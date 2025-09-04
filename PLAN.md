@@ -5,16 +5,15 @@ Durée moyenne prévue : ~2h/jour
 ---
 
 ## ⚙️ Mise en place initiale
-- [x] Installer Flutter et configurer l’environnement (1 jour)
-- [x] Créer un dépôt Git et l’organiser (1 jour)
-- [ ] Ajouter un fichier README et PLAN (1 jour)
+- [x] Installer Flutter et configurer l’environnement
+- [x] Créer un dépôt Git et l’organiser
+- [x] Ajouter un fichier README et PLAN
 
 ---
 
 ## 📚 Apprentissage de Dart & Flutter
-- [ ] Étudier les bases du langage Dart (3 jours)
-- [ ] Faire de petits exercices/tests Dart dans `sandbox/` (2 jours)
-- [ ] Découvrir les bases de Flutter (widgets, MaterialApp, Scaffold) (3 jours)
+- [ ] Étudier les bases du langage Dart et Faire de petits test dans `sandbox/` (2 jours)
+- [ ] Découvrir les bases de Flutter (widgets, MaterialApp, Scaffold) (1 jours)
 
 ---
 
