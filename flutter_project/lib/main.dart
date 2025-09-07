@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'playground/exo2_cor.dart';
+
 void main() {
-  runApp(const MyApp());
+  //runApp(const MyApp());
+  runApp(const Exo2App());
 }
 
 class MyApp extends StatelessWidget {
