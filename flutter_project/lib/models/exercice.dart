@@ -6,7 +6,7 @@ enum ExerciceType { word }
 abstract class Exercice {
   final int id;
   final ExerciceType type;
-  SRS srsData;
+  SRSState srsData;
 
   Exercice({
     required this.id,
@@ -21,7 +21,7 @@ class WordExercice extends Exercice {
   WordExercice({
     required int id,
     required Word this.word,
-    required SRS srsData,
+    required SRSState srsData,
   }) : super(
           id: id,
           type: ExerciceType.word,
