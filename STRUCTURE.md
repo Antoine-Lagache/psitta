@@ -139,7 +139,10 @@ lib/
   - **Méthodes:**
     - `void _addToInProgressSorted(Exercice exo)  // helper: insert en maintenant la liste triée par availableAt` 
     - `Exercice? chooseExercice() //choisi l'exercice suivant`
+    - `bool hasNext()` Renvoie true si toDo ou inProgress non vide.
     - `void submitAnswer(Exercice exo, int grade) // submitAnswer applique toujours update SRS et gère learning steps.`
+    - `Duration getPreviewInterval(Exercice exo, int q)` utilise les méthodes `exo.srsData.computePreviewReview` ou `exo.srsData.computePreviewLearning` pour obtenir le résultat.
+    - `static List<Exercice> buildSessionOrder(List<Exercice> dueList, List<Exercice> newList)` est utilisé par le constructeur pour obtenir la liste toDO à partir des exercices à réviser et des nouveaux exercices.
 
 
 ---

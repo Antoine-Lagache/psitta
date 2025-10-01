@@ -9,8 +9,8 @@ class Session {
   final SRSConfig config;
   String sessionType; //inutilisé pour l'instant
 
-  Session(List<Exercice> aFaire, this.config, {this.sessionType = "Default"})
-      : toDo = List<Exercice>.from(aFaire);
+  Session(List<Exercice> newList, List<Exercice> dueList, this.config, {this.sessionType = "Default"})
+      : toDo = buildSessionOrder(newList, dueList);
 
   // helper: insert en maintenant la liste triée par availableAt
   void _addToInProgressSorted(Exercice exo) {  //bien
@@ -47,6 +47,10 @@ class Session {
     }
     return null; // rien dispo
   }
+  ///Renvoie true si toDo ou inProgress non vide.
+  bool hasNext(){
+    return toDo.isNotEmpty || inProgress.isNotEmpty;
+  }
 
   /// submitAnswer applique toujours update SRS puis gère learning steps.
 void submitAnswer(Exercice exo, int grade) {
@@ -73,5 +77,47 @@ void submitAnswer(Exercice exo, int grade) {
       exo.availableAt = now.add(res);
       completed.add(exo);
     }
+  }
+
+  Duration getPreviewInterval(Exercice exo, int q){
+    if (exo.srsData.learningStepIndex >=0){
+      return exo.srsData.computePreviewLearning(q, config, steps:config.learningSteps);
+    }
+    return exo.srsData.computePreviewReview(q, config);
+  }
+
+  /// dueList : liste de mots à réviser, newList : liste de nouveaux mots.
+  static List<Exercice> buildSessionOrder(List<Exercice> dueList, List<Exercice> newList) {
+    final order = <Exercice>[];
+    dueList.shuffle();
+    newList.shuffle();
+    final N = dueList.length;
+    final M = newList.length;
+
+    if (M == 0) {
+      return List<Exercice>.from(dueList); // uniquement des révisions
+    }
+    if (N == 0) {
+      return List<Exercice>.from(newList); // uniquement des nouveaux
+    }
+
+    final chunkSize = (N / M).floor();
+    var indexDue = 0;
+    var indexNew = 0;
+
+    while (indexDue < N || indexNew < M) {
+      // Ajouter un bloc de révisions
+      for (var i = 0; i < chunkSize && indexDue < N; i++) {
+        order.add(dueList[indexDue]);
+        indexDue++;
+      }
+
+      // Ajouter un nouveau
+      if (indexNew < M) {
+        order.add(newList[indexNew]);
+        indexNew++;
+      }
+    }
+    return order;
   }
 }
