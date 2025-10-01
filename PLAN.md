@@ -12,14 +12,14 @@ Durée moyenne prévue : ~2h/jour
 ---
 
 ## 📚 Apprentissage de Dart & Flutter
-- [ ] Étudier les bases du langage Dart et Faire de petits test dans `sandbox/` (2 jours)
-- [ ] Découvrir les bases de Flutter (widgets, MaterialApp, Scaffold) (1 jours)
+- [x] Étudier les bases du langage Dart et Faire de petits test dans `sandbox/` (2 jours)
+- [x] Découvrir les bases de Flutter (widgets, MaterialApp, Scaffold) (1 jours)
 
 ---
 
 ## 🏗️ Structure du projet
-- [ ] Réfléchir à l’architecture (fichiers, classes, organisation) (2 jours)
-- [ ] Créer la structure minimale (lib/, pages, widgets) (2 jours)
+- [x] Réfléchir à l’architecture (fichiers, classes, organisation) (2 jours)
+- [x] Créer la structure minimale (lib/, pages, widgets) (2 jours)
 
 ---
 

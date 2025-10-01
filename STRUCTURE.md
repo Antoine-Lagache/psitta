@@ -147,6 +147,6 @@ lib/
 ## modèle SRS
 
 Probabilité de rétention après un temps t :
-$$P(t) = (1-w) exp(-kt) + w $$
+$$P(t) = (1-w) exp(-kt) + w \\$$
 avec :
 $$P(I) = R^*$$

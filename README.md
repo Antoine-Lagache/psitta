@@ -13,6 +13,11 @@ C’est mon premier projet Flutter, il sert à la fois d’exercice pour apprend
 
 ---
 
+## Progrès:
+voir le fichier [STRUCTURE.md](STRUCTURE.md) pour la structure du projet
+
+
+
 ## ✅ Avancement
 
 Voir le fichier [PLAN.md](PLAN.md) pour la liste détaillée des objectifs.  
