@@ -4,16 +4,15 @@ import 'dart:math';
 class SRSState {
   DateTime? nextReview;
   double easeFactor;
-  Duration interval; // days for review intervals
+  Duration interval; // duration for review intervals
   double kFactor;
-  double w;
-  double rbar;
+  double w; //correspond à la mémoire long terme
+  double rbar; //moyenne pondéré des dernière victoire
 
   DateTime? lastReview;
-  List<int> history;
+  List<int> history; //inutilisé pour l'instant
 
-  // NEW: index in learning steps (-1 = not in learning)
-  int learningStepIndex;
+  int learningStepIndex; // index in learning steps (-1 = not in learning)
 
   SRSState({
     this.nextReview,

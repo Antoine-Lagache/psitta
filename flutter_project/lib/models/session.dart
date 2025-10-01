@@ -7,7 +7,7 @@ class Session {
   final List<Exercice> completed = [];
 
   final SRSConfig config;
-  String sessionType;
+  String sessionType; //inutilisé pour l'instant
 
   Session(List<Exercice> aFaire, this.config, {this.sessionType = "Default"})
       : toDo = List<Exercice>.from(aFaire);
