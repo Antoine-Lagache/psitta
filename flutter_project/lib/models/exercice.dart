@@ -1,30 +1,27 @@
-import 'word.dart';
 import 'srs.dart';
+import 'note.dart';
 
 enum ExerciceType { word }
 
 abstract class Exercice {
-  final int id;
   final ExerciceType type;
   SRSState srsData;
 
+  DateTime? availableAt;   // moment où l'exercice redevient disponible. null au départ
+  
   Exercice({
-    required this.id,
     required this.type,
     required this.srsData,
   });
 }
 
 class WordExercice extends Exercice {
-  final Word word;
+  final Card card;
 
   WordExercice({
-    required int id,
-    required Word this.word,
-    required SRSState srsData,
+    required this.card,
+    required super.srsData,
   }) : super(
-          id: id,
-          type: ExerciceType.word,
-          srsData: srsData,
+          type: ExerciceType.word
         );
 }
