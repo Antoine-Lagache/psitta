@@ -8,31 +8,30 @@ Brève description du projet, objectifs et organisation générale.
 ## Arborescence des fichiers
 ```text
 lib/
-    models/
-        exercice.dart
-        note.dart
-        session.dart
-        srs.dart
-    playground/
-        test.dart
-    screen/
-        home_screen.dart
-        setting.dart
-        statistic_screen.dart
-    service/
-        main_router.dart
-        main.dart
+  models/
+    exercice.dart
+    note.dart
+    session.dart
+    srs.dart
+  playground/
+    test.dart
+  screen/
+    home_screen.dart
+    setting.dart
+    statistic_screen.dart
+  main_router.dart
+  main.dart
 ```
 ---
 
 ## Fichiers et classes
 
-### `service/main.dart`
+### `main.dart`
 - **Fonction principale**
   - `main()`: lance l’application.
   - `class MyApp extends StatelessWidget` : créer un MaterialApp
 
-### `service/main_router.dart`
+### `main_router.dart`
 - **class MainRouter extends StatefulWidget**
   - State_MainRouterState
     - contient une liste final `List<Widget> _page`

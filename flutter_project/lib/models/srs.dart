@@ -1,5 +1,6 @@
 // lib/models/srs.dart
 import 'dart:math';
+import '../services/convert_utils.dart';
 
 class SRSState {
   DateTime? nextReview;
@@ -10,7 +11,7 @@ class SRSState {
   double rbar; //moyenne pondéré des dernière victoire
 
   DateTime? lastReview;
-  List<int> history; //inutilisé pour l'instant
+  List<dynamic> history; //inutilisé pour l'instant
 
   int learningStepIndex; // index in learning steps (-1 = not in learning)
 
@@ -22,9 +23,38 @@ class SRSState {
     this.w = 0.0,
     this.rbar = 0.0,
     this.lastReview,
-    List<int>? history,
+    List<dynamic>? history,
     this.learningStepIndex = 0,
   })  : history = history ?? [];
+
+  Map<String, dynamic> toMap(int exerciceId) {
+    return {
+      'exercice_id': exerciceId,
+      'next_review': toIsoUtc(nextReview),
+      'ease_factor': easeFactor,
+      'interval': safeFromDuration(interval),
+      'k_factor': kFactor,
+      'w': w,
+      'rbar': rbar,
+      'last_review': toIsoUtc(lastReview),
+      'learning_step_index': learningStepIndex,
+      'history': safeJsonEncode(history) ?? '[]',
+    };
+  }
+
+  factory SRSState.fromMap(Map<String, dynamic> map) {
+    return SRSState(
+      nextReview: safeParseDate(map['next_review'] as String?),
+      easeFactor: safeToDouble(map['ease_factor']),
+      interval: safeToDuration(map['interval']),
+      kFactor: safeToDouble(map['k_factor']),
+      w: safeToDouble(map['w']),
+      rbar: safeToDouble(map['rbar']),
+      lastReview: safeParseDate(map['last_review'] as String?),
+      learningStepIndex: safeToInt(map['learning_step_index']),
+      history: safeJsonDecodeList(map['history'] as String?),
+    );
+  }
 
   // -----------------------------
   // PURE preview helpers (no mutation)
@@ -262,6 +292,7 @@ class SRSState {
 }
 
 class SRSConfig {
+  final int? id;
   final double rstar;
   final double wMaxFactor;
   final List<double> lambdas;
@@ -285,6 +316,7 @@ class SRSConfig {
   static const List<double> _defaultLambdas = [0.60, 0.90, 0.80, 0.95, 0.85, 0.70];
 
   SRSConfig({
+    this.id,
     this.rstar = 0.9,
     this.wMaxFactor = 0.95,
     List<double>? lambdas,
@@ -321,5 +353,57 @@ class SRSConfig {
   double getLambda(int q) {
     final int idx = q.clamp(0, lambdas.length - 1);
     return lambdas[idx];
+  }
+
+    Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'rstar': rstar,
+      'w_max_factor': wMaxFactor,
+      'lambdas': safeJsonEncode(lambdas) ?? '[]',
+      'easy_interval': easyInterval,
+      'first_interval_fallback': firstIntervalFallback,
+      'ef_min': efMin,
+      'i_max': iMax,
+      'default_ef': defaultEF,
+      'default_w': defaultW,
+      'mu': mu,
+      'long_pause': longPause,
+      'min_tol_factor': minTolFactor,
+      'learning_steps': safeJsonEncode(
+        learningSteps.map((d) => safeFromDuration(d)).toList(),
+      ) ?? '[]',
+      'hard_review_factor': hardReviewFactor,
+      'hard_learning_factor': hardLearningFactor,
+      'easy_bonus': easyBonus,
+      'day_boundary': safeFromDuration(dayBoundary),
+    };
+  }
+
+  factory SRSConfig.fromMap(Map<String, dynamic> map) {
+    return SRSConfig(
+      id: safeToInt(map['id']),
+      rstar: safeToDouble(map['rstar']),
+      wMaxFactor: safeToDouble(map['w_max_factor']),
+      lambdas: (safeJsonDecodeList(map['lambdas'] as String?))
+          .map((e) => safeToDouble(e))
+          .toList(),
+      easyInterval: safeToInt(map['easy_interval']),
+      firstIntervalFallback: safeToInt(map['first_interval_fallback']),
+      efMin: safeToDouble(map['ef_min']),
+      iMax: safeToInt(map['i_max']),
+      defaultEF: safeToDouble(map['default_ef']),
+      defaultW: safeToDouble(map['default_w']),
+      mu: safeToDouble(map['mu']),
+      longPause: safeToInt(map['long_pause']),
+      minTolFactor: safeToDouble(map['min_tol_factor']),
+      learningSteps: (safeJsonDecodeList(map['learning_steps'] as String?))
+          .map((e) => safeToDuration(e))
+          .toList(),
+      hardReviewFactor: safeToDouble(map['hard_review_factor']),
+      hardLearningFactor: safeToDouble(map['hard_learning_factor']),
+      easyBonus: safeToDouble(map['easy_bonus']),
+      dayBoundary: safeToDuration(map['day_boundary']),
+    );
   }
 }
