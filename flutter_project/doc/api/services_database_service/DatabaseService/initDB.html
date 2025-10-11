@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the initDB method from the DatabaseService class, for the Dart programming language.">
+  <title>initDB method - DatabaseService class - database_service library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">flutter_application_1</a></li>
+    <li><a href="../../services_database_service/">services&#47;database_service.dart</a></li>
+    <li><a href="../../services_database_service/DatabaseService-class.html">DatabaseService</a></li>
+    <li class="self-crumb">initDB method</li>
+  </ol>
+  <div class="self-name">initDB</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="services_database_service&#47;DatabaseService-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">initDB</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+<span class="name ">initDB</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="initDB-param-db"><span class="type-annotation"><a href="https://pub.dev/documentation/sqflite_common/2.5.6/sqflite/Database-class.html">Database</a></span> <span class="parameter-name">db</span>, </span></li>
+<li><span class="parameter" id="initDB-param-version"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">version</span></span></li>
+</ol>)
+
+      
+
+    </section>
+    
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">Future&lt;void&gt; initDB(Database db, int version) async {
+  &#47;&#47; TABLE NOTES
+  await db.execute(&#39;&#39;&#39;
+    CREATE TABLE notes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      data TEXT NOT NULL,             -- JSON encodé depuis Map&lt;String,dynamic&gt;
+      tags TEXT,
+      created_time TEXT NOT NULL      -- stocké en ISO8601
+    )
+  &#39;&#39;&#39;);
+
+  &#47;&#47; TABLE CARD_TEMPLATES
+  await db.execute(&#39;&#39;&#39;
+    CREATE TABLE card_templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      recto_html TEXT NOT NULL,
+      verso_html TEXT NOT NULL
+    )
+  &#39;&#39;&#39;);
+
+  &#47;&#47; TABLE CARDS
+  await db.execute(&#39;&#39;&#39;
+    CREATE TABLE cards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      note_id INTEGER NOT NULL,
+      template_id INTEGER NOT NULL,
+      FOREIGN KEY(note_id) REFERENCES notes(id) ON DELETE CASCADE,
+      FOREIGN KEY(template_id) REFERENCES card_templates(id) ON DELETE CASCADE
+    )
+  &#39;&#39;&#39;);
+
+  &#47;&#47; TABLE EXERCICES
+  await db.execute(&#39;&#39;&#39;
+    CREATE TABLE exercices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      available_at TEXT
+    )
+  &#39;&#39;&#39;);
+
+  &#47;&#47; TABLE WORD_EXERCICES
+  await db.execute(&#39;&#39;&#39;
+    CREATE TABLE word_exercices (
+      id INTEGER PRIMARY KEY,
+      card_id INTEGER NOT NULL,
+      FOREIGN KEY(id) REFERENCES exercices(id) ON DELETE CASCADE,
+      FOREIGN KEY(card_id) REFERENCES cards(id) ON DELETE CASCADE
+    )
+  &#39;&#39;&#39;);
+
+  &#47;&#47; TABLE SRS_STATES
+  await db.execute(&#39;&#39;&#39;
+    CREATE TABLE srs_states (
+      exercice_id INTEGER PRIMARY KEY,   -- relation 1-1 avec exercice
+      next_review TEXT,
+      ease_factor REAL,
+      interval INTEGER,
+      k_factor REAL,
+      w REAL,
+      rbar REAL,
+      last_review TEXT,
+      learning_step_index INTEGER,
+      history TEXT,
+      FOREIGN KEY(exercice_id) REFERENCES exercices(id) ON DELETE CASCADE
+    )
+  &#39;&#39;&#39;);
+
+  &#47;&#47; TABLE SRS_CONFIG
+  await db.execute(&#39;&#39;&#39;
+    CREATE TABLE srs_configs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      rstar REAL NOT NULL,
+      w_max_factor REAL NOT NULL,
+      lambdas TEXT NOT NULL,        -- stockée en JSON : [0.60, 0.90, ...]
+      easy_interval INTEGER NOT NULL,
+      first_interval_fallback INTEGER NOT NULL,
+      ef_min REAL NOT NULL,
+      i_max INTEGER NOT NULL,
+      default_ef REAL NOT NULL,
+      default_w REAL NOT NULL,
+      mu REAL NOT NULL,
+      long_pause INTEGER NOT NULL,
+      min_tol_factor REAL NOT NULL,
+      learning_steps TEXT NOT NULL, -- stockée en JSON : [ &quot;00:01:00&quot;, &quot;00:10:00&quot;, &quot;01:00:00&quot;, ... ]
+      hard_review_factor REAL NOT NULL,
+      hard_learning_factor REAL NOT NULL,
+      easy_bonus REAL NOT NULL,
+      day_boundary INTEGER NOT NULL  -- stocké en milliseconde, c&#39;est une durée ( &lt; 24h)
+    )
+  &#39;&#39;&#39;);
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">flutter_application_1</a></li>
+    <li><a href="../../services_database_service/">database_service</a></li>
+    <li><a href="../../services_database_service/DatabaseService-class.html">DatabaseService</a></li>
+    <li class="self-crumb">initDB method</li>
+</ol>
+
+    <h5>DatabaseService class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    flutter_application_1
+      1.0.0+1
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

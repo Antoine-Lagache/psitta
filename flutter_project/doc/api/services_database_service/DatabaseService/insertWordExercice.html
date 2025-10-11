@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the insertWordExercice method from the DatabaseService class, for the Dart programming language.">
+  <title>insertWordExercice method - DatabaseService class - database_service library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">flutter_application_1</a></li>
+    <li><a href="../../services_database_service/">services&#47;database_service.dart</a></li>
+    <li><a href="../../services_database_service/DatabaseService-class.html">DatabaseService</a></li>
+    <li class="self-crumb">insertWordExercice method</li>
+  </ol>
+  <div class="self-name">insertWordExercice</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="services_database_service&#47;DatabaseService-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">insertWordExercice</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span>
+<span class="name ">insertWordExercice</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="insertWordExercice-param-exo"><span class="type-annotation"><a href="../../models_exercice/WordExercice-class.html">WordExercice</a></span> <span class="parameter-name">exo</span></span></li>
+</ol>)
+
+      
+
+    </section>
+    
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">Future&lt;int&gt; insertWordExercice(WordExercice exo) async {
+  final db = await database;
+
+  return await db.transaction&lt;int&gt;((txn) async {
+    &#47;&#47; 1) insert dans exercices (autoinc)
+    final exerciceId = await txn.insert(&#39;exercices&#39;, {
+      &#39;type&#39;: exerciceTypeToText(exo.type),
+      &#39;available_at&#39;: toIsoUtc(exo.availableAt),
+    });
+
+    &#47;&#47; 2) insert dans word_exercices avec le même id
+    await txn.insert(&#39;word_exercices&#39;, {
+      &#39;id&#39;: exerciceId,
+      &#39;card_id&#39;: exo.card.id,
+    });
+
+    &#47;&#47; 3) insert SRSState lié (exercice_id = exerciceId)
+    await txn.insert(&#39;srs_states&#39;, {
+      &#39;exercice_id&#39;: exerciceId,
+      &#39;next_review&#39;: toIsoUtc(exo.srsData.nextReview),
+      &#39;ease_factor&#39;: exo.srsData.easeFactor,
+      &#39;interval&#39;: exo.srsData.interval.inMilliseconds,
+      &#39;k_factor&#39;: exo.srsData.kFactor,
+      &#39;w&#39;: exo.srsData.w,
+      &#39;rbar&#39;: exo.srsData.rbar,
+      &#39;last_review&#39;: toIsoUtc(exo.srsData.lastReview),
+      &#39;learning_step_index&#39;: exo.srsData.learningStepIndex,
+      &#39;history&#39;: safeJsonEncode(exo.srsData.history) ?? &#39;[]&#39;,
+    });
+
+    return exerciceId;
+  });
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">flutter_application_1</a></li>
+    <li><a href="../../services_database_service/">database_service</a></li>
+    <li><a href="../../services_database_service/DatabaseService-class.html">DatabaseService</a></li>
+    <li class="self-crumb">insertWordExercice method</li>
+</ol>
+
+    <h5>DatabaseService class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    flutter_application_1
+      1.0.0+1
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
