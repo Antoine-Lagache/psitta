@@ -1,8 +1,22 @@
 import 'package:flutter/material.dart';
+// ignore: unnecessary_import
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'dart:io';
 
 import 'screens/main_router.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+  print('\n\nDatabase path:');
+  print(await getDatabasesPath());    
+
+
   //runApp(const MyApp());
   runApp(const MyApp());
 }
@@ -15,9 +29,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: "App pour apprentissage de langue",
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.lightBlue
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
       ),
       home: MainRouter(),
     );

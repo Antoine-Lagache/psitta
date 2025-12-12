@@ -33,7 +33,10 @@ import 'srs.dart';
 #### ⚙️ Constructeur
 ```dart
 Session(List<Exercice> newList, List<Exercice> dueList, this.config, {this.sessionType = "Default"})
-  : toDo = buildSessionOrder(newList, dueList);
+    : toDo = []
+    {
+      _initSession(newList, dueList);
+    }
 ```
 Construit une nouvelle session à partir des listes d’exercices **nouveaux** et **dus**.  
 La méthode statique `buildSessionOrder` détermine un ordre équilibré entre révisions et nouveautés.
@@ -75,11 +78,11 @@ Calcule, sans appliquer de changement, l’intervalle qui serait généré pour 
 Utilisé pour afficher les durées de révision à venir (prévisualisation des boutons Anki-like).
 
 
-### `buildSessionOrder(List<Exercice> dueList, List<Exercice> newList)`
-Méthode statique utilisée pour créer la liste initiale `toDo`.  
-  1. Mélange les deux listes.  
-  2. Alterne blocs de révisions et nouvelles cartes selon leur proportion.  
-  3. Garantit une répartition équilibrée de la charge cognitive.
+### `_initSession(List<Exercice> dueList, List<Exercice> newList)`
+Méthode utilisée pour créer les liste initiale `toDo` et `inProgress`.
+  1. Ajoute les exercices dans `inProgress` si la session avait été arrêter avant d'être finit.
+  2. Mélange les deux listes.  
+  3. Alterne blocs de révisions et nouvelles cartes selon leur proportion pour garantit une répartition équilibrée de la charge cognitive.
 
 ---
 

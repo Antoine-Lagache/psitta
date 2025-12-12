@@ -1,3 +1,4 @@
+import '../services/database_service.dart';
 import '../services/convert_utils.dart';
 import 'srs.dart';
 import 'note.dart';
@@ -21,7 +22,7 @@ ExerciceType exerciceTypeFromText(String? text) {
 }
 
 abstract class Exercice {
-  final int? id;
+  int? id;
   final ExerciceType type;
   final SRSState srsData;
   DateTime? availableAt;
@@ -32,6 +33,8 @@ abstract class Exercice {
     required this.srsData,
     this.availableAt,
   });
+
+  Future<void> saveToDb();
 
   Map<String, dynamic> toMap();
 }
@@ -49,7 +52,17 @@ class WordExercice extends Exercice {
         );
 
   @override
+  Future<void> saveToDb() async {
+    final db = DatabaseService.instance;
+    if (id == null) {
+      id = await db.insertWordExercice(this);
+    } else {
+      await db.updateWordExercice(this);
+    }
+  }
+  @override
   Map<String, dynamic> toMap() {
+    assert(card.id != null, 'Card must be inserted before WordExercice.');
     return {
       'id': id,
       'type': exerciceTypeToText(type),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'statistic_screen.dart';
 import 'setting_screen.dart';
+import 'session_screen.dart';
 
 
 class MainRouter extends StatefulWidget {
@@ -17,7 +18,7 @@ class _MainRouterState extends State<MainRouter> {
   int _currentIndex = 0;
 
   final List<Widget> _page = const [
-    HomeScreen(),
+    SessionScreen(),
     StatisticScreen(),
     SettingScreen()
   ];

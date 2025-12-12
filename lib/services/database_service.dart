@@ -20,12 +20,17 @@ class DatabaseService {
     // Ouvrir la base (et créer si nécessaire)
     _db = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (Database db, int version) async {
         await initDB(db, version);  // appelle la fonction de création des tables
       },
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE srs_configs ADD COLUMN new_count INTEGER DEFAULT 10;');
+        }
       },
     );
 
@@ -120,6 +125,7 @@ class DatabaseService {
         hard_learning_factor REAL NOT NULL,
         easy_bonus REAL NOT NULL,
         day_boundary INTEGER NOT NULL  -- stocké en milliseconde, c'est une durée ( < 24h)
+        new_count INTEGER NOT NULL
       )
     ''');
   }
@@ -614,6 +620,90 @@ class DatabaseService {
 
     final List<WordExercice> out = [];
     for (final row in rows) {
+      final note = Note.fromMap({
+        'id': row['note_id_real'],
+        'data': row['note_data'],
+        'tags': row['note_tags'],
+        'created_time': row['note_created_time'],
+      });
+
+      final template = CardTemplate.fromMap({
+        'id': row['template_id_real'],
+        'recto_html': row['recto_html'],
+        'verso_html': row['verso_html'],
+      });
+
+      final card = Card.fromMap({'id': row['card_id_real']}, note, template);
+
+      final srs = SRSState.fromMap({
+        'next_review': row['next_review'],
+        'ease_factor': row['ease_factor'],
+        'interval': row['interval'],
+        'k_factor': row['k_factor'],
+        'w': row['w'],
+        'rbar': row['rbar'],
+        'last_review': row['last_review'],
+        'learning_step_index': row['learning_step_index'],
+        'history': row['history'],
+      });
+
+      out.add(WordExercice.fromMap({
+        'id': row['exo_id'],
+        'available_at': row['exo_available_at'],
+        'type': row['exo_type'],
+      }, card, srs));
+    }
+
+    return out;
+  }
+
+  // GET some new exercices
+  Future<List<WordExercice>> getNewExercices(int limit) async {
+    final db = await database;
+
+    final rows = await db.rawQuery('''
+      SELECT
+        e.id    AS exo_id,
+        e.type  AS exo_type,
+        e.available_at AS exo_available_at,
+
+        w.card_id AS card_id,
+
+        c.id AS card_id_real,
+        c.note_id AS card_note_id,
+        c.template_id AS card_template_id,
+
+        n.id   AS note_id_real,
+        n.data AS note_data,
+        n.tags AS note_tags,
+        n.created_time AS note_created_time,
+
+        t.id AS template_id_real,
+        t.recto_html AS recto_html,
+        t.verso_html AS verso_html,
+
+        s.next_review AS next_review,
+        s.ease_factor AS ease_factor,
+        s.interval AS interval,
+        s.k_factor AS k_factor,
+        s.w AS w,
+        s.rbar AS rbar,
+        s.last_review AS last_review,
+        s.learning_step_index AS learning_step_index,
+        s.history AS history
+      FROM exercices e
+      JOIN word_exercices w ON e.id = w.id
+      JOIN cards c ON w.card_id = c.id
+      JOIN notes n ON c.note_id = n.id
+      JOIN card_templates t ON c.template_id = t.id
+      JOIN srs_states s ON s.exercice_id = e.id
+      WHERE e.available_at IS NULL
+      ORDER BY e.id ASC
+    ''');
+
+    final List<WordExercice> out = [];
+    for (int i = 0; i < rows.length && i < limit; i++) {
+      final row = rows[i];
       final note = Note.fromMap({
         'id': row['note_id_real'],
         'data': row['note_data'],

@@ -71,7 +71,7 @@ static final DatabaseService instance = DatabaseService._init();
 
 ### WordExercice
 
-* `insertWordExercice`, `getWordExerciceById`, `getAllWordExercices`, `getDueExercices`, `updateWordExercice`, `deleteWordExercice`
+* `insertWordExercice`, `getWordExerciceById`, `getAllWordExercices`, `getDueExercices`, `getNewExercices`, `updateWordExercice`, `deleteWordExercice`
 
 ### SRSState
 

@@ -1,7 +1,8 @@
+import '../services/database_service.dart';
 import '../services/convert_utils.dart';
 
 class Note {
-  final int? id;
+  int? id;
   final Map<String, dynamic> data; // JSON flexible
   final List<String> tags;
   final DateTime createdTime;
@@ -16,7 +17,7 @@ class Note {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'data': safeJsonEncode(data) ?? "",   // encode propre
+      'data': safeJsonEncode(data) ?? "{}",   // encode propre
       'tags': safeJsonEncode(tags),
       'created_time': toIsoUtc(createdTime),
     };
@@ -33,11 +34,11 @@ class Note {
 }
 
 class CardTemplate {
-  final int? id;
+  int? id;
   final String rectoHtml;
   final String versoHtml;
 
-  const CardTemplate(
+  CardTemplate(
     this.id,
     this.rectoHtml,
     this.versoHtml,
@@ -61,15 +62,24 @@ class CardTemplate {
 }
 
 class Card {
-  final int? id;
+  int? id;
   final Note note;
   final CardTemplate template;
 
-  const Card(
+  Card(
     this.id,
     this.note,
     this.template
   );
+
+  Future<void> saveToDb() async {
+    final db = DatabaseService.instance;
+    if (id == null) {
+      id = await db.insertCard(this);
+    } else {
+      await db.updateCard(this);
+    }
+  }
 
   Map<String, dynamic> toMap() {
     return {

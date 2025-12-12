@@ -135,6 +135,7 @@ class SRSState {
 
     // AGAIN -> reset to first step
     if (qq == 0) {
+      lastReview = now;
       final Duration dur = s.isNotEmpty ? s[0] : Duration(minutes: 1);
       learningStepIndex = 0;
       nextReview = now.add(dur);
@@ -143,6 +144,7 @@ class SRSState {
     }
     // HARD
     if (qq == 2) {
+      lastReview = now;
       if(learningStepIndex > 0 && learningStepIndex < s.length){
           final Duration dur = Duration(milliseconds: (s[learningStepIndex].inMilliseconds* config.hardLearningFactor).round());
           nextReview = now.add(dur);
@@ -160,6 +162,7 @@ class SRSState {
 
     // MEDIUM (Anki Hard equivalent)
     if (qq == 3) {
+      lastReview = now;
       if (learningStepIndex <= 0) {
         if (s.length > 1) {
           final int avgMs = ((s[0].inMilliseconds + s[1].inMilliseconds) / 2.0).round();
@@ -191,12 +194,13 @@ class SRSState {
     if (qq == 4) {
       final int nextIdx = learningStepIndex + 1;
       if (nextIdx < s.length) {
+        lastReview = now;
         learningStepIndex = nextIdx;
         final Duration dur = s[nextIdx];
         nextReview = now.add(dur);
         history.add(qq);
         return dur;
-      } else {
+      } else { //case when user finish all learning steps (learningStepIndex = s.length -1)
         // graduate to review: set interval to 0 days first (will be computed by review logic)
         learningStepIndex = -1;
         final double arg = ((config.rstar - w) / (1.0 - w)).clamp(1e-6, 1.0 - 1e-6);
@@ -208,6 +212,9 @@ class SRSState {
 
     // EASY -> immediate graduation with easyInterval
     if (qq == 5) {
+      lastReview = now;
+      nextReview = now.add(Duration(days: config.easyInterval));
+      history.add(qq);
       learningStepIndex = -1;
       // set a provisional interval as easyInterval days -> review branch will use it
       final double arg = ((config.rstar - w) / (1.0 - w)).clamp(1e-6, 1.0 - 1e-6);
@@ -313,6 +320,8 @@ class SRSConfig {
   final double easyBonus;
   final Duration dayBoundary; // 0..23, Anki-like day boundary
 
+  final int newCount;
+
   static const List<double> _defaultLambdas = [0.60, 0.90, 0.80, 0.95, 0.85, 0.70];
 
   SRSConfig({
@@ -338,6 +347,7 @@ class SRSConfig {
     this.hardLearningFactor = 0.7,
     this.easyBonus = 1.3,
     this.dayBoundary = Duration.zero,
+    this.newCount = 10,
   })  : lambdas = List.generate(
           6,
           (i) {
@@ -377,6 +387,7 @@ class SRSConfig {
       'hard_learning_factor': hardLearningFactor,
       'easy_bonus': easyBonus,
       'day_boundary': safeFromDuration(dayBoundary),
+      'new_count': newCount,
     };
   }
 
@@ -404,6 +415,7 @@ class SRSConfig {
       hardLearningFactor: safeToDouble(map['hard_learning_factor']),
       easyBonus: safeToDouble(map['easy_bonus']),
       dayBoundary: safeToDuration(map['day_boundary']),
+      newCount: safeToInt(map['new_count']),
     );
   }
 }

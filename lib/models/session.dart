@@ -10,7 +10,10 @@ class Session {
   String sessionType; //inutilisé pour l'instant
 
   Session(List<Exercice> newList, List<Exercice> dueList, this.config, {this.sessionType = "Default"})
-      : toDo = buildSessionOrder(newList, dueList);
+    : toDo = []
+    {
+      _initSession(newList, dueList);
+    }
 
   // helper: insert en maintenant la liste triée par availableAt
   void _addToInProgressSorted(Exercice exo) {  //bien
@@ -75,6 +78,7 @@ void submitAnswer(Exercice exo, int grade) {
       _addToInProgressSorted(exo);
     }else{
       exo.availableAt = now.add(res);
+      exo.availableAt = DateTime.utc(exo.availableAt!.year, exo.availableAt!.month, exo.availableAt!.day).add(config.dayBoundary);
       completed.add(exo);
     }
   }
@@ -86,38 +90,75 @@ void submitAnswer(Exercice exo, int grade) {
     return exo.srsData.computePreviewReview(q, config);
   }
 
-  /// dueList : liste de mots à réviser, newList : liste de nouveaux mots.
-  static List<Exercice> buildSessionOrder(List<Exercice> dueList, List<Exercice> newList) {
-    final order = <Exercice>[];
-    dueList.shuffle();
+  /// Initialise les listes internes de la session.
+  /// - Sépare les exercices dus entre `inProgress` (déjà commencés) et `toDo` (à réviser),
+  /// - Mélange et intercale les nouveaux exercices avec ceux à réviser.
+  void _initSession(List<Exercice> dueList, List<Exercice> newList) {
+    // Nettoyer les listes actuelles avant toute reconstruction
+    toDo.clear();
+    inProgress.clear();
+
+    // Helper pour comparer les dates "même jour"
+    bool sameDay(DateTime? a, DateTime? b) {
+      if (a == null || b == null) return false;
+      return a.year == b.year && a.month == b.month && a.day == b.day;
+    }
+
+    // Séparer les exercices en fonction de leurs dates
+    for (final exo in dueList) {
+      final srs = exo.srsData;
+      if (sameDay(srs.lastReview, srs.nextReview)) {
+        inProgress.add(exo); // exercice déjà vu aujourd’hui
+      } else {
+        toDo.add(exo); // à réviser normalement
+      }
+    }
+
+    // Mélange les listes
+    toDo.shuffle();
     newList.shuffle();
-    final N = dueList.length;
+
+    // Répartition des nouveaux exercices au milieu des révisions
+    final N = toDo.length;
     final M = newList.length;
 
-    if (M == 0) {
-      return List<Exercice>.from(dueList); // uniquement des révisions
-    }
+    if (M == 0) return; // aucune carte nouvelle, pas besoin de réordonner
     if (N == 0) {
-      return List<Exercice>.from(newList); // uniquement des nouveaux
+      toDo.addAll(newList);
+      return;
     }
 
-    final chunkSize = (N / M).floor();
+    var chunkSize = (N / M).floor();
+    if (chunkSize < 1) chunkSize = 1;
+    final mixedOrder = <Exercice>[];
+
     var indexDue = 0;
     var indexNew = 0;
 
     while (indexDue < N || indexNew < M) {
       // Ajouter un bloc de révisions
       for (var i = 0; i < chunkSize && indexDue < N; i++) {
-        order.add(dueList[indexDue]);
+        mixedOrder.add(toDo[indexDue]);
         indexDue++;
       }
-
-      // Ajouter un nouveau
-      if (indexNew < M) {
-        order.add(newList[indexNew]);
-        indexNew++;
+      
+      // Ajouter un nouveau mot
+      if (chunkSize == 1){
+        for (var i = 0; i < (M/N).floor() && indexNew < M; i++) {
+          mixedOrder.add(newList[indexDue]);
+          indexNew++;
+        }
+      }else {
+        if (indexNew < M) {
+          mixedOrder.add(newList[indexNew]);
+          indexNew++;
+        }
       }
     }
-    return order;
+
+    // Met à jour la liste finale "toDo"
+    toDo
+      ..clear()
+      ..addAll(mixedOrder);
   }
 }
