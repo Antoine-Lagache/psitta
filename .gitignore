@@ -1,0 +1,56 @@
+# Flutter / Dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / misc
+*.class
+*.log
+*.pyc
+*.swp
+*~      # temporary editor files
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# Flutter / Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub/
+.pub-cache/
+
+# Build outputs
+build/
+**/ios/Flutter/.last_build_id
+
+# Android
+android/.gradle/
+android/local.properties
+android/**/build/
+android/app/debug
+android/app/profile
+android/app/release
+
+# Linux
+linux/**/build/
+
+# Generated docs
+**/docs/FULL_DOC.md
+**/doc/api/
+
+# Symbolication / obfuscation
+app.*.symbols
+app.*.map.json
+
+# Misc project-specific
+.swiftpm/
+migrate_working_dir/
+.history
+.build/
+.buildlog/
+.svn/
