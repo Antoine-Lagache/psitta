@@ -45,7 +45,7 @@ class _SessionScreenState extends State<SessionScreen> {
 
       session = Session(newList, dueList, config);
       currentExercice = session.chooseExercice() as WordExercice?;
-    } catch (e, s) {
+    } catch (e, s){
       debugPrint('*ERREUR* lors du chargement de la session: $e\n$s');
       errorMessage = e.toString();
       currentExercice = null;

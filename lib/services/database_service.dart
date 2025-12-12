@@ -871,6 +871,6 @@ class DatabaseService {
   // ---------- CLOSE ----------
   Future close() async {
     final db = await database;
-    db.close();
+    await db.close();
   }
 }

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 
 /// Script pour compter le nombre de lignes de code Dart dans le répertoire lib,

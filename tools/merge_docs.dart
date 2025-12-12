@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 
 /// Merge all Markdown docs into one big FULL_DOC.md

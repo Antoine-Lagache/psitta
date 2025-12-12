@@ -13,9 +13,8 @@ Future<void> main() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
-  print('\n\nDatabase path:');
-  print(await getDatabasesPath());    
-
+  debugPrint('\n\nDatabase path:');
+  debugPrint(await getDatabasesPath());    
 
   //runApp(const MyApp());
   runApp(const MyApp());
