@@ -4,14 +4,6 @@
 Application Flutter d’apprentissage des langues basée sur un algorithme de répétition espacée (SRS).
 Ce projet sert à la fois de terrain d’apprentissage pour **Dart/Flutter** et de base pour une application complète de mémoristation de vocabulaire et de révision intelligente.
 
----
-```mermaid
-classDiagram
-    SentenceSession "1" o-- "k" SentenceExercice
-    SentenceExercice --> Sentence
-    SentenceExercice --> SentenceGroup
-    SentenceGroup "1" --> "1" SRSState
-```
 
 ---
 
@@ -24,37 +16,39 @@ classDiagram
 
 ---
 
-## 🧩 Architecture générale
+## 🧩 Architecture (MVP)
 
-L’application est divisée en plusieurs couches :
+L’application suit une architecture modulaire, organisée autour de 4 blocs principaux :
 
-- [models/](lib/models/) $\rightarrow$ définitions des objets métier (`Note`, `Card`, `Exercice`, `SRSState`, `SRSConfig`, etc.)
-- [playground/](lib/playground) $\rightarrow$  fichiers de test et d’expérimentation
-- [screens/](lib/screens/) $\rightarrow$  interfaces utilisateur (`HomeScreen`, `StatisticScreen`, `SettingScreen`)
-- [services/](lib/services) $\rightarrow$  logique d’accès aux données et conversions
-> Les détails complets se trouvent dans [**doc/index.md**](docs/index.md)
+- **UI**  
+  Écrans Flutter (Home, Sessions, Stats, Settings).  
+  Aucun accès direct au Domain ou à la base de données.
+
+- **Application / Controllers**  
+  Orchestration de la logique applicative (sessions, navigation, statistiques).  
+  Les Controllers sont long-vivants et partagés entre les écrans.
+
+- **Domain**  
+  Logique métier pure :
+  - contenu pédagogique (`Word`, `Sentence`, `SentenceGroup`, `Chapter`, `Note`)
+  - sessions d’apprentissage
+  - système de répétition espacée (SRS)
+
+- **Persistence**  
+  Accès aux données via des repositories.  
+  Le SQL, le mapping DB ↔ Domain et les optimisations sont confinés à cette couche.
+
+👉 L’architecture complète est documentée dans [`docs/architecture`](docs/architecture).
 
 
 ---
 
 ## ⚙️ État actuel (MVP in progress) - chronologie
 
-1. Définition des modèles principaux :  
-   `Note`, `CardTemplate`, `Card`, `Exercice`, `WordExercice`, `SRSState`, `SRSConfig`
-2. Création des fonctions utilitaires dans `convert_utils.dart` (conversion de types, gestion des dates et durées).
-3. Conception complète de la base **SQLite** : 
-   -  toutes les tables
-   -  Les relations
-   -  Méthodes toMap/fromMap implémentées pour tous les modèles
-   - CRUD complet pour chaque table
-   - Requêtes optimisées avec jointures pour reconstruire les objets complexes
-4. Mise en place d’une **documentation claire** et maintenable en Markdown.
 
----
+* Architecture MVP définie et documentée
+* Modèle SRS conçu (cf [`docs/maths_srs.md`](docs/maths_srs.md))
+* Séparation claire UI / Application / Domain / Persistence
+* 🚧 Implémentation en cours
 
-## 📈 Étapes suivantes
-
-- Logique complète de session (enchaînement et filtrage des exercices)  
-- Génération des statistiques et résumé de session  
-- Développement de l’interface utilisateur finale  
-- Écriture de tests unitaires pour chacun des modules  
+Le code existant est progressivement aligné sur cette architecture.
