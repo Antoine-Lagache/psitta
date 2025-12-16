@@ -40,8 +40,8 @@ android/app/release
 linux/**/build/
 
 # Generated docs
-**/docs/FULL_DOC.md
 **/doc/api/
+**/doc/**/*.pdf
 
 # Symbolication / obfuscation
 app.*.symbols

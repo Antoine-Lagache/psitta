@@ -5,6 +5,15 @@ Application Flutter d’apprentissage des langues basée sur un algorithme de r�
 Ce projet sert à la fois de terrain d’apprentissage pour **Dart/Flutter** et de base pour une application complète de mémoristation de vocabulaire et de révision intelligente.
 
 ---
+```mermaid
+classDiagram
+    SentenceSession "1" o-- "k" SentenceExercice
+    SentenceExercice --> Sentence
+    SentenceExercice --> SentenceGroup
+    SentenceGroup "1" --> "1" SRSState
+```
+
+---
 
 ## 🚀 Objectifs
 
