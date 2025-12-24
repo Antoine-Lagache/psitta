@@ -1,7 +1,7 @@
-import '../services/database_service.dart';
-import '../services/convert_utils.dart';
-import 'srs.dart';
-import 'note.dart';
+import '../../persistence/database_service.dart';
+import '../../utils/convert_utils.dart';
+import '../srs/legacy_srs.dart';
+import '../legacy_note.dart';
 
 enum ExerciceType { word }
 

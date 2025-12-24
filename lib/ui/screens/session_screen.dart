@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/session.dart';
-import '../models/exercice.dart';
-import '../models/srs.dart';
-import '../services/database_service.dart';
-import '../services/screens_utils.dart';
+import '../../domain/sessions/legacy_session.dart';
+import '../../domain/exercices/legacy_exercice.dart';
+import '../../domain/srs/legacy_srs.dart';
+import '../../persistence/database_service.dart';
+import 'utils.dart';
 
 enum _FinishAction { retry, quitAnyway }
 

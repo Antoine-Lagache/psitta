@@ -1,8 +1,8 @@
 import 'package:sqflite/sqflite.dart';
-import '../models/note.dart';
-import '../models/exercice.dart';
-import '../models/srs.dart';
-import 'convert_utils.dart';
+import '../domain/legacy_note.dart';
+import '../domain/exercices/legacy_exercice.dart';
+import '../domain/srs/legacy_srs.dart';
+import '../utils/convert_utils.dart';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._init();

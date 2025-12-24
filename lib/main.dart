@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
 
-import 'screens/main_router.dart';
+import 'ui/screens/main_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
