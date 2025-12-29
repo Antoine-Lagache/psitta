@@ -4,7 +4,8 @@ import '../prompt/exercice_prompt.dart';
 import 'exercice_status.dart';
 import '../srs/grade.dart';
 
-
+/// Classe abstraite représentant un exercice générique.
+/// gère l'algo intra-session et l'état SRS de l'exercice.
 abstract class Exercice {
   ExerciceStatus status;
 
@@ -19,6 +20,12 @@ abstract class Exercice {
   void submitAnswer(Grade grade, DateTime now, SRSConfig config) {
     srsState.updateState(grade, now, config);
     //TODO: update status based on grade
+  }
+
+  /// renvoie l'intervalle prévisionnel pour une note donnée
+  Duration? getPreviewInterval(Grade grade, DateTime now, SRSConfig config) {
+    return srsState.getPreviewInterval(grade, now, config);
+    // TODO: implement logic to get preview interval
   }
 
   /// Vérifie si une note Grade est autorisée pour cet exercice

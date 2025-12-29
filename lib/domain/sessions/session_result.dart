@@ -1,4 +1,7 @@
 
+/// Classe représentant le résultat d'une session d'exercices.
+/// Ce résultat est modifié à chaque fois qu'un exercice est répondu.
+/// Il est modifé uniquement par la classe Session.
 class SessionResult {
   // Placeholder for SessionResult properties and methods
   // SessionResult is modified each time an Exercices is Answered. 
@@ -10,8 +13,8 @@ class SessionResult {
   int numberOfNewExercices;
   int numberOfRevisedExercices;
 
-  DateTime startedAt; //totalTimeSpend != startAt - endAt (if pause or quit session early) ???
-  DateTime endAt;
+  DateTime startedAt; //totalTimeSpent != startAt-endAt (if pause or quit session early) ???
+  DateTime? endAt;
 
 
 

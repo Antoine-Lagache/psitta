@@ -6,7 +6,7 @@ class SRSState {
   DateTime? nextReview;
   double easeFactor;
   Duration interval; // duration for review intervals
-  double kFactor;
+  double kFactor; //TODO: doit etre en 1/days ! Verrouiller ça et faire /!\
   double w; //correspond à la mémoire long terme
   double rbar; //moyenne pondéré des dernière victoire
 
@@ -56,6 +56,9 @@ class SRSState {
     );
   }
 
+
+// TODO: corrigé interval.InDays pour des durées < 1 jour 
+// et créer une fonction `double DurationToDays(Duration duration)`
   // -----------------------------
   // PURE preview helpers (no mutation)
   // -----------------------------

@@ -1,5 +1,3 @@
-[⬅️ Retour à la documentation Models](index.md) | [🧠 Détails SRS](srs.md)
-
 # 🧮 Mathématiques du modèle SRS
 
 Ce document décrit les formules et les variables utilisées par le moteur SRS de l’application.
@@ -102,7 +100,7 @@ $$
 \text{tol} = \min(\text{longPause},\; \text{minTolFactor}\cdot I)
 $$
 
-- Si $l \ge \text{longPause}$ alors réinitialisation :
+- Si $l \ge \text{longPause}$ et que la note $q < 2$ (review is failed) alors réinitialisation :
   $$
   \bar{R}\leftarrow 0,\quad w\leftarrow 0
   $$

@@ -2,12 +2,8 @@ import '../exercices/exercice.dart';
 import '../srs/srs_config.dart';
 import 'session_result.dart';
 import '../srs/grade.dart';
+import 'session_type.dart';
 
-/// Types de sessions possibles
-enum SessionType {
-  wordSession,
-  sentenceSession,
-}
 
 /// Classe représentant une session d'exercices avec SRS.
 /// Les méthodes sont implémentées par les classes concrètes (WordSession, SentenceSession, etc.)
@@ -60,9 +56,15 @@ class Session {
     return 0;
   }
 
+  /// met à jour l'ordre des exercices dans la session en fonction de leur état (Exercice.status et SRSState)
+  void updateExerciceOrder(){
+    // TODO
+  }
+
   /// passe à l'exercice suivant dans la session
   /// ne fait rien s'il n'y a pas d'exercice suivant
   void _nextExercice(){
+    updateExerciceOrder();
     // TODO
   }
 
@@ -78,7 +80,7 @@ class Session {
     // TODO
     _nextExercice();
     return null;
-  }
+  } 
 
   /// renvoie l'intervalle prévisionnel pour l'exercice courant et une note donnée
   /// renvoie null s'il n'y a pas d'exercice courant ou si la session n'a pas commencé
@@ -91,18 +93,17 @@ class Session {
   /// une session terminée ne peut plus recevoir de réponses et doit etre supprimée
   SessionResult? endSessionEarly(DateTime now){
     // TODO
-    // need to use this._intermediateResult to make sure that submit answer is not called after this.
+    // need to use this._intermediateResult.endAt to make sure that submit answer is not called after this.
     // cannot return null ??
     return null;
   }
 
   /// termine la session normalement et renvoie le résultat
-  /// renvoie null si la session n'est pas terminée
+  /// renvoie null ssi il reste des exercices à faire dans la session
   /// une session terminée ne peut plus recevoir de réponses et doit etre supprimée
   SessionResult? endSession(DateTime now){
     // TODO
-    // need to use this._intermediateResult to make sure that submit answer is not called after this.
-    // cannot return null ??
+    // need to use this._intermediateResult.endAt to make sure that submit answer is not called after this.
     return null;
   }
 }

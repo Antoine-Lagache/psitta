@@ -2,6 +2,8 @@ import 'exercice.dart';
 import '../prompt/exercice_prompt.dart';
 import '../content/word.dart';
 
+/// Classe représentant un exercice de mots.
+/// c'est l'exercice de base, equivalent d'un flashcard Anki.
 class WordExercice extends Exercice {
   final Word word;
 
@@ -10,10 +12,7 @@ class WordExercice extends Exercice {
 
   @override
   ExercicePrompt getPrompt() {
-    return ExercicePrompt(promptData: {
-      'word': word.text,
-      'definition': word.meaning
-    }, keyRecto: [], keyVerso: []);
+    return ExercicePrompt(promptData: {}, keyRecto: [], keyVerso: [],  keyMeta: []);
   }
 
 }

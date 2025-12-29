@@ -1,16 +1,70 @@
 
+/// Configuration parameters for the Spaced Repetition System (SRS).
 class SRSConfig {
-  final List<int> learningSteps; // en minutes
-  final List<int> relearningSteps; // en minutes
-  final int graduatingInterval; // en jours
-  final double easeFactor; // multiplicateur
-  final int lapsesInterval; // en minutes
+  final int? id;
+  final double rstar;
+  final double wMaxFactor;
+  final List<double> lambdas;
+  final int easyInterval; // days
+  final int firstIntervalFallback; // used for SM-2 first review
+  final double efMin;
+  final int iMax;
+  final double defaultEF;
+  final double defaultW;
+
+  final double mu;
+  final int longPause;
+  final double minTolFactor;
+
+  final List<Duration> learningSteps;
+  final double hardReviewFactor;
+  final double hardLearningFactor;
+  final double easyBonus;
+  final Duration dayBoundary; // 0..23, Anki-like day boundary
+
+  final int newCount;
+
+  static const List<double> _defaultLambdas = [0.60, 0.90, 0.80, 0.95, 0.85, 0.70];
 
   SRSConfig({
-    required this.learningSteps,
-    required this.relearningSteps,
-    required this.graduatingInterval,
-    required this.easeFactor,
-    required this.lapsesInterval,
-  });
+    this.id,
+    this.rstar = 0.9,
+    this.wMaxFactor = 0.95,
+    List<double>? lambdas,
+    this.easyInterval = 4,
+    this.firstIntervalFallback = 1,
+    this.efMin = 1.3,
+    this.iMax = 5 * 365,
+    this.defaultEF = 2.5,
+    this.defaultW = 0.0,
+    this.mu = 0.03,
+    this.longPause = 60,
+    this.minTolFactor = 0.2,
+    this.learningSteps = const [
+      Duration(minutes: 1),
+      Duration(minutes: 10),
+      Duration(days: 1),
+    ],
+    this.hardReviewFactor = 1.2,
+    this.hardLearningFactor = 0.7,
+    this.easyBonus = 1.3,
+    this.dayBoundary = Duration.zero,
+    this.newCount = 10,
+  }): 
+    lambdas = List.generate(
+      6,
+      (i) {
+        if (lambdas != null && i < lambdas.length) return lambdas[i].clamp(0.0, 1.0);
+        return _defaultLambdas[i];
+      },
+    ),
+    assert(rstar > 0 && rstar < 1),
+    assert(wMaxFactor > 0 && wMaxFactor < 1);
+
+  double get wMax => wMaxFactor * rstar;
+
+  double getLambda(int q) {
+    final int idx = q.clamp(0, lambdas.length - 1);
+    return lambdas[idx];
+  }
 }

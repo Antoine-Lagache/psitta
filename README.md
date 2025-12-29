@@ -13,6 +13,7 @@ Ce projet sert à la fois de terrain d’apprentissage pour **Dart/Flutter** et 
 - Implémenter un système de répétition espacée (Spaced Repetition System) inspiré d’Anki/SM-2.
 - Construire une architecture modulaire et extensible avec une base de données SQLite.
 - Appliquer les bonnes pratiques de conception logicielle (clean architecture, séparation des couches, code testable).
+- s'engager dans un projet en se concentrant sur la *rigeur* et la *qualité* du projet.
 
 ---
 
