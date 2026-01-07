@@ -20,7 +20,6 @@ class Session {
   /// modifié à chaque soumission de réponse
   /// renvoyé par endSession ou endSessionEarly
   SessionResult? _intermediateResult;
-  SessionResult? get intermediateResult => _intermediateResult;
 
   /// Liste des exercices dans la session
   /// triée dynamiquement selon l'état des exercices
@@ -39,6 +38,7 @@ class Session {
 
   /// Initialise la session en initialisant les exercices.
   /// modifie l'ordre des exercices en fonction de leur état, et fait quelques vérifications.
+  /// /// SessionType n'est utilisé que lors de l'initialisation et ne doit pas etre stocké
   void _initSession(SessionType sessionType){
     // TODO
   }
@@ -46,6 +46,7 @@ class Session {
   /// Démarre la session à la date et heure donnée.
   /// ne fait rien si la session a déjà commencé
   void beginSession(DateTime now){
+    assert(_startedAt == null);
     _startedAt ??= now;
     _nextExercice();
   }
@@ -56,7 +57,8 @@ class Session {
     return 0;
   }
 
-  /// met à jour l'ordre des exercices dans la session en fonction de leur état (Exercice.status et SRSState)
+  /// Réordonne la liste des exercices existants sans en ajouter ni en retirer.
+  /// Utilise l'état des exercices et leur SRSState pour déterminer la priorité.
   void updateExerciceOrder(){
     // TODO
   }
@@ -68,42 +70,49 @@ class Session {
     // TODO
   }
 
-  /// renvoie l'exercice courant, ou null s'il n'y en a pas
-  Exercice? getCurrentExercice(){
-    return _current;
+  SessionResult getSessionResult(){
+    assert(_intermediateResult != null);
+    return _intermediateResult!;
+  }
+
+  /// renvoie l'exercice courant, lève une exception s'il n'y en a pas
+  Exercice getCurrentExercice(){
+    assert(_current != null);
+    return _current!;
   }
 
   /// soumet la réponse pour l'exercice courant avec la note donnée, puis passe à l'exercice suivant
   /// renvoie l'exercice mis à jour après application de la SRS
-  /// renvoie null s'il n'y a pas d'exercice courant ou si la session n'a pas commencé
-  Exercice? submitAnswer(Grade grade, DateTime now){
+  ///  Lève une exception s'il n'y a pas d'exercice courant ou si la session n'a pas commencé
+  Exercice submitAnswer(Grade grade, DateTime now){
     // TODO
     _nextExercice();
-    return null;
+    throw UnimplementedError("TODO");
   } 
 
   /// renvoie l'intervalle prévisionnel pour l'exercice courant et une note donnée
-  /// renvoie null s'il n'y a pas d'exercice courant ou si la session n'a pas commencé
-  Duration? getPreviewInterval(Grade grade, DateTime now){
+  ///  Lève une exception s'il n'y a pas d'exercice courant ou si la session n'a pas commencé
+  Duration getPreviewInterval(Grade grade, DateTime now){
     // TODO
-    return null;
+    return Duration();
   }
 
   /// termine la session de manière anticipée et renvoie le résultat partiel
   /// une session terminée ne peut plus recevoir de réponses et doit etre supprimée
-  SessionResult? endSessionEarly(DateTime now){
+  /// Lève une exception en cas de problème (session non commencé ou déja terminé)
+  SessionResult endSessionEarly(DateTime now){
     // TODO
     // need to use this._intermediateResult.endAt to make sure that submit answer is not called after this.
-    // cannot return null ??
-    return null;
+    throw UnimplementedError("TODO");
   }
 
   /// termine la session normalement et renvoie le résultat
   /// renvoie null ssi il reste des exercices à faire dans la session
   /// une session terminée ne peut plus recevoir de réponses et doit etre supprimée
-  SessionResult? endSession(DateTime now){
+  /// Lève une exception en cas de problème (session non commencé ou déja terminé)
+  SessionResult endSession(DateTime now){
     // TODO
     // need to use this._intermediateResult.endAt to make sure that submit answer is not called after this.
-    return null;
+    throw UnimplementedError("TODO");
   }
 }

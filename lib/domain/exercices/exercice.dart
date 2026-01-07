@@ -13,6 +13,11 @@ abstract class Exercice {
 
   Exercice(this.status, this.srsState);
 
+  /// un simple getter
+  SRSState getSRSState(){
+    return srsState;
+  }
+
   /// renvoie le prompt de l'exercice (pour l'UI)
   ExercicePrompt getPrompt();
 

@@ -70,7 +70,7 @@ Utilise :
 ### WordSessionScreen
 
 * affiche une session d’exercices sur les mots
-* affiche les exercices un par un
+* affiche les exercices fournis par la session via des projections un par un
 * transmet les réponses utilisateur
 
 Utilise :

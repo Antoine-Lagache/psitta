@@ -13,6 +13,8 @@ Cette couche :
 
 Aucune logique métier ne doit se trouver ici.
 
+⚠️ La Persistence ne fait qu’enregistrer les états calculés par le Domain.
+
 ---
 
 ## Diagramme
@@ -24,9 +26,8 @@ classDiagram
 namespace Persistence {
   class WordRepository
   class SentenceRepository
-  class SentenceGroupRepository
+  class ExerciceRepository
   class ChapterRepository
-  class NoteRepository
   class SrsRepository
   class SettingsRepository
 }
@@ -35,9 +36,8 @@ class SQLiteDatabase
 
 WordRepository --> SQLiteDatabase
 SentenceRepository --> SQLiteDatabase
-SentenceGroupRepository --> SQLiteDatabase
+ExerciceRepository --> SQLiteDatabase
 ChapterRepository --> SQLiteDatabase
-NoteRepository --> SQLiteDatabase
 SrsRepository --> SQLiteDatabase
 SettingsRepository --> SQLiteDatabase
 ```
@@ -72,30 +72,26 @@ Chaque repository :
 * charge les phrases par groupe ou par chapitre
 * utilisée principalement pour la génération d’exercices
 
-#### `SentenceGroupRepository`
+#### `ExerciceRepository`
 
-* charge les groupes grammaticaux
-* charge les groupes dus via le SRS
+* création d'exercice en utilisant `WordRepository`, `SentenceRepository` et `SrsRepository`
+* Les exercices ne sont pas persisté, mais créer sur la demande de la couche applicative grace aux autres repository qui sont eux, persisté.
 
 #### `ChapterRepository`
 
 * charge la structure pédagogique
-* ordre des chapitres, métadonnées
-
-#### `NoteRepository`
-
-* accès au contenu brut
-* abstraction des sources de données
+* ordre et contenu des chapitres, métadonnées
 
 #### `SrsRepository`
 
-* gère **SRSState** et **SRSConfig**
-* calcule et persiste :
+* gère **SRSState**, **SRSConfig** et **SentenceState**
+* persiste :
 
+  * les états de progression calculés par le Domain
   * prochaine date de révision
   * niveau / intervalle
 
-👉 Pour le MVP, `SRSState` et `SRSConfig` sont volontairement regroupés ici.
+👉 Pour le MVP, `SRSState` et `SRSConfig` et `SentenceState` sont volontairement regroupés ici (pourra etre séparé plus tard)
 
 #### `SettingsRepository`
 

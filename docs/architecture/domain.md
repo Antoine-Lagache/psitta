@@ -2,129 +2,114 @@
 
 ## Objectif
 
-Décrire les entités métier fondamentales de l’application, leurs relations, ainsi que la structure du système de répétition espacée (SRS).
-Ce diagramme définit **le contenu appris** et **la progression**, indépendamment de toute logique d’interface, de session ou de persistance.
+Décrire le **modèle métier central** et le **déroulement général** du moteur d’apprentissage.
+
+Ce document fixe :
+
+* le vocabulaire du projet,
+* les responsabilités majeures (`Session`, `Exercice`, contenu, progression),
+* la frontière d’affichage via `ExercicePrompt`.
+
+Les détails d’implémentation sont dans :
+
+* `sessions.md` (cycle de vie et orchestration),
+* `exercises.md` (runtime d’un exercice et statuts),
+* `srs.md` (progression SRS + progression “exposition” via `SentenceState`).
 
 ---
 
-## Diagramme
+## Diagramme du Domain (vue utile, pas exhaustive)
 
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
-    %% Chapters
-    Chapter "1" o-- "0..*" Word
-    Chapter "1" o-- "0..*" Sentence
-    Chapter "1" o-- "0..*" SentenceGroup
 
-    %% Notes
-    Note "1" <-- "1" Word
-    Note "1" <-- "1" Sentence
+namespace Content {
+  class Word
+  class Sentence
+}
 
-    %% Vocabulary
-    Word "1" --> "1" SRSState
+namespace Runtime {
+  class Session
+  class Exercice
+  class WordExercice
+  class SentenceExercice
+  class ExerciceStatus
+}
 
-    %% Sentences & grammar
-    SentenceGroup "1" *-- "1..*" Sentence
-    SentenceGroup "1" --> "1" SRSState
-    Sentence "1..*" --> "1..*" Word
+namespace Progression {
+  class SRSConfig
+  class SRSState
+  class SentenceState
+}
 
-    %% SRS configuration
-    SRSConfig "1" --> "0..*" SRSState
+namespace Boundary {
+  class ExercicePrompt
+}
+
+%% Inheritance
+Exercice <|-- WordExercice
+Exercice <|-- SentenceExercice
+
+%% Session
+Session "1" --> "0..*" Exercice : orchestrates
+Session "1" --> "1" SRSConfig : config
+
+%% Exercice core
+Exercice "1" --> "1" SRSState : srsState
+Exercice "1" --> "1" ExerciceStatus : status
+
+%% Targets (content)
+WordExercice "1" --> "1" Word : target
+SentenceExercice "1" --> "1..*" Sentence : sentences
+
+%% Sentence-specific progression
+SentenceExercice "1" --> "1..*" SentenceState : updates
+
+%% Boundary projection (created on demand)
+Exercice ..> ExercicePrompt : getPrompt()
 ```
 
 ---
 
-## Lecture du diagramme
+## Lecture rapide du modèle
 
-### Chapter
+### 1) Content
 
-Un **Chapter** représente une étape de progression pédagogique.
+* `Word` et `Sentence` sont des **données statiques/immuables** (issues de la DB).
+* Elles ne portent pas l’état de progression, mais uniquement le contenu (mots, phrases).
+### 2) Progression
 
-* Il regroupe :
+* `SRSState` est **attaché à `Exercice`** (pas à `Word` ni à `SentenceExercice`). Il gère la logique de progression inter-session.
+* `SentenceState` est **distinct du SRS** et existe **pour chaque `Sentence`** dans un `SentenceExercice`.
+* `SRSConfig` est fourni à la `Session` et sert aux mises à jour/preview via les exercices.
+### 3) Runtime
 
-  * des `Word`
-  * des `Sentence`
-  * des `SentenceGroup`
-* Il permet de contrôler le **déblocage du contenu**, indépendamment des règles grammaticales.
+* `Exercice` est un objet **runtime stateful** : `status`, `srsState`, logique intra-session.
+* `WordExercice` et `SentenceExercice` spécialisent uniquement la cible et certaines règles (grades autorisés, mise à jour `SentenceState`, etc.).
+* `Session` est un **orchestrateur** : elle enchaîne des exercices et porte le `SRSConfig`.
 
-Les Chapters peuvent être persistés ou reconstruits dynamiquement à partir des références.
+> Note : `SessionType` (cf [session.md](session.md)) est un détail d’initialisation (validation/cohérence) et n’est pas un état persistant de `Session`.
 
+### 4) Boundary (`ExercicePrompt`)
 
-### Note
-
-Une **Note** est une source de contenu brut (multi-langue, dictionnaire, import).
-
-* Chaque `Word` référence **exactement une** `Note`
-* Chaque `Sentence` référence **exactement une** `Note`
-* La `Note` ne contient aucune logique SRS
-
-
-### Word
-
-Un **Word** représente une unité lexicale apprise.
-
-* Il appartient à un `Chapter`
-* Il référence une `Note`
-* Il possède **exactement un** `SRSState`
-
-
-### Sentence
-
-Une **Sentence** est un exemple concret de phrase.
-
-* Elle appartient à :
-
-  * un `SentenceGroup` (règle grammaticale)
-  * un `Chapter` (progression pédagogique)
-* Elle référence une `Note`
-* Elle utilise un ou plusieurs `Word`
-
-Les phrases **ne sont pas évaluées individuellement** par le SRS.
-
-
-### SentenceGroup
-
-Un **SentenceGroup** représente une **connaissance grammaticale** (pattern).
-
-* Il peut être utilisé dans plusieurs Chapters
-* Il regroupe plusieurs `Sentence`
-* Il possède **exactement un** `SRSState`
-
-Le SRS est attaché au groupe, pas aux phrases.
-
-
-### SRSState
-
-Un **SRSState** représente l’état de maîtrise d’une connaissance.
-
-* Il est associé à :
-
-  * un `Word`
-  * ou un `SentenceGroup`
-* Il contient les informations nécessaires pour planifier la prochaine révision
-
-
-### SRSConfig
-
-Un **SRSConfig** définit les paramètres globaux du SRS.
-
-* Il est partagé par plusieurs `SRSState`
-* Il ne dépend d’aucune entité de contenu
+* `ExercicePrompt` est une **projection immuable** construite **à la demande** via `Exercice.getPrompt()`.
+* Il n’est pas persisté.
+* Il ne contient **aucune logique de présentation** (pas de widget, pas de layout).
 
 ---
 
-## Règles métier importantes
+## Ce que le Domain ignore volontairement
 
-* Le SRS s’applique uniquement aux **connaissances** (`Word`, `SentenceGroup`)
-* Les `Sentence` sont des exemples, jamais des éléments évalués
-* Le déblocage pédagogique est géré par `Chapter`, pas par le SRS
-* Le contenu brut (`Note`) est séparé de la logique d’apprentissage
+* UI Flutter (widgets, navigation, layout)
+* Persistence (SQL, schéma, mapping)
+* Paramètres applicatifs “UX” (ex : préférences d’affichage)
+* Organisation du contenu en “chapitres” (c’est une structure d’accès/filtrage côté Application/Stats, pas un besoin du moteur runtime)
 
 ---
 
-## Notes d’architecture
+## Répartition des détails (pour éviter un Domain.md trop gros)
 
-* Le Domain est écrit en Dart et fait partie du projet Flutter, mais reste **indépendant de la couche UI Flutter**.
-* Ce diagramme ne décrit ni les exercices, ni les sessions, ni la persistance.
-* Il constitue la **référence métier** pour tous les autres diagrammes.
+* Détails de `Session` (début/fin, current, ordering, contraintes d’appel) → `sessions.md`
+* Détails de `Exercice` (statuts, règles de transitions, allowed grades) → `exercises.md`
+* Détails progression (`SRSState`, `SentenceState`, `Grade`, preview/apply) → `srs.md`

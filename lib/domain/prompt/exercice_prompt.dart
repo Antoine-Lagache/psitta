@@ -1,4 +1,5 @@
 
+/// Objet Boundary
 /// Classe représentant le prompt d'un exercice.
 /// Contient les données à afficher et les clés pour chaque coté de l'exercice.
 /// c'est une projection des données de l'exercice pour l'UI.

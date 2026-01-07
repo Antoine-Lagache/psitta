@@ -19,10 +19,11 @@ flowchart TD
 
     %% Domain (with internal structure)
     subgraph DOM["Domain"]
-        DOM_CONTENT["<u>Content</u><br/>Chapter · Note · Word · Sentence · SentenceGroup"]
-        DOM_EX["<u>Exercises</u><br/>Exercice · TemplateType"]
-        DOM_SESS["<u>Sessions</u><br/>WordSession · SentenceSession"]
-        DOM_SRS["<u>SRS</u><br/>SRSState · SRSConfig"]
+        DOM_SESS["<u>Sessions</u><br/>Session / SessionResult / SessionType"]
+        DOM_EXO["<u>Exercices</u><br/> Exercice (abstract) / WordExercice / SentenceExercice / ExerciceStatus"]
+        DOM_CONTENT["<u>Content</u><br/> Word / Sentence"]
+        DOM_SRS["<u>SRS</u><br/> SRSState / SRSConfig / SentenceState / Grade"]
+        DOM_PROMPT["ExercicePrompt"]
     end
 
     %% Persistence
@@ -39,6 +40,7 @@ flowchart TD
     UI --> APP
     APP --> DOM
     APP --> PERS
+
 ```
 
 ---
@@ -67,13 +69,16 @@ Le **Domain** regroupe toute la logique métier de l’application.
 Il est volontairement représenté comme un **bloc unique**, mais structuré en sous-composants conceptuels :
 
 * **Content**
-  Représente le contenu pédagogique (mots, phrases, chapitres, notes).
+  Représente le contenu pédagogique (mots, phrases).
 
-* **Exercises**
-  Représente les exercices concrets présentés à l’utilisateur ainsi que les TemplateType qui décrive l'affichage de chaque type d'exercice.
-
+* **Exercices**
+  Représente les exercices concrets présentés à l’utilisateur.
+  Les exercices sont des objets runtime stateful, créés avant la session et détruits à sa fin.
+  
+  l'UI ne connait les exercices qu'au travers de `ExercicePrompt` qui est une projection d'un `Exercice`
 * **Sessions**
   Gère l’organisation des exercices en sessions d’apprentissage.
+  Les sessions ne font qu'orchestrer les exercices.
 
 * **SRS**
   Implémente la logique de répétition espacée et l’état de progression.
@@ -113,3 +118,8 @@ Il est transversal et ne fait pas partie de la hiérarchie de dépendances princ
 * Le Domain est présenté comme un bloc unique au niveau global ; sa structure interne est détaillée dans les diagrammes suivants.
 * L’Application joue un rôle d’orchestrateur entre l’UI, le Domain et la Persistence.
 * Les fonctions utilitaires sont volontairement exclues des dépendances explicites pour préserver la lisibilité du diagramme.
+  
+### Notes sur la notion de chapitre
+
+* Les Mots et phrases sont organisés par chapitre. Cette notion de chapitre n'existe que dans le `StatsScreen` et le `HomeScreen`.
+* Les chapitres structurent le contenu pour l’utilisateur, mais n’interviennent pas dans la logique d’apprentissage et sont donc ignorés par les sessions et le domain.
