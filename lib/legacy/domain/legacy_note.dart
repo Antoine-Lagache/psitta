@@ -1,5 +1,5 @@
-import '../persistence/database_service.dart';
-import '../utils/convert_utils.dart';
+import '../../persistence/database_service.dart';
+import '../../utils/convert_utils.dart';
 
 class Note {
   int? id;

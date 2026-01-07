@@ -31,8 +31,9 @@ L’application suit une architecture modulaire, organisée autour de 4 blocs pr
 
 - **Domain**  
   Logique métier pure :
-  - contenu pédagogique (`Word`, `Sentence`, `SentenceGroup`, `Chapter`, `Note`)
-  - sessions d’apprentissage
+  - contenu pédagogique (`Word` et `Sentence`)
+  - sessions d’apprentissage (`Session`)
+  - Objet runtime Exercice (`abstract Exercice`, `WordExercice` et `SentenceExercice`)
   - système de répétition espacée (SRS)
 
 - **Persistence**  
@@ -48,7 +49,7 @@ L’application suit une architecture modulaire, organisée autour de 4 blocs pr
 
 
 * Architecture MVP définie et documentée
-* Modèle SRS conçu (cf [`docs/maths_srs.md`](docs/maths_srs.md))
+* Modèle SRS conçu (cf [`docs/maths_srs.md`](docs/maths_srs.md) et [`docs/hypotheses_et_info_srs.md`](docs/hypotheses_et_info_srs.md))
 * Séparation claire UI / Application / Domain / Persistence
 * 🚧 Implémentation en cours
 

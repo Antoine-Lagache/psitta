@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../domain/sessions/legacy_session.dart';
-import '../../domain/exercices/legacy_exercice.dart';
-import '../../domain/srs/legacy_srs.dart';
+import '../../legacy/domain/legacy_session.dart';
+import '../../legacy/domain/legacy_exercice.dart';
+import '../../legacy/domain/legacy_srs.dart';
 import '../../persistence/database_service.dart';
 import 'utils.dart';
 

@@ -39,7 +39,7 @@ namespace Runtime {
   class Exercice
   class Grade
   class WordExercice
-class SentenceExercice
+  class SentenceExercice
 }
 
 namespace Progression {

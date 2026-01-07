@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
-import '../domain/legacy_note.dart';
-import '../domain/exercices/legacy_exercice.dart';
-import '../domain/srs/legacy_srs.dart';
+import '../legacy/domain/legacy_note.dart';
+import '../legacy/domain/legacy_exercice.dart';
+import '../legacy/domain/legacy_srs.dart';
 import '../utils/convert_utils.dart';
 
 class DatabaseService {

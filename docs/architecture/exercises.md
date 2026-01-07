@@ -145,7 +145,7 @@ L'utilisation d'un groupe de phrases permet de :
 ## Projection d’un Exercice
 
 Un exercice peut produire une **projection immuable de son état**
-via `Exercice.getPrompt()`.
+via `Exercise.getPrompt()`.
 
 Cette projection (`ExercicePrompt`) :
 

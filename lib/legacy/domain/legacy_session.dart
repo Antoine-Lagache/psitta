@@ -1,5 +1,5 @@
-import '../exercices/legacy_exercice.dart';
-import '../srs/legacy_srs.dart';
+import 'legacy_exercice.dart';
+import 'legacy_srs.dart';
 
 class Session {
   final List<Exercice> toDo; // liste simple, pas de timer
