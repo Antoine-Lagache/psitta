@@ -9,6 +9,7 @@ Thumbs.db
 
 # Flutter / Dart
 .dart_tool/
+.metadata
 .packages
 .flutter-plugins
 .flutter-plugins-dependencies
