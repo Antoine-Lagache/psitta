@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
-import '../legacy/domain/legacy_note.dart';
-import '../legacy/domain/legacy_exercice.dart';
-import '../legacy/domain/legacy_srs.dart';
+import '../archive/domain/legacy_note.dart';
+import '../archive/domain/legacy_exercice.dart';
+import '../archive/domain/legacy_srs.dart';
 import '../utils/convert_utils.dart';
 
 class DatabaseService {
@@ -22,7 +22,7 @@ class DatabaseService {
       path,
       version: 2,
       onCreate: (Database db, int version) async {
-        await initDB(db, version);  // appelle la fonction de création des tables
+        await initDB(db, version); // appelle la fonction de création des tables
       },
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -130,7 +130,6 @@ class DatabaseService {
     ''');
   }
 
-
   // ---------- NOTES ----------
 
   // INSERT
@@ -142,16 +141,12 @@ class DatabaseService {
   // GET by ID
   Future<Note?> getNoteById(int id) async {
     final db = await database;
-    final result = await db.query(
-      'notes',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final result = await db.query('notes', where: 'id = ?', whereArgs: [id]);
     if (result.isNotEmpty) {
       return Note.fromMap(result.first);
     }
     return null;
-}
+  }
 
   // GET all
   Future<List<Note>> getAllNotes() async {
@@ -163,24 +158,14 @@ class DatabaseService {
   // UPDATE
   Future<int> updateNote(Note note) async {
     final db = await database;
-    return await db.update(
-      'notes',
-      note.toMap(),
-      where: 'id = ?',
-      whereArgs: [note.id],
-    );
+    return await db.update('notes', note.toMap(), where: 'id = ?', whereArgs: [note.id]);
   }
 
   // DELETE
   Future<int> deleteNote(int id) async {
     final db = await database;
-    return await db.delete(
-      'notes',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('notes', where: 'id = ?', whereArgs: [id]);
   }
-
 
   // ---------- CARD_TEMPLATES ----------
 
@@ -193,11 +178,7 @@ class DatabaseService {
   // GET by ID
   Future<CardTemplate?> getCardTemplateById(int id) async {
     final db = await database;
-    final result = await db.query(
-      'card_templates',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final result = await db.query('card_templates', where: 'id = ?', whereArgs: [id]);
     if (result.isNotEmpty) {
       return CardTemplate.fromMap(result.first);
     }
@@ -225,13 +206,8 @@ class DatabaseService {
   // DELETE
   Future<int> deleteCardTemplate(int id) async {
     final db = await database;
-    return await db.delete(
-      'card_templates',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('card_templates', where: 'id = ?', whereArgs: [id]);
   }
-
 
   // ---------- CARDS ----------
 
@@ -245,7 +221,8 @@ class DatabaseService {
   Future<Card?> getCardById(int id) async {
     final db = await database;
 
-    final result = await db.rawQuery('''
+    final result = await db.rawQuery(
+      '''
       SELECT 
         c.id AS card_id,
         c.note_id,
@@ -263,7 +240,9 @@ class DatabaseService {
       JOIN notes n ON c.note_id = n.id
       JOIN card_templates t ON c.template_id = t.id
       WHERE c.id = ?
-    ''', [id]);
+    ''',
+      [id],
+    );
 
     if (result.isEmpty) return null;
     final row = result.first;
@@ -282,11 +261,7 @@ class DatabaseService {
     });
 
     return Card.fromMap(
-      {
-        'id': row['card_id'],
-        'note_id': row['note_id'],
-        'template_id': row['template_id'],
-      },
+      {'id': row['card_id'], 'note_id': row['note_id'], 'template_id': row['template_id']},
       note,
       template,
     );
@@ -296,7 +271,8 @@ class DatabaseService {
   Future<List<Card>> getCardsByNoteId(int noteId) async {
     final db = await database;
 
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT
         c.id AS card_id,
         c.note_id AS note_id,
@@ -314,7 +290,9 @@ class DatabaseService {
       JOIN notes n ON c.note_id = n.id
       JOIN card_templates t ON c.template_id = t.id
       WHERE c.note_id = ?
-    ''', [noteId]);
+    ''',
+      [noteId],
+    );
 
     if (rows.isEmpty) return [];
 
@@ -344,24 +322,14 @@ class DatabaseService {
   // UPDATE
   Future<int> updateCard(Card card) async {
     final db = await database;
-    return await db.update(
-      'cards',
-      card.toMap(),
-      where: 'id = ?',
-      whereArgs: [card.id],
-    );
+    return await db.update('cards', card.toMap(), where: 'id = ?', whereArgs: [card.id]);
   }
 
   // DELETE
   Future<int> deleteCard(int id) async {
     final db = await database;
-    return await db.delete(
-      'cards',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('cards', where: 'id = ?', whereArgs: [id]);
   }
-
 
   // ---------- WORD_EXERCICES ----------
 
@@ -377,12 +345,9 @@ class DatabaseService {
       });
 
       // 2) insert dans word_exercices avec le même id
-      await txn.insert('word_exercices', {
-        'id': exerciceId,
-        'card_id': exo.card.id,
-      });
+      await txn.insert('word_exercices', {'id': exerciceId, 'card_id': exo.card.id});
 
-      // 3) insert SRSState lié (exercice_id = exerciceId)
+      // 3) insert LegacySRSState lié (exercice_id = exerciceId)
       await txn.insert('srs_states', {
         'exercice_id': exerciceId,
         'next_review': toIsoUtc(exo.srsData.nextReview),
@@ -399,12 +364,13 @@ class DatabaseService {
       return exerciceId;
     });
   }
-  
+
   // Optimized: GET by ID
   Future<WordExercice?> getWordExerciceById(int id) async {
     final db = await database;
 
-    final result = await db.rawQuery('''
+    final result = await db.rawQuery(
+      '''
       SELECT 
         e.id AS exercice_id,
         e.type,
@@ -441,7 +407,9 @@ class DatabaseService {
       JOIN card_templates t ON c.template_id = t.id
       JOIN srs_states s ON e.id = s.exercice_id
       WHERE e.id = ?
-    ''', [id]);
+    ''',
+      [id],
+    );
 
     if (result.isEmpty) return null;
     final row = result.first;
@@ -459,13 +427,13 @@ class DatabaseService {
       'verso_html': row['verso_html'],
     });
 
-    final card = Card.fromMap({
-      'id': row['card_id'],
-      'note_id': row['note_id'],
-      'template_id': row['template_id'],
-    }, note, template);
+    final card = Card.fromMap(
+      {'id': row['card_id'], 'note_id': row['note_id'], 'template_id': row['template_id']},
+      note,
+      template,
+    );
 
-    final srs = SRSState.fromMap({
+    final srs = LegacySRSState.fromMap({
       'next_review': row['next_review'],
       'ease_factor': row['ease_factor'],
       'interval': row['interval'],
@@ -477,11 +445,11 @@ class DatabaseService {
       'history': row['history'],
     });
 
-    return WordExercice.fromMap({
-      'id': row['exercice_id'],
-      'type': row['type'],
-      'available_at': row['available_at'],
-    }, card, srs);
+    return WordExercice.fromMap(
+      {'id': row['exercice_id'], 'type': row['type'], 'available_at': row['available_at']},
+      card,
+      srs,
+    );
   }
 
   // Optimized: getAllWordExercices (single JOIN, uses fromMap)
@@ -559,7 +527,7 @@ class DatabaseService {
         'learning_step_index': row['learning_step_index'],
         'history': row['history'],
       };
-      final srs = SRSState.fromMap(srsMap);
+      final srs = LegacySRSState.fromMap(srsMap);
 
       final exoMap = {
         'id': row['exo_id'],
@@ -578,7 +546,8 @@ class DatabaseService {
     final db = await database;
     final iso = toIsoUtc(DateTime.now().toUtc());
 
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT
         e.id    AS exo_id,
         e.type  AS exo_type,
@@ -616,7 +585,9 @@ class DatabaseService {
       JOIN srs_states s ON s.exercice_id = e.id
       WHERE e.type = 'word'
         AND (e.available_at <= ? OR s.next_review <= ?)
-    ''', [iso, iso]);
+    ''',
+      [iso, iso],
+    );
 
     final List<WordExercice> out = [];
     for (final row in rows) {
@@ -635,7 +606,7 @@ class DatabaseService {
 
       final card = Card.fromMap({'id': row['card_id_real']}, note, template);
 
-      final srs = SRSState.fromMap({
+      final srs = LegacySRSState.fromMap({
         'next_review': row['next_review'],
         'ease_factor': row['ease_factor'],
         'interval': row['interval'],
@@ -647,11 +618,13 @@ class DatabaseService {
         'history': row['history'],
       });
 
-      out.add(WordExercice.fromMap({
-        'id': row['exo_id'],
-        'available_at': row['exo_available_at'],
-        'type': row['exo_type'],
-      }, card, srs));
+      out.add(
+        WordExercice.fromMap(
+          {'id': row['exo_id'], 'available_at': row['exo_available_at'], 'type': row['exo_type']},
+          card,
+          srs,
+        ),
+      );
     }
 
     return out;
@@ -719,7 +692,7 @@ class DatabaseService {
 
       final card = Card.fromMap({'id': row['card_id_real']}, note, template);
 
-      final srs = SRSState.fromMap({
+      final srs = LegacySRSState.fromMap({
         'next_review': row['next_review'],
         'ease_factor': row['ease_factor'],
         'interval': row['interval'],
@@ -731,11 +704,13 @@ class DatabaseService {
         'history': row['history'],
       });
 
-      out.add(WordExercice.fromMap({
-        'id': row['exo_id'],
-        'available_at': row['exo_available_at'],
-        'type': row['exo_type'],
-      }, card, srs));
+      out.add(
+        WordExercice.fromMap(
+          {'id': row['exo_id'], 'available_at': row['exo_available_at'], 'type': row['exo_type']},
+          card,
+          srs,
+        ),
+      );
     }
 
     return out;
@@ -744,14 +719,11 @@ class DatabaseService {
   // UPDATE
   Future<int> updateWordExercice(WordExercice exo) async {
     final db = await database;
-    await updateSrsState(exo.srsData, exo.id!);
-    
+    await updateLegacySRSState(exo.srsData, exo.id!);
+
     return await db.update(
       'exercices',
-      {
-        'available_at': toIsoUtc(exo.availableAt),
-        'type': exerciceTypeToText(exo.type),
-      },
+      {'available_at': toIsoUtc(exo.availableAt), 'type': exerciceTypeToText(exo.type)},
       where: 'id = ?',
       whereArgs: [exo.id],
     );
@@ -761,18 +733,13 @@ class DatabaseService {
   Future<int> deleteWordExercice(int id) async {
     final db = await database;
     // Suppression en cascade via clé étrangère
-    return await db.delete(
-      'exercices',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('exercices', where: 'id = ?', whereArgs: [id]);
   }
-
 
   // ---------- SRS_STATES ----------
 
   // INSERT
-  Future<void> insertSrsState(SRSState s, int exerciceId) async {
+  Future<void> insertLegacySRSState(LegacySRSState s, int exerciceId) async {
     final db = await database;
     await db.insert(
       'srs_states',
@@ -780,21 +747,17 @@ class DatabaseService {
       conflictAlgorithm: ConflictAlgorithm.replace, // en cas de doublon
     );
   }
-  
+
   // GET by ID
-  Future<SRSState?> getSrsStateByExerciceId(int exerciceId) async {
+  Future<LegacySRSState?> getLegacySRSStateByExerciceId(int exerciceId) async {
     final db = await database;
-    final result = await db.query(
-      'srs_states',
-      where: 'exercice_id = ?',
-      whereArgs: [exerciceId],
-    );
+    final result = await db.query('srs_states', where: 'exercice_id = ?', whereArgs: [exerciceId]);
     if (result.isEmpty) return null;
-    return SRSState.fromMap(result.first);
+    return LegacySRSState.fromMap(result.first);
   }
 
   // UPDATE
-  Future<int> updateSrsState(SRSState s, int exerciceId) async {
+  Future<int> updateLegacySRSState(LegacySRSState s, int exerciceId) async {
     final db = await database;
     return await db.update(
       'srs_states',
@@ -803,17 +766,12 @@ class DatabaseService {
       whereArgs: [exerciceId],
     );
   }
-  
-  // DELETE
-  Future<int> deleteSrsState(int exerciceId) async {
-    final db = await database;
-    return await db.delete(
-      'srs_states',
-      where: 'exercice_id = ?',
-      whereArgs: [exerciceId],
-    );
-  }
 
+  // DELETE
+  Future<int> deleteLegacySRSState(int exerciceId) async {
+    final db = await database;
+    return await db.delete('srs_states', where: 'exercice_id = ?', whereArgs: [exerciceId]);
+  }
 
   // ---------- SRS_CONFIGS ----------
 
@@ -830,11 +788,7 @@ class DatabaseService {
   // GET by ID
   Future<SRSConfig?> getSrsConfigById(int id) async {
     final db = await database;
-    final result = await db.query(
-      'srs_configs',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final result = await db.query('srs_configs', where: 'id = ?', whereArgs: [id]);
     if (result.isEmpty) return null;
     return SRSConfig.fromMap(result.first);
   }
@@ -849,24 +803,14 @@ class DatabaseService {
   // UPDATE
   Future<int> updateSrsConfig(SRSConfig config) async {
     final db = await database;
-    return await db.update(
-      'srs_configs',
-      config.toMap(),
-      where: 'id = ?',
-      whereArgs: [config.id],
-    );
+    return await db.update('srs_configs', config.toMap(), where: 'id = ?', whereArgs: [config.id]);
   }
 
   // DELETE
   Future<int> deleteSrsConfig(int id) async {
     final db = await database;
-    return await db.delete(
-      'srs_configs',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('srs_configs', where: 'id = ?', whereArgs: [id]);
   }
-
 
   // ---------- CLOSE ----------
   Future close() async {

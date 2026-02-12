@@ -24,7 +24,7 @@ ExerciceType exerciceTypeFromText(String? text) {
 abstract class Exercice {
   int? id;
   final ExerciceType type;
-  final SRSState srsData;
+  final LegacySRSState srsData;
   DateTime? availableAt;
 
   Exercice({
@@ -71,7 +71,7 @@ class WordExercice extends Exercice {
     };
   }
 
-  factory WordExercice.fromMap(Map<String, dynamic> map, Card card, SRSState srsData) {
+  factory WordExercice.fromMap(Map<String, dynamic> map, Card card, LegacySRSState srsData) {
     return WordExercice(
       id: safeToInt(map['id']),
       card: card,

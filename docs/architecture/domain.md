@@ -7,8 +7,8 @@ Décrire le **modèle métier central** et le **déroulement général** du mote
 Ce document fixe :
 
 * le vocabulaire du projet,
-* les responsabilités majeures (`Session`, `Exercice`, contenu, progression),
-* la frontière d’affichage via `ExercicePrompt`.
+* les responsabilités majeures (`Session`, `Exercise`, contenu, progression),
+* la frontière d’affichage via `ExercisePrompt`.
 
 Les détails d’implémentation sont dans :
 
@@ -31,10 +31,10 @@ namespace Content {
 
 namespace Runtime {
   class Session
-  class Exercice
-  class WordExercice
-  class SentenceExercice
-  class ExerciceStatus
+  class Exercise
+  class WordExercise
+  class SentenceExercise
+  class ExerciseStatus
 }
 
 namespace Progression {
@@ -44,30 +44,44 @@ namespace Progression {
 }
 
 namespace Boundary {
-  class ExercicePrompt
+  class ExercisePrompt
 }
 
+namespace Answer {
+  class ExerciseAnswer
+  class RealExerciseAnswer
+  class PreviewExerciseAnswer
+}
+
+
 %% Inheritance
-Exercice <|-- WordExercice
-Exercice <|-- SentenceExercice
+Exercise <|-- WordExercise
+Exercise <|-- SentenceExercise
 
 %% Session
-Session "1" --> "0..*" Exercice : orchestrates
+Session "1" --> "0..*" Exercise : orchestrates
 Session "1" --> "1" SRSConfig : config
 
-%% Exercice core
-Exercice "1" --> "1" SRSState : srsState
-Exercice "1" --> "1" ExerciceStatus : status
+%% Exercise core
+Exercise "1" --> "1" SRSState : srsState
+Exercise "1" --> "1" ExerciseStatus : status
 
 %% Targets (content)
-WordExercice "1" --> "1" Word : target
-SentenceExercice "1" --> "1..*" Sentence : sentences
+WordExercise "1" --> "1" Word : target
+SentenceExercise "1" --> "1..*" Sentence : sentences
 
 %% Sentence-specific progression
-SentenceExercice "1" --> "1..*" SentenceState : updates
+SentenceExercise "1" --> "1..*" SentenceState : updates
 
 %% Boundary projection (created on demand)
-Exercice ..> ExercicePrompt : getPrompt()
+Exercise ..> ExercisePrompt : getPrompt()
+
+%% Answer hierarchy
+ExerciseAnswer <|-- RealExerciseAnswer
+ExerciseAnswer <|-- PreviewExerciseAnswer
+
+%% Answer consumption
+SRSState ..> ExerciseAnswer : apply / preview
 ```
 
 ---
@@ -80,20 +94,28 @@ Exercice ..> ExercicePrompt : getPrompt()
 * Elles ne portent pas l’état de progression, mais uniquement le contenu (mots, phrases).
 ### 2) Progression
 
-* `SRSState` est **attaché à `Exercice`** (pas à `Word` ni à `SentenceExercice`). Il gère la logique de progression inter-session.
-* `SentenceState` est **distinct du SRS** et existe **pour chaque `Sentence`** dans un `SentenceExercice`.
+* `SRSState` est **attaché à `Exercise`** (pas à `Word` ni à `SentenceExercise`). Il gère la logique de progression inter-session.
+* `SentenceState` est **distinct du SRS** et existe **pour chaque `Sentence`** dans un `SentenceExercise`.
 * `SRSConfig` est fourni à la `Session` et sert aux mises à jour/preview via les exercices.
-### 3) Runtime
+### 3) ExerciseAnswer (réponses utilisateur)
 
-* `Exercice` est un objet **runtime stateful** : `status`, `srsState`, logique intra-session.
-* `WordExercice` et `SentenceExercice` spécialisent uniquement la cible et certaines règles (grades autorisés, mise à jour `SentenceState`, etc.).
+Le Domain modélise explicitement les réponses utilisateur via `ExerciseAnswer`, un type scellé qui distingue :
+* les réponses réelles (`RealExerciseAnswer`), issues d’une interaction utilisateur effective et appliquées au moteur SRS,
+* les réponses hypothétiques (`PreviewExerciseAnswer`), utilisées pour simuler un prochain interval sans effet de bord.
+
+`ExerciseAnswer` est consommé par `Session`, `Exercise` et `SRSState` lors d’une interaction, mais n’est pas un état persistant du Domain.
+
+### 4) Runtime
+
+* `Exercise` est un objet **runtime stateful** : `status`, `srsState`, logique intra-session.
+* `WordExercise` et `SentenceExercise` spécialisent uniquement la cible et certaines règles (grades autorisés, mise à jour `SentenceState`, etc.).
 * `Session` est un **orchestrateur** : elle enchaîne des exercices et porte le `SRSConfig`.
 
 > Note : `SessionType` (cf [session.md](session.md)) est un détail d’initialisation (validation/cohérence) et n’est pas un état persistant de `Session`.
 
-### 4) Boundary (`ExercicePrompt`)
+### 5) Boundary (`ExercisePrompt`)
 
-* `ExercicePrompt` est une **projection immuable** construite **à la demande** via `Exercice.getPrompt()`.
+* `ExercisePrompt` est une **projection immuable** construite **à la demande** via `Exercise.getPrompt()`.
 * Il n’est pas persisté.
 * Il ne contient **aucune logique de présentation** (pas de widget, pas de layout).
 
@@ -111,5 +133,5 @@ Exercice ..> ExercicePrompt : getPrompt()
 ## Répartition des détails (pour éviter un Domain.md trop gros)
 
 * Détails de `Session` (début/fin, current, ordering, contraintes d’appel) → `sessions.md`
-* Détails de `Exercice` (statuts, règles de transitions, allowed grades) → `exercises.md`
+* Détails de `Exercise` (statuts, règles de transitions, allowed grades) → `exercises.md`
 * Détails progression (`SRSState`, `SentenceState`, `Grade`, preview/apply) → `srs.md`

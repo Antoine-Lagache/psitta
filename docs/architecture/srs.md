@@ -36,10 +36,9 @@ Le SRS :
 classDiagram
 
 namespace Runtime {
-  class Exercice
-  class Grade
-  class WordExercice
-  class SentenceExercice
+  class Exercise
+  class WordExercise
+  class SentenceExercise
 }
 
 namespace Progression {
@@ -48,14 +47,26 @@ namespace Progression {
   class SentenceState
 }
 
-Exercice <|-- WordExercice
-Exercice <|-- SentenceExercice
+namespace Answer {
+  class ExerciseAnswer
+  class RealExerciseAnswer
+  class PreviewExerciseAnswer
+}
 
-Exercice "1" --> "1" SRSState : possède
-SentenceExercice "0..*" --> "0..*" SentenceState : met à jour
-Exercice ..> Grade : submitAnswer()
-SRSState ..> SRSConfig : utilise
+%% Inheritance
+Exercise <|-- WordExercise
+Exercise <|-- SentenceExercise
 
+ExerciseAnswer <|-- RealExerciseAnswer
+ExerciseAnswer <|-- PreviewExerciseAnswer
+
+%% Core relations
+Exercise "1" --> "1" SRSState : owns
+SentenceExercise "1..*" --> "1..*" SentenceState : updates
+
+%% SRS usage
+SRSState ..> ExerciseAnswer : apply / preview
+SRSState ..> SRSConfig : uses
 ```
 
 ---
@@ -64,15 +75,23 @@ SRSState ..> SRSConfig : utilise
 
 `SRSState` représente l’état de mémorisation d’un exercice.
 
-* Attaché directement à `Exercice`
+* Attaché directement à `Exercise`
 * Persisté
 * Modifié uniquement suite à une réponse utilisateur
 
 Responsabilités :
 
-* interpréter un `Grade`,
-* calculer un nouvel état,
-* produire un interval théorique.
+
+* interpréter une réponse utilisateur (`ExerciseAnswer`),
+* faire évoluer l’état de mémorisation,
+* calculer un interval théorique de révision,
+* fournir une simulation d’interval sans effet de bord (preview).
+
+`SRSState` ne consomme jamais directement un `Grade`.
+Il interprète un `ExerciseAnswer`, qui encapsule :
+* la note (`Grade`),
+* le moment de la réponse,
+* et éventuellement des informations temporelles (durées d’étapes).
 
 
 ## SRSConfig
@@ -86,9 +105,23 @@ Responsabilités :
 
 ## SentenceState
 
-`SentenceState` représente l’état d’exposition/usage d’une phrase. Il est mis à jour par les exercices de type SentenceExercice (typiquement un état par phrase du groupe), indépendamment du SRS : il ne calcule pas d’intervalle de révision mais sert au suivi de progression “contextuelle”.
+`SentenceState` représente l’état d’exposition/usage d’une phrase. Il est mis à jour par les exercices de type `SentenceExercise` (typiquement un état par phrase du groupe), indépendamment du SRS : il ne calcule pas d’intervalle de révision mais sert au suivi de progression “contextuelle”.
 
-Son Rôle est de garder les informations permettant à `SentenceExercice` de choisir la phrase à afficher. Typiquement : phrase la moins montrée / la moins réussie du groupe.
+Son Rôle est de garder les informations permettant à `SentenceExercise` de choisir la phrase à afficher. Typiquement : phrase la moins montrée / la moins réussie du groupe.
+
+## ExerciseAnswer
+
+Le SRS ne traite pas directement des notes brutes, mais des **réponses utilisateur modélisées**.
+
+`ExerciseAnswer` est un type scellé représentant une interaction avec un exercice :
+
+* `RealExerciseAnswer` correspond à une réponse effective de l’utilisateur, et entraine une mise à jour persisté du `SRSState`.
+
+* `PreviewExerciseAnswer` représente une réponse hypothétique, permet de simuler l’évolution de l’interval  et n’a **aucun effet de bord**.
+
+Cette distinction garantit que :
+* la prévisualisation n’altère jamais l’état persisté,
+* toute mise à jour réelle du SRS est explicitement intentionnelle.
 
 
 ## Grade
@@ -138,8 +171,9 @@ En dehors d’une session :
 La session peut exposer une **prévisualisation d’interval** :
 
 * sans modifier le `SRSState`,
+* en utilisant une `PreviewExerciseAnswer`,
+* avec une logique strictement identique à celle d’une réponse réelle.
 * à des fins d’information utilisateur : l'utilisateur sait quand il reverra le même exercice s’il obtient un grade précis.
-
 
 
 

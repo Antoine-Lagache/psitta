@@ -39,15 +39,24 @@ Elle n’est **pas responsable** :
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
-    class Session
-    class Exercice
     class SessionType
+    class Session
+    class Exercise
     class SessionResult
     class SRSConfig
 
-    Session "1" --> "0..*" Exercice : orchestrates
+    class ExerciseAnswer
+    class RealExerciseAnswer
+    class PreviewExerciseAnswer
+
+    Session "1" --> "0..*" Exercise : orchestrates
     Session "1" --> "1" SRSConfig : config
     Session "1" --> "1" SessionResult : result
+
+    ExerciseAnswer <|-- RealExerciseAnswer
+    ExerciseAnswer <|-- PreviewExerciseAnswer
+
+    Session ..> ExerciseAnswer : submit / preview
 ```
 
 ---
@@ -75,7 +84,7 @@ Une session suit un **cycle de vie strict** :
    * La session :
 
      * maintient un exercice courant,
-     * est appelé avec des réponses utilisateur (classe `Grade`) par la couche applicative,
+     * est appelée avec des réponses utilisateur (`ExerciseAnswer`) par la couche applicative,
      * délègue le traitement aux exercices,
      * sélectionne l’exercice suivant.
 
@@ -97,7 +106,7 @@ La session :
 * maintient un **exercice courant**,
 * détermine l’ordre de passage en fonction :
 
-  * de l’état des exercices (`ExerciceStatus`),
+  * de l’état des exercices (`ExerciseStatus`),
   * de règles d’orchestration simples.
 
 La session :
@@ -111,7 +120,7 @@ La session :
 
 Lorsqu’une réponse utilisateur est soumise :
 
-1. La session reçoit un `Grade` ainsi que la date actuelle (`DateTime now`)
+1. La session reçoit un `ExerciseAnswer`
 2. Elle délègue la réponse à l’exercice courant.
 3. L’exercice :
 
@@ -121,8 +130,28 @@ Lorsqu’une réponse utilisateur est soumise :
 
 La session ne connaît pas :
 
-* la signification d’un `Grade`,
-* les règles de réussite ou d’échec.
+* la signification d’une réponse (`Grade`, durées, timing),
+* les règles d’évaluation ou de progression.
+
+---
+
+## Preview vs soumission réelle
+
+La session distingue deux types d’interactions utilisateur :
+
+* **Soumission réelle** (`RealExerciseAnswer`)
+  * modifie l’état de l’exercice et du SRS,
+  * met à jour le `SessionResult`,
+  * déclenche la persistance côté applicatif.
+
+* **Prévisualisation** (`PreviewExerciseAnswer`)
+  * permet de simuler l’interval théorique,
+  * n’a aucun effet de bord,
+  * ne modifie ni l’exercice, ni la session.
+
+Cette distinction garantit que :
+* la logique de calcul est unique,
+* l’état du Domain n’est jamais modifié par une action exploratoire.
 
 ---
 
@@ -162,12 +191,12 @@ Il ne contient :
 ## Invariants fondamentaux
 
 * Une session orchestre des exercices, elle ne les crée pas.
-* Une session ne contient aucune logique SRS ni de logique intra-session.
+* Une session ne contient aucune logique SRS ni de logique d’évaluation de réponse.
 * Une session ne connaît pas le contenu pédagogique détaillé.
 * Toute modification de progression passe par un exercice.
 * Une session ne peut être démarrée qu’une seule fois.
 * Une session terminée ne peut plus accepter de réponses.
-* Le couche applicative ne peut utiliser uniquement des getters explicite afin de pouvoir observer la session (pour la persistance par exemple) !
+* La couche applicative observe l’état de la session uniquement via des getters explicites (afin de garantir la cohérence et faciliter la persistance).
 
 ---
 

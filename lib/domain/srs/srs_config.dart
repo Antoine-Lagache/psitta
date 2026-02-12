@@ -1,16 +1,17 @@
-
 /// Configuration parameters for the Spaced Repetition System (SRS).
 class SRSConfig {
-  final int? id;
+  final int id;
   final double rstar;
   final double wMaxFactor;
   final List<double> lambdas;
   final int easyInterval; // days
-  final int firstIntervalFallback; // used for SM-2 first review
+  final int
+  firstIntervalFallback; // TOD: je crois que ce paramètre doit etre supprimé       (used for SM-2 first review)
   final double efMin;
   final int iMax;
   final double defaultEF;
   final double defaultW;
+  final double defaultKFactor;
 
   final double mu;
   final int longPause;
@@ -27,7 +28,7 @@ class SRSConfig {
   static const List<double> _defaultLambdas = [0.60, 0.90, 0.80, 0.95, 0.85, 0.70];
 
   SRSConfig({
-    this.id,
+    required this.id,
     this.rstar = 0.9,
     this.wMaxFactor = 0.95,
     List<double>? lambdas,
@@ -37,10 +38,11 @@ class SRSConfig {
     this.iMax = 5 * 365,
     this.defaultEF = 2.5,
     this.defaultW = 0.0,
+    this.defaultKFactor = 0.1,
     this.mu = 0.03,
     this.longPause = 60,
     this.minTolFactor = 0.2,
-    this.learningSteps = const [
+    List<Duration> learningSteps = const [
       Duration(minutes: 1),
       Duration(minutes: 10),
       Duration(days: 1),
@@ -50,16 +52,15 @@ class SRSConfig {
     this.easyBonus = 1.3,
     this.dayBoundary = Duration.zero,
     this.newCount = 10,
-  }): 
-    lambdas = List.generate(
-      6,
-      (i) {
-        if (lambdas != null && i < lambdas.length) return lambdas[i].clamp(0.0, 1.0);
-        return _defaultLambdas[i];
-      },
-    ),
-    assert(rstar > 0 && rstar < 1),
-    assert(wMaxFactor > 0 && wMaxFactor < 1);
+  }) : lambdas = List.unmodifiable(
+         List.generate(6, (i) {
+           if (lambdas != null && i < lambdas.length) return lambdas[i].clamp(0.0, 1.0);
+           return _defaultLambdas[i];
+         }),
+       ),
+       learningSteps = List.unmodifiable(learningSteps),
+       assert(rstar > 0 && rstar < 1),
+       assert(wMaxFactor > 0 && wMaxFactor < 1);
 
   double get wMax => wMaxFactor * rstar;
 

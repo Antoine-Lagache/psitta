@@ -115,6 +115,8 @@ $$
 
 $\mu$ contrôle la vitesse de perte de mémoire après une longue absence.
 
+Le produit de `wMax` par `Rbar` permet de s'assurer que `w <= wMax` tout en évitant une discontinuité brutale.
+
 ---
 
 ## 🔹 Remarques d’implémentation

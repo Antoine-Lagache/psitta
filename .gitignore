@@ -1,20 +1,11 @@
-# Flutter / Dart
-
 # OS
 .DS_Store
 Thumbs.db
 
-# Editor / misc
-*.class
-*.log
-*.pyc
-*.swp
-*~      # temporary editor files
-
-# IDEs
+# IDE
 .idea/
-*.iml
 .vscode/
+*.iml
 
 # Flutter / Dart
 .dart_tool/
@@ -22,34 +13,22 @@ Thumbs.db
 .flutter-plugins
 .flutter-plugins-dependencies
 .pub/
-.pub-cache/
 
-# Build outputs
+# Build
 build/
-**/ios/Flutter/.last_build_id
 
-# Android
-android/.gradle/
+# Android (machine-specific)
 android/local.properties
-android/**/build/
-android/app/debug
-android/app/profile
-android/app/release
-
-# Linux
-linux/**/build/
+android/.gradle/
 
 # Generated docs
-docs/**/*.pdf
+*.pdf
 
-# Symbolication / obfuscation
-app.*.symbols
-app.*.map.json
+# Logs / temp
+*.log
+*.tmp
+*~
+*.swp
 
-# Misc project-specific
-.swiftpm/
-migrate_working_dir/
-.history
-.build/
-.buildlog/
-.svn/
+# Coverage
+coverage/

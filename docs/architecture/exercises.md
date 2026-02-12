@@ -6,7 +6,7 @@ Décrire le **rôle des exercices** dans le moteur d’apprentissage.
 
 Ce document précise :
 
-* ce qu’est un `Exercice`,
+* ce qu’est un `Exercise`,
 * comment il évolue pendant une session,
 * comment il interagit avec les mécanismes de progression,
 * les invariants à respecter.
@@ -17,7 +17,7 @@ Les aspects temporels et l’orchestration sont décrits dans [`sessions.md`](se
 
 ## Rôle d’un Exercice
 
-Un `Exercice` est un **objet runtime stateful**.
+Un `Exercise` est un **objet runtime stateful**.
 
 Il représente :
 
@@ -37,38 +37,43 @@ Un exercice :
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
-    class Exercice
-    class WordExercice
-    class SentenceExercice
-    class ExerciceStatus
-    class Grade
+    class Exercise
+    class WordExercise
+    class SentenceExercise
+    class ExerciseStatus
     class SRSState
     class SentenceState
     class Word
     class Sentence
-    class ExercicePrompt
+    class ExercisePrompt
+    class ExerciseAnswer
+    class RealExerciseAnswer
+    class PreviewExerciseAnswer
 
-    Exercice <|-- WordExercice
-    Exercice <|-- SentenceExercice
+    Exercise <|-- WordExercise
+    Exercise <|-- SentenceExercise
 
-    Exercice "1" --> "1" ExerciceStatus : status
-    Exercice "1" --> "1" SRSState : srsState
+    Exercise "1" --> "1" ExerciseStatus : status
+    Exercise "1" --> "1" SRSState : srsState
 
-    WordExercice "1" --> "1" Word : target
-    SentenceExercice "1" --> "1..*" Sentence : sentences
-    SentenceExercice "1" --> "1..*" SentenceState : updates
+    WordExercise "1" --> "1" Word : target
+    SentenceExercise "1" --> "1..*" Sentence : sentences
+    SentenceExercise "1" --> "1..*" SentenceState : updates
 
-    Exercice ..> Grade : applyGrade()
-    Exercice ..> ExercicePrompt : getPrompt()
+    ExerciseAnswer <|-- RealExerciseAnswer
+    ExerciseAnswer <|-- PreviewExerciseAnswer
+
+    Exercise ..> ExerciseAnswer : submit / preview answer
+    Exercise ..> ExercisePrompt : getPrompt()
 ```
 
 ---
 
 ## Structure générale d’un Exercice
 
-Un `Exercice` encapsule :
+Un `Exercise` encapsule :
 
-* un **état local** intra-session (`ExerciceStatus`),
+* un **état local** intra-session (`ExerciseStatus`),
 * un **état de progression** (`SRSState`),
 * une logique de réaction aux réponses utilisateur.
 
@@ -82,7 +87,7 @@ Il ne connaît :
 
 ## ExerciceStatus
 
-`ExerciceStatus` décrit l’**état courant** d’un exercice pendant la session.
+`ExerciseStatus` décrit l’**état courant** d’un exercice pendant la session.
 
 Il est utilisé par :
 
@@ -93,33 +98,32 @@ Exemples typiques de statuts : exercice non encore traité, nouvel exercice, dé
 
 ---
 
-## Interaction utilisateur : Grade
+## Interaction utilisateur : ExerciseAnswer
 
-Un `Grade` représente la **qualité d’une réponse utilisateur**.
+Les interactions utilisateur sont modélisées par le type `ExerciseAnswer`.
 
-* Il est fourni par la couche applicative.
-* Il ne contient aucune logique métier.
-* Il est interprété exclusivement par l’exercice.
+Un exercice peut recevoir :
 
-### Application d’un Grade
+* une **réponse réelle** (`RealExerciseAnswer`) :
+  * issue d’une interaction utilisateur effective,
+  * appliquée à l’état de l’exercice et du SRS.
 
-Lorsqu’un grade est appliqué à un exercice :
+* une **réponse hypothétique** (`PreviewExerciseAnswer`) :
+  * utilisée pour simuler l’évolution de l’interval,
+  * sans aucun effet de bord.
 
-1. L’exercice valide que l’opération est autorisée
-   (statut courant compatible).
-2. Il met à jour son `ExerciceStatus`.
-3. Il met à jour son `SRSState`.
-4. Dans le cas d'un `SentenceExercice`, il met à jour des `SentenceState`.
-
-L’exercice est le **seul responsable** de ces mises à jour.
+L’exercice est responsable de :
+* valider que la réponse est autorisée,
+* déléguer la mise à jour de la progression,
+* mettre à jour son état intra-session.
 
 ---
 
 ## Spécialisations d’Exercice
 
-### WordExercice
+### WordExercise
 
-Un `WordExercice` :
+Un `WordExercise` :
 
 * cible un `Word`,
 * utilise son `SRSState`.
@@ -127,9 +131,9 @@ Un `WordExercice` :
 Il ne manipule aucune `SentenceState`.
 
 
-### SentenceExercice
+### SentenceExercise
 
-Un `SentenceExercice` :
+Un `SentenceExercise` :
 
 * cible un **groupe de phrases** (`Sentence`),
 * possède un `SRSState` propre (au niveau du groupe),
@@ -147,7 +151,7 @@ L'utilisation d'un groupe de phrases permet de :
 Un exercice peut produire une **projection immuable de son état**
 via `Exercise.getPrompt()`.
 
-Cette projection (`ExercicePrompt`) :
+Cette projection (`ExercisePrompt`) :
 
 * est créée **à la demande**,
 * n’est pas persistée,

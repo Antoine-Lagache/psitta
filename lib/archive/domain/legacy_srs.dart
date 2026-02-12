@@ -2,7 +2,7 @@
 import 'dart:math';
 import '../../utils/convert_utils.dart';
 
-class SRSState {
+class LegacySRSState {
   DateTime? nextReview;
   double easeFactor;
   Duration interval; // duration for review intervals
@@ -15,17 +15,17 @@ class SRSState {
 
   int learningStepIndex; // index in learning steps (-1 = not in learning)
 
-  SRSState({
+  LegacySRSState({
     this.nextReview,
     this.easeFactor = 2.5,
-    this.interval =  const Duration(days: 1),
+    this.interval = const Duration(days: 1),
     this.kFactor = 0.1,
     this.w = 0.0,
     this.rbar = 0.0,
     this.lastReview,
     List<dynamic>? history,
     this.learningStepIndex = 0,
-  })  : history = history ?? [];
+  }) : history = history ?? [];
 
   Map<String, dynamic> toMap(int exerciceId) {
     return {
@@ -42,8 +42,8 @@ class SRSState {
     };
   }
 
-  factory SRSState.fromMap(Map<String, dynamic> map) {
-    return SRSState(
+  factory LegacySRSState.fromMap(Map<String, dynamic> map) {
+    return LegacySRSState(
       nextReview: safeParseDate(map['next_review'] as String?),
       easeFactor: safeToDouble(map['ease_factor']),
       interval: safeToDuration(map['interval']),
@@ -56,9 +56,8 @@ class SRSState {
     );
   }
 
-
-// TODO: corrigé interval.InDays pour des durées < 1 jour 
-// et créer une fonction `double DurationToDays(Duration duration)`
+  // TODO: corrigé interval.InDays pour des durées < 1 jour
+  // et créer une fonction `double DurationToDays(Duration duration)`
   // -----------------------------
   // PURE preview helpers (no mutation)
   // -----------------------------
@@ -68,11 +67,19 @@ class SRSState {
     // learning semantics (mirror applyLearningAnswer but pure)
     if (qq == 0) return s.isNotEmpty ? s[0] : Duration(minutes: 1);
     if (qq == 2) {
-      if(learningStepIndex > 0){
-          return Duration(milliseconds: (s[learningStepIndex].inMilliseconds* config.hardLearningFactor).round());
-        }else{
-          return(s.length >1) ? Duration(milliseconds: ((s[0].inMilliseconds + s[1].inMilliseconds)*0.5*config.hardLearningFactor).round()) : Duration(minutes: 4);
-        }
+      if (learningStepIndex > 0) {
+        return Duration(
+          milliseconds: (s[learningStepIndex].inMilliseconds * config.hardLearningFactor).round(),
+        );
+      } else {
+        return (s.length > 1)
+            ? Duration(
+                milliseconds:
+                    ((s[0].inMilliseconds + s[1].inMilliseconds) * 0.5 * config.hardLearningFactor)
+                        .round(),
+              )
+            : Duration(minutes: 4);
+      }
     }
     if (qq == 3) {
       // Medium -> Anki Hard equivalent
@@ -89,10 +96,12 @@ class SRSState {
     }
     if (qq == 4) {
       final int nextIdx = learningStepIndex + 1;
-      if (nextIdx < s.length){
+      if (nextIdx < s.length) {
         return s[nextIdx];
       }
-      return Duration(milliseconds: (interval.inMilliseconds * easeFactor).round()); // will graduate to review with easyInterval
+      return Duration(
+        milliseconds: (interval.inMilliseconds * easeFactor).round(),
+      ); // will graduate to review with easyInterval
     }
     if (qq == 5) {
       return Duration(days: config.easyInterval); // immediate graduation
@@ -106,15 +115,24 @@ class SRSState {
     final bool isSuccess = qq >= 3;
     Duration simInterval;
     if (!isSuccess) {
-      if(qq==0) {
-        simInterval = config.learningSteps.isNotEmpty ? config.learningSteps[0] : Duration(minutes: 1);
-      } else{
-        simInterval = config.learningSteps.length > 1 ? config.learningSteps[1] : Duration(minutes: 10);
+      if (qq == 0) {
+        simInterval = config.learningSteps.isNotEmpty
+            ? config.learningSteps[0]
+            : Duration(minutes: 1);
+      } else {
+        simInterval = config.learningSteps.length > 1
+            ? config.learningSteps[1]
+            : Duration(minutes: 10);
       }
     } else {
-      if(qq==3){
-        simInterval = Duration(milliseconds:max(24*3600*1000, (interval.inMilliseconds.toDouble() * config.hardReviewFactor).round()));
-      }else {
+      if (qq == 3) {
+        simInterval = Duration(
+          milliseconds: max(
+            24 * 3600 * 1000,
+            (interval.inMilliseconds.toDouble() * config.hardReviewFactor).round(),
+          ),
+        );
+      } else {
         final double arg = ((config.rstar - w) / (1.0 - w)).clamp(1e-6, 1 - 1e-6);
         final double logArg = log(arg);
         final double kf = kFactor / easeFactor;
@@ -123,7 +141,7 @@ class SRSState {
       }
     }
     if (qq == 5) simInterval = Duration(days: max(1, (interval.inDays * config.easyBonus).round()));
-    simInterval = Duration(days : min(simInterval.inDays, config.iMax));
+    simInterval = Duration(days: min(simInterval.inDays, config.iMax));
     return simInterval;
   }
 
@@ -148,19 +166,25 @@ class SRSState {
     // HARD
     if (qq == 2) {
       lastReview = now;
-      if(learningStepIndex > 0 && learningStepIndex < s.length){
-          final Duration dur = Duration(milliseconds: (s[learningStepIndex].inMilliseconds* config.hardLearningFactor).round());
-          nextReview = now.add(dur);
-          history.add(qq);
-          return dur;
-        }else{
-          final Duration dur = (s.length >1)
-            ? Duration(milliseconds: ((s[0].inMilliseconds + s[1].inMilliseconds)*0.5*config.hardLearningFactor).round())
+      if (learningStepIndex > 0 && learningStepIndex < s.length) {
+        final Duration dur = Duration(
+          milliseconds: (s[learningStepIndex].inMilliseconds * config.hardLearningFactor).round(),
+        );
+        nextReview = now.add(dur);
+        history.add(qq);
+        return dur;
+      } else {
+        final Duration dur = (s.length > 1)
+            ? Duration(
+                milliseconds:
+                    ((s[0].inMilliseconds + s[1].inMilliseconds) * 0.5 * config.hardLearningFactor)
+                        .round(),
+              )
             : Duration(minutes: 4);
-          nextReview = now.add(dur);
-          history.add(qq);
-          return dur;
-        }
+        nextReview = now.add(dur);
+        history.add(qq);
+        return dur;
+      }
     }
 
     // MEDIUM (Anki Hard equivalent)
@@ -179,7 +203,7 @@ class SRSState {
           history.add(qq);
           return dur;
         }
-      } else if (learningStepIndex < s.length){
+      } else if (learningStepIndex < s.length) {
         final Duration dur = s[learningStepIndex];
         nextReview = now.add(dur);
         history.add(qq);
@@ -190,7 +214,7 @@ class SRSState {
         nextReview = now.add(dur);
         history.add(qq);
         return dur;
-  }
+      }
     }
 
     // GOOD -> advance step or graduate
@@ -203,12 +227,13 @@ class SRSState {
         nextReview = now.add(dur);
         history.add(qq);
         return dur;
-      } else { //case when user finish all learning steps (learningStepIndex = s.length -1)
+      } else {
+        //case when user finish all learning steps (learningStepIndex = s.length -1)
         // graduate to review: set interval to 0 days first (will be computed by review logic)
         learningStepIndex = -1;
         final double arg = ((config.rstar - w) / (1.0 - w)).clamp(1e-6, 1.0 - 1e-6);
         final double logArg = log(arg);
-        kFactor = -(logArg*24*3600*1000/interval.inMilliseconds);
+        kFactor = -(logArg * 24 * 3600 * 1000 / interval.inMilliseconds);
         // fall through to review behavior below by calling applyReviewAnswer
       }
     }
@@ -222,7 +247,7 @@ class SRSState {
       // set a provisional interval as easyInterval days -> review branch will use it
       final double arg = ((config.rstar - w) / (1.0 - w)).clamp(1e-6, 1.0 - 1e-6);
       final double logArg = log(arg);
-      kFactor = -(logArg/config.easyInterval);
+      kFactor = -(logArg / config.easyInterval);
       interval = Duration(days: config.easyInterval);
       easeFactor = max(easeFactor + 0.1, config.efMin);
       final double lam = config.getLambda(qq);
@@ -243,9 +268,14 @@ class SRSState {
     final bool isSuccess = qq >= 3;
 
     // deltaDays used for long pause handling
-    final double deltaDays = lastReview == null ? 0.0 : now.difference(lastReview!).inDays.toDouble();
+    final double deltaDays = lastReview == null
+        ? 0.0
+        : now.difference(lastReview!).inDays.toDouble();
     final double l = max(0.0, deltaDays - interval.inDays.toDouble());
-    final double tol = min(config.longPause.toDouble(), config.minTolFactor * interval.inDays.toDouble());
+    final double tol = min(
+      config.longPause.toDouble(),
+      config.minTolFactor * interval.inDays.toDouble(),
+    );
     if (l >= tol && !isSuccess) {
       if (l >= config.longPause) {
         rbar = 0.0;
@@ -260,19 +290,26 @@ class SRSState {
     final double logArg = log(arg);
 
     if (!isSuccess) {
-      if(qq==0) {
+      if (qq == 0) {
         learningStepIndex = 0;
         interval = config.learningSteps.isNotEmpty ? config.learningSteps[0] : Duration(minutes: 1);
-      } else{
+      } else {
         learningStepIndex = 1;
-        interval = config.learningSteps.length > 1 ? config.learningSteps[1] : Duration(minutes: 10);
+        interval = config.learningSteps.length > 1
+            ? config.learningSteps[1]
+            : Duration(minutes: 10);
       }
       kFactor = -logArg / max(1, interval.inDays);
     } else {
-      if(qq == 3){
-        interval = Duration(milliseconds:max(24*3600*1000, (interval.inMilliseconds.toDouble() * config.hardReviewFactor).round()));
-        kFactor = -(logArg*24*3600*1000/ interval.inMilliseconds);
-      }else{
+      if (qq == 3) {
+        interval = Duration(
+          milliseconds: max(
+            24 * 3600 * 1000,
+            (interval.inMilliseconds.toDouble() * config.hardReviewFactor).round(),
+          ),
+        );
+        kFactor = -(logArg * 24 * 3600 * 1000 / interval.inMilliseconds);
+      } else {
         kFactor = kFactor / easeFactor;
         final double computed = -(logArg / kFactor);
         interval = Duration(days: max(1, computed.round()));
@@ -281,7 +318,7 @@ class SRSState {
 
     // apply multipliers
     if (qq == 5) interval = Duration(days: max(1, (interval.inDays * config.easyBonus).round()));
-    interval = Duration(days : min(interval.inDays, config.iMax));
+    interval = Duration(days: min(interval.inDays, config.iMax));
 
     // EF update only in review
     final double deltaEF = 0.1 - (5 - qq) * (0.08 + (5 - qq) * 0.02);
@@ -292,7 +329,6 @@ class SRSState {
     rbar = (lam * rbar) + ((1.0 - lam) * obs);
     rbar = rbar.clamp(0.0, 1.0);
     w = config.wMax * rbar;
-
 
     lastReview = now;
     nextReview = now.add(interval);
@@ -341,25 +377,18 @@ class SRSConfig {
     this.mu = 0.03,
     this.longPause = 60,
     this.minTolFactor = 0.2,
-    this.learningSteps = const [
-      Duration(minutes: 1),
-      Duration(minutes: 10),
-      Duration(days: 1),
-    ],
+    this.learningSteps = const [Duration(minutes: 1), Duration(minutes: 10), Duration(days: 1)],
     this.hardReviewFactor = 1.2,
     this.hardLearningFactor = 0.7,
     this.easyBonus = 1.3,
     this.dayBoundary = Duration.zero,
     this.newCount = 10,
-  })  : lambdas = List.generate(
-          6,
-          (i) {
-            if (lambdas != null && i < lambdas.length) return lambdas[i].clamp(0.0, 1.0);
-            return _defaultLambdas[i];
-          },
-        ),
-        assert(rstar > 0 && rstar < 1),
-        assert(wMaxFactor > 0 && wMaxFactor < 1);
+  }) : lambdas = List.generate(6, (i) {
+         if (lambdas != null && i < lambdas.length) return lambdas[i].clamp(0.0, 1.0);
+         return _defaultLambdas[i];
+       }),
+       assert(rstar > 0 && rstar < 1),
+       assert(wMaxFactor > 0 && wMaxFactor < 1);
 
   double get wMax => wMaxFactor * rstar;
 
@@ -368,7 +397,7 @@ class SRSConfig {
     return lambdas[idx];
   }
 
-    Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap() {
     return {
       'id': id,
       'rstar': rstar,
@@ -383,9 +412,8 @@ class SRSConfig {
       'mu': mu,
       'long_pause': longPause,
       'min_tol_factor': minTolFactor,
-      'learning_steps': safeJsonEncode(
-        learningSteps.map((d) => safeFromDuration(d)).toList(),
-      ) ?? '[]',
+      'learning_steps':
+          safeJsonEncode(learningSteps.map((d) => safeFromDuration(d)).toList()) ?? '[]',
       'hard_review_factor': hardReviewFactor,
       'hard_learning_factor': hardLearningFactor,
       'easy_bonus': easyBonus,
@@ -399,9 +427,7 @@ class SRSConfig {
       id: safeToInt(map['id']),
       rstar: safeToDouble(map['rstar']),
       wMaxFactor: safeToDouble(map['w_max_factor']),
-      lambdas: (safeJsonDecodeList(map['lambdas'] as String?))
-          .map((e) => safeToDouble(e))
-          .toList(),
+      lambdas: (safeJsonDecodeList(map['lambdas'] as String?)).map((e) => safeToDouble(e)).toList(),
       easyInterval: safeToInt(map['easy_interval']),
       firstIntervalFallback: safeToInt(map['first_interval_fallback']),
       efMin: safeToDouble(map['ef_min']),
@@ -411,9 +437,9 @@ class SRSConfig {
       mu: safeToDouble(map['mu']),
       longPause: safeToInt(map['long_pause']),
       minTolFactor: safeToDouble(map['min_tol_factor']),
-      learningSteps: (safeJsonDecodeList(map['learning_steps'] as String?))
-          .map((e) => safeToDuration(e))
-          .toList(),
+      learningSteps: (safeJsonDecodeList(
+        map['learning_steps'] as String?,
+      )).map((e) => safeToDuration(e)).toList(),
       hardReviewFactor: safeToDouble(map['hard_review_factor']),
       hardLearningFactor: safeToDouble(map['hard_learning_factor']),
       easyBonus: safeToDouble(map['easy_bonus']),

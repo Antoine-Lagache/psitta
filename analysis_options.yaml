@@ -28,6 +28,9 @@ linter:
     # Avoid debug prints leaking into production logic
     avoid_print: true
 
+    # 80 char is NOT ENOUGH 
+    lines_longer_than_80_chars: false
+
 
     # ===== Flutter / UI rules deliberately relaxed =====
 

@@ -20,10 +20,11 @@ flowchart TD
     %% Domain (with internal structure)
     subgraph DOM["Domain"]
         DOM_SESS["<u>Sessions</u><br/>Session / SessionResult / SessionType"]
-        DOM_EXO["<u>Exercices</u><br/> Exercice (abstract) / WordExercice / SentenceExercice / ExerciceStatus"]
+        DOM_EXO["<u>Exercises</u><br/> Exercise (abstract) / WordExercise / SentenceExercise / ExerciseStatus"]
+        DOM_ANSWER["<u>Answer</u><br/> ExerciseAnswer (sealed) / RealExerciseAnswer / PrevieExerciseAnswer"]
         DOM_CONTENT["<u>Content</u><br/> Word / Sentence"]
         DOM_SRS["<u>SRS</u><br/> SRSState / SRSConfig / SentenceState / Grade"]
-        DOM_PROMPT["ExercicePrompt"]
+        DOM_PROMPT["ExercisePrompt"]
     end
 
     %% Persistence
@@ -71,11 +72,13 @@ Il est volontairement représenté comme un **bloc unique**, mais structuré en 
 * **Content**
   Représente le contenu pédagogique (mots, phrases).
 
-* **Exercices**
+* **Exercises**
   Représente les exercices concrets présentés à l’utilisateur.
   Les exercices sont des objets runtime stateful, créés avant la session et détruits à sa fin.
   
-  l'UI ne connait les exercices qu'au travers de `ExercicePrompt` qui est une projection d'un `Exercice`
+  l'UI ne connait les exercices qu'au travers de `ExercisePrompt` qui est une projection d'un `Exercise`.
+* **Answers**
+  Représente les réponses utilisateur (`ExerciseAnswer`) transmises aux exercices.
 * **Sessions**
   Gère l’organisation des exercices en sessions d’apprentissage.
   Les sessions ne font qu'orchestrer les exercices.
