@@ -1,56 +1,125 @@
-# 📘 Flutter App Langue
+# Language Study Engine
 
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart)](https://dart.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-In%20Development-orange)]()
 
-Application Flutter d’apprentissage des langues basée sur un algorithme de répétition espacée (SRS).
-Ce projet sert à la fois de terrain d’apprentissage pour **Dart/Flutter** et de base pour une application complète de mémoristation de vocabulaire et de révision intelligente.
+**Language Study Engine** is a cross-platform Flutter application built around a custom Spaced Repetition System (SRS) inspired by the SM-2 algorithm. The goal is not just to ship a language learning app — but to engineer a rigorous, modular, and extensible study engine with clearly defined architectural boundaries and a formally documented memory model.
 
-
----
-
-## 🚀 Objectifs
-
-- Créer une application Flutter multiplateformes (Android, iOS, Web, Desktop).
-- Implémenter un système de répétition espacée (Spaced Repetition System) inspiré d’Anki/SM-2.
-- Construire une architecture modulaire et extensible avec une base de données SQLite.
-- Appliquer les bonnes pratiques de conception logicielle (clean architecture, séparation des couches, code testable).
-- s'engager dans un projet en se concentrant sur la *rigeur* et la *qualité* du projet.
+This project serves as both a personal deep-dive into Dart/Flutter and a demonstration of clean software architecture applied to a non-trivial domain.
 
 ---
 
-## 🧩 Architecture (MVP)
+## Highlights
 
-L’application suit une architecture modulaire, organisée autour de 4 blocs principaux :
-
-- **UI**  
-  Écrans Flutter (Home, Sessions, Stats, Settings).  
-  Aucun accès direct au Domain ou à la base de données.
-
-- **Application / Controllers**  
-  Orchestration de la logique applicative (sessions, navigation, statistiques).  
-  Les Controllers sont long-vivants et partagés entre les écrans.
-
-- **Domain**  
-  Logique métier pure :
-  - contenu pédagogique (`Word` et `Sentence`)
-  - sessions d’apprentissage (`Session`)
-  - Objet runtime Exercice (`abstract Exercice`, `WordExercice` et `SentenceExercice`)
-  - système de répétition espacée (SRS)
-
-- **Persistence**  
-  Accès aux données via des repositories.  
-  Le SQL, le mapping DB ↔ Domain et les optimisations sont confinés à cette couche.
-
-👉 L’architecture complète est documentée dans [`docs/architecture`](docs/architecture).
-
+- **Custom SRS engine** — scheduling logic inspired by SM-2, with formal mathematical documentation and explicit modeling hypotheses
+- **Strict layered architecture** — UI / Application / Domain / Persistence, with enforced separation of concerns
+- **Framework-independent domain layer** — pure Dart business logic with no Flutter or SQLite dependencies
+- **Designed for extensibility** — modular exercise abstractions (`WordExercise`, `SentenceExercise`) allow new content types to be added without altering core logic
+- **SQLite persistence** — repository pattern with clean domain ↔ storage mapping
 
 ---
 
-## ⚙️ État actuel (MVP in progress) - chronologie
+## Architecture
 
+The application follows a four-layer architecture. Each layer has a single, well-defined responsibility and strict dependency rules.
 
-* Architecture MVP définie et documentée
-* Modèle SRS conçu (cf [`docs/maths_srs.md`](docs/maths_srs.md) et [`docs/hypotheses_et_info_srs.md`](docs/hypotheses_et_info_srs.md))
-* Séparation claire UI / Application / Domain / Persistence
-* 🚧 Implémentation en cours
+```
+┌──────────────────────────────────────┐
+│                  UI                  │  Flutter screens — presentation only
+├──────────────────────────────────────┤
+│         Application / Controllers    │  Session lifecycle, navigation, aggregation
+├──────────────────────────────────────┤
+│               Domain                 │  Pure business logic — no Flutter, no SQLite
+├──────────────────────────────────────┤
+│             Persistence              │  Repositories, SQL queries, domain mapping
+└──────────────────────────────────────┘
+```
 
-Le code existant est progressivement aligné sur cette architecture.
+### UI
+Flutter screens: Home, Sessions, Statistics, Settings. Contains presentation logic only — no direct access to Domain objects or database code.
+
+### Application / Controllers
+Orchestrates application workflows: session lifecycle, navigation coordination, and statistics aggregation. Controllers are long-lived and shared across screens.
+
+### Domain
+Pure business logic, fully framework-independent:
+
+- Learning content: `Word`, `Sentence`
+- Learning sessions: `Session`
+- Exercise abstractions: `abstract Exercise`, `WordExercise`, `SentenceExercise`
+- SRS scheduling logic
+
+This layer has zero dependencies on Flutter or SQLite and can be tested in isolation.
+
+### Persistence
+Data access through the repository pattern. Responsible for SQL queries, database ↔ domain mapping, and storage optimizations. All storage concerns are strictly confined to this layer.
+
+Full architectural documentation is available in [`docs/architecture/`](docs/architecture/).
+
+---
+
+## Spaced Repetition Model
+
+The SRS model is formally documented and covers modeling assumptions, scheduling hypotheses, mathematical formulation, and system invariants.
+
+- [`docs/maths_and_srs/maths_srs.md`](docs/maths_and_srs/maths_srs.md) — mathematical model and scheduling logic
+- [`docs/maths_and_srs/hypotheses_et_info_srs.md`](docs/maths_and_srs/hypotheses_et_info_srs.md) — modeling hypotheses and design decisions
+
+The implementation is progressively aligned with this formal specification.
+
+---
+
+## Current Status
+
+The project is under active development. Here is a transparent breakdown of progress:
+
+| Component | Status |
+|---|---|
+| Layered architecture | ✅ Defined and documented |
+| SRS model (formal spec) | ✅ Complete |
+| Domain layer — class & method design | ✅ Complete |
+| Domain layer — implementation | 🔄 ~60–70% complete |
+| Persistence layer | ⏳ Not started |
+| Application / Controllers | ⏳ Not started |
+| UI | ⏳ Not started |
+
+The current focus is completing the Domain layer implementation and ensuring full conformance with the formal SRS specification. The codebase is being incrementally refactored to strictly conform to the defined architecture.
+
+---
+
+## Getting Started
+
+> ⚠️ The application is not yet runnable end-to-end. The UI and persistence layers are not implemented. This section will be updated as the project progresses.
+
+**Prerequisites:** Flutter SDK 3.x, Dart 3.x
+
+```bash
+git clone https://github.com/your-username/language-study-engine.git
+cd language-study-engine
+flutter pub get
+```
+
+Domain logic and SRS unit tests can be run independently once the domain layer implementation is complete:
+
+```bash
+flutter test
+```
+
+---
+
+## Roadmap
+
+- [ ] Complete Domain layer implementation
+- [ ] Implement Persistence layer (SQLite repositories)
+- [ ] Implement Application / Controllers layer
+- [ ] Build core UI screens (Home, Session, Statistics)
+- [ ] Full integration and end-to-end testing
+- [ ] Translate all inline code documentation to English
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [`LICENSE`](LICENSE) file for details.
