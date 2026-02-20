@@ -1,25 +1,18 @@
-# Diagramme 6 — **UI (Screens & navigation)**
+# `docs/architecture/ui.md`
 
-Ce diagramme décrit **la structure de l’interface utilisateur**, les écrans principaux et **leurs dépendances vers les Controllers**.
-Aucune logique métier, aucun détail Flutter interne (widgets, layout).
+## Purpose
 
----
+Describe:
 
-## `docs/architecture/ui.md`
+* the main screens of the application,
+* their functional role,
+* which **Controller** each screen uses.
 
-## Objectif
-
-Décrire :
-
-* les écrans principaux de l’application,
-* leur rôle fonctionnel,
-* quel **Controller** chaque écran utilise.
-
-Ce diagramme fixe le **contrat UI ↔ Application**.
+This diagram establishes the **UI ↔ Application contract**.
 
 ---
 
-## Diagramme
+## Diagram
 
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
@@ -50,86 +43,72 @@ SettingsScreen --> SettingsController
 
 ---
 
-## Lecture du diagramme
+## Reading the Diagram
 
 ### HomeScreen
 
-* écran d’entrée de l’application
-* affiche l’état global de progression
-* permet de :
+* Application entry screen.
+* Displays the overall progression state.
+* Allows the user to:
 
-  * démarrer une session (mots / phrases)
-  * accéder aux statistiques
-  * accéder aux paramètres
+  * start a session (words / sentences),
+  * navigate to statistics,
+  * navigate to settings.
 
-Utilise :
-
-* `HomeController`
-
+Uses: `HomeController`
 
 ### WordSessionScreen
 
-* affiche une session d’exercices sur les mots
-* affiche les exercices fournis par la session via des projections un par un
-* transmet les réponses utilisateur
+* Displays a word exercise session.
+* Renders exercises provided by the session as projections, one at a time.
+* Forwards user responses to the controller.
 
-Utilise :
-
-* `SessionController`
-
+Uses: `SessionController`
 
 ### SentenceSessionScreen
 
-* affiche une session d’exercices sur les phrases
-* même logique que `WordSessionScreen`, mais avec des cibles grammaticales
+* Displays a sentence exercise session.
+* Same logic as `WordSessionScreen`, but with grammatical targets.
 
-Utilise :
-
-* `SessionController`
-
+Uses: `SessionController`
 
 ### StatsScreen
 
-* affiche les statistiques d’apprentissage
-* ne déclenche aucune session
-* ne manipule aucun exercice
+* Displays learning statistics.
+* Does not trigger any session.
+* Does not manipulate any exercise.
 
-Utilise :
-
-* `StatsController`
-
+Uses: `StatsController`
 
 ### SettingsScreen
 
-* affiche et modifie les paramètres de l’application
-* inclut notamment les paramètres du SRS
+* Displays and modifies application settings.
+* Includes SRS parameters in particular.
 
-Utilise :
-
-* `SettingsController`
+Uses: `SettingsController`
 
 ---
 
-## Règles d’architecture UI
+## UI Architecture Rules
 
-* Les écrans :
+* Screens:
 
-  * ne connaissent **que leur Controller**
-  * ne connaissent ni le Domain ni la Persistence
-* Toute action utilisateur est transmise au Controller
-* Aucun calcul métier n’est fait dans l’UI
-* L’UI ne persiste jamais de données directement
+  * know **only their Controller**,
+  * know neither the Domain nor Persistence.
+* Every user action is forwarded to the Controller.
+* No business logic is computed in the UI.
+* The UI never persists data directly.
 
 ---
 
-## Notes importantes pour l’implémentation ⚠️
+## Implementation Notes ⚠️
 
-* Chaque Screen peut être :
+* Each Screen may be implemented as:
 
-  * un `Widget` Flutter
-  * ou un ensemble `Widget + ViewModel`
-* Le Controller peut être injecté :
+  * a Flutter `Widget`,
+  * or a `Widget + ViewModel` pair.
+* The Controller may be injected:
 
-  * via constructeur
-  * via Provider / Riverpod / autre (choix libre)
-* Ce diagramme reste valide quel que soit le framework d’état choisi
+  * via constructor,
+  * via Provider / Riverpod / other (free choice).
+* This diagram remains valid regardless of the chosen state management framework.

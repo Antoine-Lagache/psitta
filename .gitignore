@@ -33,3 +33,6 @@ android/.gradle/
 
 # Coverage
 coverage/
+
+#others
+local/

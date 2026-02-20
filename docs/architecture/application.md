@@ -1,18 +1,18 @@
 # `docs/architecture/application.md`
 
-## Objectif
+## Purpose
 
-Décrire la couche **Application / Controllers**, qui coordonne :
+Describe the **Application / Controllers** layer, which coordinates:
 
-* les actions venant de l’UI,
-* la logique métier du **Domain** (sessions, exercices),
-* la **Persistence** (chargement et sauvegarde via repositories).
+* actions coming from the UI,
+* business logic from the **Domain** (sessions, exercises),
+* **Persistence** (loading and saving via repositories).
 
-Ce diagramme ne décrit pas l’UI ni les détails SQL : uniquement les **dépendances structurantes**.
+This diagram does not describe the UI or SQL details — only the **structural dependencies**.
 
 ---
 
-## Diagramme
+## Diagram
 
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
@@ -27,22 +27,22 @@ namespace Application {
 
 namespace Domain {
   class Session
-  class exercice
-  class Wordexercice
-  class Sentenceexercice
-  class ExercicePrompt
+  class Exercise
+  class WordExercise
+  class SentenceExercise
+  class ExercisePrompt
 }
 
 
 %% Domain inheritance
-exercice <|-- Wordexercice
-exercice <|-- Sentenceexercice
+Exercise <|-- WordExercise
+Exercise <|-- SentenceExercise
 
 %% Application -> Domain
 HomeController --> SessionController : starts sessions
 SessionController --> Session : manages
-SessionController --> exercice : produces/consumes
-SessionController --> ExercicePrompt : get projection
+SessionController --> Exercise : produces/consumes
+SessionController --> ExercisePrompt : get projection
 
 %% Application -> Persistence
 SessionController --> Repository : **load**<br/> words, groups
@@ -55,53 +55,51 @@ SettingsController --> Repository : read/write config
 
 ---
 
-## Lecture du diagramme
+## Reading the Diagram
 
 ### Controllers (Application)
 
-* `HomeController` : logique d’entrée (démarrer une session, navigation logique côté app).
-* `SessionController` : orchestre le déroulement d’une session (création des exercices et de la session; envoie des `ExercicePrompt` à l'UI et récupération des inputs de l'utilisateur; suppression de la session)
-* `StatsController` : calcule et expose les statistiques à partir des données persistées, sans dépendre des sessions ou du runtime d’exercices.
-* `SettingsController` : expose et modifie la configuration (ex: paramètres SRS).
-
+* `HomeController`: entry-point logic (starting a session, application-side navigation).
+* `SessionController`: orchestrates the flow of a session (exercise and session creation; sending `ExercisePrompt` objects to the UI and collecting user input; session teardown).
+* `StatsController`: computes and exposes statistics from persisted data, without depending on sessions or the exercise runtime.
+* `SettingsController`: exposes and modifies configuration (e.g. SRS parameters).
 
 ### Domain
 
-* `Session` orchestre les Exercices d'une session
-* `exercice` est un objet abstrait **runtime** utilisé pendant une session. `WordExercice` et `SentenceExercice` sont 2 spécialisation.
-* `ExercicePrompt` est une projection d'un exercice créer par la session pour l'UI. `SessionController` les envoient à l'UI qui les transforme en widget.
-
+* `Session` orchestrates the exercises of a session.
+* `Exercise` is an abstract **runtime** object used during a session. `WordExercise` and `SentenceExercise` are two specialisations.
+* `ExercisePrompt` is a projection of an exercise created by the session for the UI. `SessionController` sends them to the UI, which renders them as widgets.
 
 ### Persistence
 
-Les controllers accèdent aux données via des **repositories** :
+Controllers access data through **repositories**:
 
-* contenu (`WordRepository`, `SentenceGroupRepository`, `ChapterRepository`)
+* content (`WordRepository`, `SentenceGroupRepository`, `ChapterRepository`)
 * progression/config (`SrsRepository`)
 
-Le SQL, le mapping DB, et les tables sont confinés au diagramme “Persistence”.
+SQL, DB mapping, and table definitions are confined to the Persistence diagram.
 
 ---
 
-## Règles d’architecture
+## Architecture Rules
 
-* L’UI appelle les controllers ; elle n’appelle jamais directement le Domain ou la Persistence.
-* Le `StatsController` ne dépend pas du runtime (sessions/exercices), uniquement des repositories.
-* Le `SessionController` orchestre les sessions et délègue la persistance aux repositories (aucun SQL ici).
-* Le Domain reste indépendant de la couche UI Flutter.
+* The UI calls controllers; it never calls the Domain or Persistence directly.
+* `StatsController` does not depend on the runtime (sessions/exercises) — only on repositories.
+* `SessionController` orchestrates sessions and delegates persistence to repositories (no SQL here).
+* The Domain remains independent of the Flutter UI layer.
 
 ---
 
-## Note sur le cycle de vie des Controllers
+## Note on Controller Lifecycle
 
-Les **Controllers** sont des objets **long-vivants**, créés lors de l’initialisation de l’application et partagés entre les écrans.
+**Controllers** are **long-lived** objects, created at application startup and shared across screens.
 
-* Ils conservent les dépendances (repositories, configuration).
-* Ils **ne représentent pas** une session en cours.
-* Ils créent et détruisent des instances de **Sessions** à la demande paramétrées par `SessionType`.
+* They hold dependencies (repositories, configuration).
+* They **do not represent** an ongoing session.
+* They create and destroy **Session** instances on demand, parameterised by `SessionType`.
 
-Les **Sessions** sont des objets **éphémères**, limités à la durée d’une session d’apprentissage.
+**Sessions** are **ephemeral** objects, scoped to the duration of a single learning session.
 
-Ce découplage permet d’enchaîner plusieurs sessions sans recréer les Controllers et garantit une gestion claire du cycle de vie.
+This decoupling allows multiple sessions to be run sequentially without recreating controllers, and ensures a clear lifecycle management.
 
-* La couche Application ne connaît ni `Widget`, ni Flutter, ni BuildContext.
+* The Application layer knows neither `Widget`, nor Flutter, nor `BuildContext`.

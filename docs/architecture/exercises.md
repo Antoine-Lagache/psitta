@@ -1,38 +1,38 @@
 # `docs/architecture/exercises.md`
 
-## Objectif
+## Purpose
 
-Décrire le **rôle des exercices** dans le moteur d’apprentissage.
+Describe the **role of exercises** in the learning engine.
 
-Ce document précise :
+This document specifies:
 
-* ce qu’est un `Exercise`,
-* comment il évolue pendant une session,
-* comment il interagit avec les mécanismes de progression,
-* les invariants à respecter.
+* what an `Exercise` is,
+* how it evolves during a session,
+* how it interacts with progression mechanisms,
+* the invariants to respect.
 
-Les aspects temporels et l’orchestration sont décrits dans [`sessions.md`](sessions.md).
-
----
-
-## Rôle d’un Exercice
-
-Un `Exercise` est un **objet runtime stateful**.
-
-Il représente :
-
-* une **interaction utilisateur** avec un contenu pédagogique,
-* dans le cadre d’une **session donnée**.
-
-Un exercice :
-
-* est **créé avant** le démarrage de la session,
-* est **temporaire** (non persisté),
-* encapsule la logique **locale** à cette interaction.
+Temporal aspects and orchestration are described in [`sessions.md`](sessions.md).
 
 ---
 
-## Diagramme conceptuel
+## Role of an Exercise
+
+An `Exercise` is a **stateful runtime object**.
+
+It represents:
+
+* a **user interaction** with learning content,
+* within the context of a **given session**.
+
+An exercise:
+
+* is **created before** the session starts,
+* is **temporary** (not persisted),
+* encapsulates logic that is **local** to that interaction.
+
+---
+
+## Conceptual Diagram
 
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
@@ -69,111 +69,111 @@ classDiagram
 
 ---
 
-## Structure générale d’un Exercice
+## General Structure of an Exercise
 
-Un `Exercise` encapsule :
+An `Exercise` encapsulates:
 
-* un **état local** intra-session (`ExerciseStatus`),
-* un **état de progression** (`SRSState`),
-* une logique de réaction aux réponses utilisateur.
+* a **local intra-session state** (`ExerciseStatus`),
+* a **progression state** (`SRSState`),
+* logic for reacting to user responses.
 
-Il ne connaît :
+It knows nothing about:
 
-* ni la session globale,
-* ni l’UI,
-* ni la persistence.
-
----
-
-## ExerciceStatus
-
-`ExerciseStatus` décrit l’**état courant** d’un exercice pendant la session.
-
-Il est utilisé par :
-
-* l’exercice (pour gérer ses transitions),
-* la session (pour orchestrer l’ordre de passage).
-
-Exemples typiques de statuts : exercice non encore traité, nouvel exercice, déjà répondu, terminé.
+* the global session,
+* the UI,
+* persistence.
 
 ---
 
-## Interaction utilisateur : ExerciseAnswer
+## ExerciseStatus
 
-Les interactions utilisateur sont modélisées par le type `ExerciseAnswer`.
+`ExerciseStatus` describes the **current state** of an exercise during the session.
 
-Un exercice peut recevoir :
+It is used by:
 
-* une **réponse réelle** (`RealExerciseAnswer`) :
-  * issue d’une interaction utilisateur effective,
-  * appliquée à l’état de l’exercice et du SRS.
+* the exercise (to manage its transitions),
+* the session (to orchestrate the presentation order).
 
-* une **réponse hypothétique** (`PreviewExerciseAnswer`) :
-  * utilisée pour simuler l’évolution de l’interval,
-  * sans aucun effet de bord.
-
-L’exercice est responsable de :
-* valider que la réponse est autorisée,
-* déléguer la mise à jour de la progression,
-* mettre à jour son état intra-session.
+Typical status examples: not yet attempted, new exercise, already answered, completed.
 
 ---
 
-## Spécialisations d’Exercice
+## User Interaction: ExerciseAnswer
+
+User interactions are modelled by the `ExerciseAnswer` type.
+
+An exercise can receive:
+
+* a **real response** (`RealExerciseAnswer`):
+  * resulting from an actual user interaction,
+  * applied to the exercise and SRS state.
+
+* a **hypothetical response** (`PreviewExerciseAnswer`):
+  * used to simulate interval evolution,
+  * with no side effects whatsoever.
+
+The exercise is responsible for:
+* validating that the response is permitted,
+* delegating the progression update,
+* updating its intra-session state.
+
+---
+
+## Exercise Specialisations
 
 ### WordExercise
 
-Un `WordExercise` :
+A `WordExercise`:
 
-* cible un `Word`,
-* utilise son `SRSState`.
+* targets a `Word`,
+* uses its `SRSState`.
 
-Il ne manipule aucune `SentenceState`.
-
+It does not manipulate any `SentenceState`.
 
 ### SentenceExercise
 
-Un `SentenceExercise` :
+A `SentenceExercise`:
 
-* cible un **groupe de phrases** (`Sentence`),
-* possède un `SRSState` propre (au niveau du groupe),
-* met à jour un `SentenceState` pour chaque phrase concernée.
+* targets a **group of sentences** (`Sentence`),
+* has its own `SRSState` (at the group level),
+* updates a `SentenceState` for each sentence involved.
 
-L'utilisation d'un groupe de phrases permet de :
+Using a group of sentences allows:
 
-* avoir un même état **SRS** pour plusieurs phrases proches grammaticalement.
-* permettre à l'utilisateur une exposition à de nombreuses phrases sans compromettre la qualité du **SRS**.
+* a single **SRS** state to cover several grammatically related sentences,
+* the user to be exposed to many sentences without compromising **SRS** quality.
 
 ---
 
-## Projection d’un Exercice
+## Exercise Projection
 
-Un exercice peut produire une **projection immuable de son état**
+An exercise can produce an **immutable snapshot of its state**
 via `Exercise.getPrompt()`.
 
-Cette projection (`ExercisePrompt`) :
+This projection (`ExercisePrompt`):
 
-* est créée **à la demande**,
-* n’est pas persistée,
-* ne contient aucune logique de présentation,
-* constitue la seule information exposée à l’UI.
+* is created **on demand**,
+* is not persisted,
+* contains no presentation logic,
+* is the only information exposed to the UI.
 
 ---
 
-## Invariants fondamentaux
+## Core Invariants
 
-* Un exercice est toujours temporaire.
-* Un exercice ne persiste aucun état.
-* Toute mise à jour de progression passe par un exercice.
-* La session ne modifie jamais directement un exercice.
-* Un exercice ne connaît ni l’UI ni la persistence.
+* An exercise is always temporary.
+* An exercise never persists any state.
+* All progression updates go through an exercise.
+* The session never directly modifies an exercise.
+* An exercise knows neither the UI nor persistence.
 
+---
 
-## Ce que l’Exercice ignore volontairement
+## What the Exercise Intentionally Ignores
 
-Un exercice ignore :
+An exercise ignores:
 
-* l’enchaînement global de la session,
-* les paramètres utilisateur,
-* l’origine des données (DB, API),
-* la notion de chapitre.
+* the global session sequencing,
+* user parameters,
+* the origin of data (DB, API),
+* the concept of chapters.

@@ -96,7 +96,7 @@ The current focus is completing the Domain layer implementation and ensuring ful
 **Prerequisites:** Flutter SDK 3.x, Dart 3.x
 
 ```bash
-git clone https://github.com/your-username/language-study-engine.git
+git clone https://github.com/Antoine-Lagache/language-study-engine.git
 cd language-study-engine
 flutter pub get
 ```

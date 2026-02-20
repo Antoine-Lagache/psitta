@@ -1,13 +1,13 @@
 # `docs/architecture/overview.md`
 
-## Objectif
+## Purpose
 
-Décrire l’architecture globale de l’application et les règles de dépendance entre les grands blocs.
-Ce diagramme donne une **vue macroscopique** du projet ; les détails internes de chaque bloc sont précisés dans les diagrammes suivants.
+Describe the overall application architecture and the dependency rules between the main building blocks.
+This diagram provides a **macroscopic view** of the project; the internal details of each block are covered in the following diagrams.
 
 ---
 
-## Diagramme
+## Diagram
 
 ```mermaid
 flowchart TD
@@ -21,7 +21,7 @@ flowchart TD
     subgraph DOM["Domain"]
         DOM_SESS["<u>Sessions</u><br/>Session / SessionResult / SessionType"]
         DOM_EXO["<u>Exercises</u><br/> Exercise (abstract) / WordExercise / SentenceExercise / ExerciseStatus"]
-        DOM_ANSWER["<u>Answer</u><br/> ExerciseAnswer (sealed) / RealExerciseAnswer / PrevieExerciseAnswer"]
+        DOM_ANSWER["<u>Answer</u><br/> ExerciseAnswer (sealed) / RealExerciseAnswer / PreviewExerciseAnswer"]
         DOM_CONTENT["<u>Content</u><br/> Word / Sentence"]
         DOM_SRS["<u>SRS</u><br/> SRSState / SRSConfig / SentenceState / Grade"]
         DOM_PROMPT["ExercisePrompt"]
@@ -46,83 +46,81 @@ flowchart TD
 
 ---
 
-## Lecture du diagramme
+## Reading the Diagram
 
 ### UI
 
-Le bloc **UI** regroupe tous les écrans et widgets Flutter.
-Il est responsable uniquement de l’affichage et de la gestion des interactions utilisateur.
-
+The **UI** block groups all Flutter screens and widgets.
+It is solely responsible for rendering and handling user interactions.
 
 ### Application / Controllers
 
-Le bloc **Application** constitue le point d’entrée de la logique applicative.
-Les controllers :
+The **Application** block is the entry point for application logic.
+Controllers:
 
-* reçoivent les actions utilisateur depuis l’UI,
-* orchestrent les opérations métier,
-* coordonnent l’utilisation du Domain et de la Persistence.
-
+* receive user actions from the UI,
+* orchestrate business operations,
+* coordinate the use of the Domain and Persistence layers.
 
 ### Domain
 
-Le **Domain** regroupe toute la logique métier de l’application.
-Il est volontairement représenté comme un **bloc unique**, mais structuré en sous-composants conceptuels :
+The **Domain** groups all business logic of the application.
+It is intentionally represented as a **single block**, but structured into conceptual sub-components:
 
 * **Content**
-  Représente le contenu pédagogique (mots, phrases).
+  Represents the learning content (words, sentences).
 
 * **Exercises**
-  Représente les exercices concrets présentés à l’utilisateur.
-  Les exercices sont des objets runtime stateful, créés avant la session et détruits à sa fin.
-  
-  l'UI ne connait les exercices qu'au travers de `ExercisePrompt` qui est une projection d'un `Exercise`.
+  Represents the concrete exercises presented to the user.
+  Exercises are stateful runtime objects, created before the session starts and destroyed at its end.
+
+  The UI only knows exercises through `ExercisePrompt`, which is a projection of an `Exercise`.
+
 * **Answers**
-  Représente les réponses utilisateur (`ExerciseAnswer`) transmises aux exercices.
+  Represents user responses (`ExerciseAnswer`) passed to exercises.
+
 * **Sessions**
-  Gère l’organisation des exercices en sessions d’apprentissage.
-  Les sessions ne font qu'orchestrer les exercices.
+  Manages the organisation of exercises into learning sessions.
+  Sessions only orchestrate exercises.
 
 * **SRS**
-  Implémente la logique de répétition espacée et l’état de progression.
+  Implements spaced repetition logic and progression state.
 
-Le Domain est **indépendant de toute technologie** (UI, DB, Flutter, SQLite).
-
+The Domain is **independent of all technology** (UI, DB, Flutter, SQLite).
 
 ### Persistence
 
-Le bloc **Persistence** est responsable du stockage et de la reconstruction des données du Domain.
+The **Persistence** block is responsible for storing and reconstructing Domain data.
 
-* Les **Repositories** exposent une interface métier d’accès aux données.
-* La **base SQLite** gère le stockage physique.
+* **Repositories** expose a business-oriented data access interface.
+* The **SQLite database** handles physical storage.
 
-Le SQL, le mapping (`toMap / fromMap`) et les détails de persistance sont confinés à ce bloc.
-
+SQL, mapping (`toMap / fromMap`), and persistence details are confined to this block.
 
 ### Utils
 
-Le bloc **Utils** regroupe des fonctions utilitaires pures (dates, conversions, helpers).
-Il est transversal et ne fait pas partie de la hiérarchie de dépendances principale.
+The **Utils** block groups pure utility functions (dates, conversions, helpers).
+It is transversal and does not belong to the main dependency hierarchy.
 
 ---
 
-## Règles de dépendance
+## Dependency Rules
 
-* L’**UI** dépend uniquement de l’**Application**.
-* L’**Application** dépend du **Domain** et de la **Persistence**.
-* Le **Domain** ne dépend d’aucune couche technique.
-* La **Persistence** ne contient aucune logique métier.
-* Le **SQL et le mapping DB** sont confinés à la Persistence.
+* The **UI** depends only on the **Application** layer.
+* The **Application** depends on the **Domain** and **Persistence** layers.
+* The **Domain** does not depend on any technical layer.
+* The **Persistence** contains no business logic.
+* **SQL and DB mapping** are confined to Persistence.
 
 ---
 
-## Notes d’architecture
+## Architecture Notes
 
-* Le Domain est présenté comme un bloc unique au niveau global ; sa structure interne est détaillée dans les diagrammes suivants.
-* L’Application joue un rôle d’orchestrateur entre l’UI, le Domain et la Persistence.
-* Les fonctions utilitaires sont volontairement exclues des dépendances explicites pour préserver la lisibilité du diagramme.
-  
-### Notes sur la notion de chapitre
+* The Domain is presented as a single block at the global level; its internal structure is detailed in the following diagrams.
+* The Application acts as an orchestrator between the UI, Domain, and Persistence layers.
+* Utility functions are intentionally excluded from the explicit dependency diagram to preserve readability.
 
-* Les Mots et phrases sont organisés par chapitre. Cette notion de chapitre n'existe que dans le `StatsScreen` et le `HomeScreen`.
-* Les chapitres structurent le contenu pour l’utilisateur, mais n’interviennent pas dans la logique d’apprentissage et sont donc ignorés par les sessions et le domain.
+### Notes on the Chapter Concept
+
+* Words and sentences are organised by chapter. This chapter concept only exists in `StatsScreen` and `HomeScreen`.
+* Chapters structure content for the user, but play no role in the learning logic and are therefore ignored by sessions and the domain.

@@ -1,202 +1,202 @@
-# Hypothèses et périmètre du modèle SRS
+# Hypotheses and Scope of the SRS Model
 
-Ce document décrit **les hypothèses non mathématiques** du modèle de répétition espacée (SRS) utilisé dans l’application.
+This document describes the **non-mathematical hypotheses** of the spaced repetition model (SRS) used in the application.
 
-Il complète :
+It complements:
 
-* la documentation mathématique du SRS [`maths_srs.md`](maths_srs.md),
-* les diagrammes d’architecture (Domain, Sessions, Application).
+* the mathematical SRS documentation [`maths_srs.md`](maths_srs.md),
+* the architecture diagrams (Domain, Sessions, Application).
 
-Son objectif est de rendre **explicites les choix cognitifs, pédagogiques et produit** qui guident le modèle, afin :
+Its purpose is to make **explicit the cognitive, pedagogical, and product choices** that guide the model, in order to:
 
-* d’éviter des ambiguïtés lors des évolutions futures,
-* de distinguer clairement ce qui est volontairement simplifié de ce qui est réellement manquant,
-* de cadrer le périmètre du MVP.
-
----
-
-## 1. Hypothèse centrale : le SRS évalue une épreuve, pas une connaissance abstraite
-
-Chaque **exercice** (au sens : type d’épreuve) possède son propre état SRS.
-
-Un même contenu (mot, règle, phrase) peut donc être associé à **plusieurs exercices distincts**, par exemple :
-
-* langue A → langue B,
-* langue B → langue A,
-* reconnaissance vs rappel actif.
-
-Le SRS n’évalue jamais une “maîtrise globale” d’un mot ou d’une règle, mais uniquement la capacité à réussir **une épreuve précise**.
-
-Ce choix permet :
-
-* d’éviter toute ambiguïté sur ce que signifie « connaître » un élément,
-* d’aligner le modèle sur celui d’Anki (une note → plusieurs cartes),
-* de garder un SRS simple et local.
+* avoid ambiguity during future evolutions,
+* clearly distinguish what is intentionally simplified from what is genuinely missing,
+* define the scope of the MVP.
 
 ---
 
-## 2. Hypothèse sur le signal de réponse : auto‑évaluation subjective
+## 1. Core Hypothesis: the SRS evaluates a task, not abstract knowledge
 
-Le modèle suppose que l’utilisateur est capable de s’auto‑évaluer honnêtement après chaque exercice.
+Each **exercise** (in the sense of: type of task) has its own SRS state.
 
-Les réponses possibles (Easy / Good / Medium / Hard / Again) reflètent :
+The same content (word, rule, sentence) may therefore be associated with **several distinct exercises**, for example:
 
-* la justesse de la réponse,
-* le degré d’hésitation ressenti,
-* le temps perçu pour répondre,
-* la confiance dans la réponse.
+* language A → language B,
+* language B → language A,
+* recognition vs. active recall.
 
-Le **temps réel mesuré** n’est pas utilisé. Le signal est volontairement subjectif.
+The SRS never evaluates a "global mastery" of a word or rule, but only the ability to succeed at **one specific task**.
 
-Ce choix est assumé car :
+This choice allows:
 
-* l’utilisateur perçoit mieux sa propre difficulté que ne le ferait une mesure brute du temps,
-* cela évite une instrumentation lourde et fragile,
-* c’est le modèle utilisé par Anki avec succès.
-
----
-
-## 3. Hypothèse sur le retard : la réussite prime sur le temps écoulé
-
-Un succès à un exercice **n’est jamais pénalisé**, même en cas de retard important.
-
-Le modèle considère que :
-
-* si l’utilisateur réussit malgré le retard, l’état de maîtrise était suffisant,
-* le temps écoulé ne constitue pas à lui seul une information plus fiable que la réussite.
-
-Le retard n’est pris en compte **que lorsque l’exercice est échoué**, afin de :
-
-* réinitialiser ou affaiblir l’état SRS,
-* éviter qu’un succès chanceux répété masque une fragilité réelle.
-
-Ce choix favorise :
-
-* la stabilité du SRS,
-* la confiance utilisateur,
-* une interprétation simple et explicable du comportement du système.
+* avoiding any ambiguity about what it means to "know" an item,
+* aligning the model with Anki (one note → multiple cards),
+* keeping the SRS simple and local.
 
 ---
 
-## 4. Hypothèse d’indépendance locale des exercices
+## 2. Hypothesis on the response signal: subjective self-assessment
 
-Chaque exercice est traité comme **indépendant des autres**.
+The model assumes that the user is capable of honestly self-assessing after each exercise.
 
-Le SRS ne modélise pas :
+The possible responses (Easy / Good / Medium / Hard / Again) reflect:
 
-* les transferts de compétence entre exercices,
-* les dépendances entre vocabulaire et grammaire,
-* les relations hiérarchiques entre connaissances.
+* the correctness of the answer,
+* the degree of hesitation felt,
+* the perceived time to answer,
+* confidence in the response.
 
-Ce choix est volontaire.
+**Actual measured time** is not used. The signal is intentionally subjective.
 
-Il repose sur l’idée que :
+This choice is deliberate because:
 
-* une bonne couverture du vocabulaire est critique,
-* les phrases servent surtout d’exposition et de contextualisation,
-* une phrase mal maîtrisée doit simplement réapparaître plus tôt.
-
-L’approximation est jugée acceptable tant que :
-
-* les mots sont correctement révisés,
-* les erreurs sur les phrases entraînent une répétition rapide.
+* users perceive their own difficulty better than a raw time measurement would,
+* it avoids heavy and fragile instrumentation,
+* it is the model successfully used by Anki.
 
 ---
 
-## 5. Hypothèse sur le rôle des phrases
+## 3. Hypothesis on delay: success takes precedence over elapsed time
 
-Les phrases ne sont pas des unités de connaissance fondamentales.
+A successful response to an exercise is **never penalised**, even after a significant delay.
 
-Elles servent principalement à :
+The model considers that:
 
-* illustrer des règles grammaticales,
-* fournir du contexte réel,
-* renforcer la mémorisation par exposition répétée.
+* if the user succeeds despite the delay, the mastery state was sufficient,
+* elapsed time alone is not more reliable information than the success itself.
 
-Le SRS des phrases peut être moins précis que celui des mots sans compromettre l’apprentissage global.
+Delay is only taken into account **when the exercise is failed**, in order to:
 
-Des aides (ex. affichage de la traduction des mots dans une phrase) sont acceptables et ne remettent pas en cause l’exercice, car l’objectif principal reste l’exposition et la compréhension.
+* reset or weaken the SRS state,
+* prevent repeated lucky successes from masking a real fragility.
 
----
+This choice favours:
 
-## 6. Hypothèse produit : priorité à la simplicité et à l’explicabilité
-
-Le modèle privilégie :
-
-* des règles simples,
-* un comportement prévisible,
-* une explicabilité complète pour l’utilisateur et le développeur.
-
-Il ne cherche pas à atteindre une optimalité théorique maximale.
-
-Ce choix implique notamment :
-
-* l’absence de modèle probabiliste bayésien,
-* des paramètres globaux fixes,
-* l’absence d’apprentissage automatique des paramètres.
-
-Ces limites sont assumées pour le MVP.
+* SRS stability,
+* user confidence,
+* a simple and explainable system behaviour.
 
 ---
 
-## 7. Gestion des sessions (MVP)
+## 4. Hypothesis of local independence between exercises
 
-Les sessions sont des objets **éphémères**.
+Each exercise is treated as **independent from the others**.
 
-Elles ont pour rôle :
+The SRS does not model:
 
-* d’orchestrer une suite d’exercices,
-* de collecter les réponses,
-* de déléguer la mise à jour du SRS.
+* skill transfer between exercises,
+* dependencies between vocabulary and grammar,
+* hierarchical relationships between items of knowledge.
 
-La **priorisation des exercices** (ex. si 150 exercices sont dus mais que le maximum journalier est de 100) est réalisée **avant la session**, dans la couche Application.
+This choice is intentional.
 
-À l’intérieur d’une session :
+It rests on the idea that:
 
-* aucun tri supplémentaire n’est nécessaire,
-* les exercices sont présentés dans l’ordre défini à la création de la session.
+* good vocabulary coverage is critical,
+* sentences serve mainly as exposure and contextualisation,
+* a poorly mastered sentence should simply reappear sooner.
 
----
+The approximation is considered acceptable as long as:
 
-## 8. Gestion de la surcharge cognitive (MVP)
-
-Le modèle ne possède pas de représentation globale de l’état de l’utilisateur (fatigue, baisse de performance).
-
-Pour le MVP, la gestion repose sur des règles simples :
-
-* possibilité pour l’utilisateur d’interrompre une session à tout moment,
-* suggestion d’arrêt ou de pause en cas d’erreurs répétées.
-
-Les erreurs ponctuelles ou une mauvaise session ne doivent pas pénaliser durablement l’état SRS.
+* words are correctly revised,
+* errors on sentences lead to rapid repetition.
 
 ---
 
-## 9. Périmètre explicite du MVP
+## 5. Hypothesis on the role of sentences
 
-Le MVP **n’essaie pas** de résoudre les problèmes suivants :
+Sentences are not fundamental units of knowledge.
 
-* modélisation probabiliste fine de la mémoire,
-* transferts de compétence entre connaissances,
-* apprentissage automatique des paramètres SRS,
-* adaptation globale du modèle à l’utilisateur.
+They serve primarily to:
 
-Ces évolutions sont considérées comme **post‑MVP** et ne doivent pas influencer les choix actuels tant que les hypothèses ci‑dessus sont respectées.
+* illustrate grammatical rules,
+* provide real-world context,
+* reinforce memorisation through repeated exposure.
 
----
+The SRS for sentences may be less precise than that for words without compromising overall learning.
 
-## 10. Rôle de ce document
-
-Ce document sert de référence pour :
-
-* justifier les choix du modèle SRS,
-* guider les évolutions futures sans dénaturer le système,
-* éviter l’introduction de fonctionnalités incohérentes avec les hypothèses fondatrices.
-
-Toute modification majeure du SRS doit être évaluée au regard des hypothèses décrites ici.
+Aids (e.g. displaying word translations within a sentence) are acceptable and do not invalidate the exercise, since the primary objective remains exposure and comprehension.
 
 ---
 
-## TODO :
+## 6. Product hypothesis: priority on simplicity and explainability
 
-* suggestion d’arrêt ou de pause en cas d’erreurs répétées.
-* La **priorisation des exercices** dans la couche applicative selon la probabilité de rappel (et non pas selon l'interval)
+The model favours:
+
+* simple rules,
+* predictable behaviour,
+* complete explainability for both the user and the developer.
+
+It does not aim for maximum theoretical optimality.
+
+This implies in particular:
+
+* no Bayesian probabilistic model,
+* fixed global parameters,
+* no automatic parameter learning.
+
+These limitations are accepted for the MVP.
+
+---
+
+## 7. Session management (MVP)
+
+Sessions are **ephemeral** objects.
+
+Their role is to:
+
+* orchestrate a sequence of exercises,
+* collect responses,
+* delegate SRS updates.
+
+**Exercise prioritisation** (e.g. if 150 exercises are due but the daily maximum is 100) is performed **before the session**, in the Application layer.
+
+Inside a session:
+
+* no additional sorting is necessary,
+* exercises are presented in the order defined at session creation.
+
+---
+
+## 8. Cognitive load management (MVP)
+
+The model has no global representation of the user's state (fatigue, declining performance).
+
+For the MVP, management relies on simple rules:
+
+* the user may interrupt a session at any time,
+* a stop or pause may be suggested in case of repeated errors.
+
+Occasional errors or a poor session should not permanently penalise the SRS state.
+
+---
+
+## 9. Explicit MVP scope
+
+The MVP **does not attempt** to solve the following problems:
+
+* fine-grained probabilistic memory modelling,
+* skill transfer between items of knowledge,
+* automatic SRS parameter learning,
+* global model adaptation to the user.
+
+These evolutions are considered **post-MVP** and must not influence current choices as long as the hypotheses above are respected.
+
+---
+
+## 10. Role of this document
+
+This document serves as a reference for:
+
+* justifying the SRS model choices,
+* guiding future evolutions without distorting the system,
+* preventing the introduction of features inconsistent with the founding hypotheses.
+
+Any major SRS modification must be evaluated against the hypotheses described here.
+
+---
+
+## TODO:
+
+* Suggestion to stop or pause in case of repeated errors.
+* **Exercise prioritisation** in the application layer based on recall probability (rather than interval).

@@ -1,40 +1,40 @@
 # `docs/architecture/sessions.md`
 
-## Objectif
+## Purpose
 
-Décrire le **rôle des sessions** dans le moteur d’apprentissage et leur **cycle de vie**.
+Describe the **role of sessions** in the learning engine and their **lifecycle**.
 
-Ce document précise :
+This document specifies:
 
-* ce qu’est une `Session`,
-* ce qu’elle fait et ne fait pas,
-* comment elle interagit avec les exercices,
-* les invariants à respecter lors de son utilisation.
+* what a `Session` is,
+* what it does and does not do,
+* how it interacts with exercises,
+* the invariants to respect when using it.
 
-Les détails internes des exercices sont décrits dans [`exercises.md`](exercises.md).
-
----
-
-## Rôle d’une Session
-
-Une `Session` est un **orchestrateur runtime**.
-
-Elle est responsable de :
-
-* l’enchaînement temporel des exercices,
-* la gestion du début et de la fin d’une session,
-* la collecte d’un résultat global.
-
-Elle n’est **pas responsable** :
-
-* de la logique SRS,
-* de la logique d’évaluation d’une réponse,
-* de la création des exercices,
-* de l’affichage.
+Internal exercise details are described in [`exercises.md`](exercises.md).
 
 ---
 
-## Diagramme conceptuel
+## Role of a Session
+
+A `Session` is a **runtime orchestrator**.
+
+It is responsible for:
+
+* the temporal sequencing of exercises,
+* managing the start and end of a session,
+* collecting a global result.
+
+It is **not responsible** for:
+
+* SRS logic,
+* response evaluation logic,
+* exercise creation,
+* display.
+
+---
+
+## Conceptual Diagram
 
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
@@ -61,150 +61,150 @@ classDiagram
 
 ---
 
-## Cycle de vie d’une Session
+## Session Lifecycle
 
-Une session suit un **cycle de vie strict** :
+A session follows a **strict lifecycle**:
 
-1. **Création**
+1. **Creation**
 
-   * Une session est créée avec :
+   * A session is created with:
 
-     * une liste d’`Exercice`,
-     * un `SessionType`,
-     * un `SRSConfig`.
-   * Aucun exercice n’est encore actif.
+     * a list of `Exercise` objects,
+     * a `SessionType`,
+     * a `SRSConfig`.
+   * No exercise is yet active.
 
-2. **Démarrage**
+2. **Start**
 
-   * La session est démarrée explicitement (`begin`).
-   * Un premier exercice devient courant.
+   * The session is explicitly started (`begin`).
+   * The first exercise becomes current.
 
-3. **Déroulement**
+3. **Execution**
 
-   * La session :
+   * The session:
 
-     * maintient un exercice courant,
-     * est appelée avec des réponses utilisateur (`ExerciseAnswer`) par la couche applicative,
-     * délègue le traitement aux exercices,
-     * sélectionne l’exercice suivant.
+     * maintains a current exercise,
+     * is called with user responses (`ExerciseAnswer`) by the application layer,
+     * delegates processing to exercises,
+     * selects the next exercise.
 
-4. **Fin**
+4. **End**
 
-   * La session se termine :
+   * The session terminates:
 
-     * soit naturellement (plus d’exercices actifs),
-     * soit de manière anticipée.
-   * Un `SessionResult` final est produit.
-
----
-
-## Enchaînement des exercices
-
-La session :
-
-* possède une **liste d’exercices préexistants** maintenue dynamiquement dans l'ordre de passage,
-* maintient un **exercice courant**,
-* détermine l’ordre de passage en fonction :
-
-  * de l’état des exercices (`ExerciseStatus`),
-  * de règles d’orchestration simples.
-
-La session :
-
-* **observe** l’état des exercices,
-* **ne modifie jamais directement** leur logique interne.
+     * either naturally (no more active exercises),
+     * or early (user-triggered).
+   * A final `SessionResult` is produced.
 
 ---
 
-## Interaction avec les Exercices
+## Exercise Sequencing
 
-Lorsqu’une réponse utilisateur est soumise :
+The session:
 
-1. La session reçoit un `ExerciseAnswer`
-2. Elle délègue la réponse à l’exercice courant.
-3. L’exercice :
+* holds a **pre-existing list of exercises** maintained dynamically in order of presentation,
+* maintains a **current exercise**,
+* determines the presentation order based on:
 
-   * met à jour son état,
-   * met à jour les mécanismes de progression.
-4. La session maintient l'ordre des exercices, met à jour le `SessionResult`, puis sélectionne l’exercice suivant.
+  * exercise state (`ExerciseStatus`),
+  * simple orchestration rules.
 
-La session ne connaît pas :
+The session:
 
-* la signification d’une réponse (`Grade`, durées, timing),
-* les règles d’évaluation ou de progression.
+* **observes** exercise state,
+* **never directly modifies** their internal logic.
 
 ---
 
-## Preview vs soumission réelle
+## Interaction with Exercises
 
-La session distingue deux types d’interactions utilisateur :
+When a user response is submitted:
 
-* **Soumission réelle** (`RealExerciseAnswer`)
-  * modifie l’état de l’exercice et du SRS,
-  * met à jour le `SessionResult`,
-  * déclenche la persistance côté applicatif.
+1. The session receives an `ExerciseAnswer`.
+2. It delegates the response to the current exercise.
+3. The exercise:
 
-* **Prévisualisation** (`PreviewExerciseAnswer`)
-  * permet de simuler l’interval théorique,
-  * n’a aucun effet de bord,
-  * ne modifie ni l’exercice, ni la session.
+   * updates its state,
+   * updates the progression mechanisms.
+4. The session maintains exercise ordering, updates `SessionResult`, then selects the next exercise.
 
-Cette distinction garantit que :
-* la logique de calcul est unique,
-* l’état du Domain n’est jamais modifié par une action exploratoire.
+The session does not know:
+
+* the meaning of a response (`Grade`, durations, timing),
+* evaluation or progression rules.
+
+---
+
+## Preview vs Real Submission
+
+The session distinguishes two types of user interactions:
+
+* **Real submission** (`RealExerciseAnswer`)
+  * modifies the exercise and SRS state,
+  * updates `SessionResult`,
+  * triggers persistence on the application side.
+
+* **Preview** (`PreviewExerciseAnswer`)
+  * simulates the theoretical interval,
+  * has no side effects,
+  * modifies neither the exercise nor the session.
+
+This distinction guarantees that:
+* calculation logic is unique,
+* the Domain state is never modified by an exploratory action.
 
 ---
 
 ## SessionType
 
-Un `SessionType` représente l’**intention pédagogique** de la session.
+A `SessionType` represents the **pedagogical intent** of the session.
 
-Il est utilisé :
+It is used:
 
-* lors de l’initialisation uniquement,
-* pour valider la cohérence des exercices fournis,
-* pour qualifier la session du point de vue utilisateur et statistique.
+* during initialisation only,
+* to validate the consistency of the provided exercises,
+* to qualify the session from a user and statistical perspective.
 
-Il n’est **pas un état long-vivant** de la session
-et n’influence pas son comportement interne après initialisation.
+It is **not a long-lived state** of the session
+and does not influence its internal behaviour after initialisation.
 
 ---
 
 ## SessionResult
 
-Un `SessionResult` est un **objet de synthèse**. 
-Il est créé lors de l'initialisation et est modifié à chaque réponse.
+A `SessionResult` is a **summary object**.
+It is created during initialisation and updated after each response.
 
-Il agrège :
+It aggregates:
 
-* des compteurs (exercices traités, réussites, échecs),
-* des informations temporelles,
-* des données de progression globale.
+* counters (exercises processed, successes, failures),
+* timing information,
+* global progression data.
 
-Il ne contient :
+It contains:
 
-* aucune logique métier,
-* aucune règle d’évaluation.
-
----
-
-## Invariants fondamentaux
-
-* Une session orchestre des exercices, elle ne les crée pas.
-* Une session ne contient aucune logique SRS ni de logique d’évaluation de réponse.
-* Une session ne connaît pas le contenu pédagogique détaillé.
-* Toute modification de progression passe par un exercice.
-* Une session ne peut être démarrée qu’une seule fois.
-* Une session terminée ne peut plus accepter de réponses.
-* La couche applicative observe l’état de la session uniquement via des getters explicites (afin de garantir la cohérence et faciliter la persistance).
+* no business logic,
+* no evaluation rules.
 
 ---
 
-## Ce que la Session ignore volontairement
+## Core Invariants
 
-La session ignore :
+* A session orchestrates exercises — it does not create them.
+* A session contains no SRS logic and no response evaluation logic.
+* A session does not know the detailed pedagogical content.
+* All progression updates go through an exercise.
+* A session can only be started once.
+* A terminated session can no longer accept responses.
+* The application layer observes session state only through explicit getters (to ensure consistency and facilitate persistence).
 
-* l’UI et les écrans,
-* la persistence,
-* les paramètres utilisateur,
-* l’organisation du contenu en chapitres.
+---
+
+## What the Session Intentionally Ignores
+
+The session ignores:
+
+* UI and screens,
+* persistence,
+* user parameters,
+* organisation of content into chapters.

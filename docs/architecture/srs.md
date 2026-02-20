@@ -1,35 +1,34 @@
 # `docs/architecture/srs.md`
 
-## Objectif
+## Purpose
 
-Décrire le **fonctionnement du système de répétition espacée (SRS)** et ses règles
-d’utilisation dans le moteur d’apprentissage.
+Describe the **functioning of the Spaced Repetition System (SRS)** and its usage rules within the learning engine.
 
-Ce document précise :
+This document specifies:
 
-* le rôle du SRS,
-* la responsabilité des classes impliquées,
-* la distinction intra-session / inter-session,
-* les règles de persistance.
-
----
-
-## Rôle du SRS
-
-Le SRS est responsable de :
-
-* représenter l’état de mémorisation,
-* faire évoluer cet état après chaque réponse,
-* calculer un **interval théorique de révision**.
-
-Le SRS :
-
-* ne connaît pas la notion de session,
-* ne décide jamais quand une révision a lieu. Il calcule uniquement le moment où une révision serait optimisée.
+* the role of the SRS,
+* the responsibilities of the classes involved,
+* the distinction between intra-session and inter-session behaviour,
+* persistence rules.
 
 ---
 
-## Diagramme SRS
+## Role of the SRS
+
+The SRS is responsible for:
+
+* representing the memorisation state,
+* evolving that state after each response,
+* computing a **theoretical review interval**.
+
+The SRS:
+
+* has no concept of a session,
+* never decides when a review takes place — it only computes when a review would be optimal.
+
+---
+
+## SRS Diagram
 
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
@@ -73,130 +72,131 @@ SRSState ..> SRSConfig : uses
 
 ## SRSState
 
-`SRSState` représente l’état de mémorisation d’un exercice.
+`SRSState` represents the memorisation state of an exercise.
 
-* Attaché directement à `Exercise`
-* Persisté
-* Modifié uniquement suite à une réponse utilisateur
+* Attached directly to `Exercise`.
+* Persisted.
+* Modified only as the result of a user response.
 
-Responsabilités :
+Responsibilities:
 
+* interpret a user response (`ExerciseAnswer`),
+* evolve the memorisation state,
+* compute a theoretical review interval,
+* provide an interval simulation without side effects (preview).
 
-* interpréter une réponse utilisateur (`ExerciseAnswer`),
-* faire évoluer l’état de mémorisation,
-* calculer un interval théorique de révision,
-* fournir une simulation d’interval sans effet de bord (preview).
+`SRSState` never directly consumes a `Grade`.
+It interprets an `ExerciseAnswer`, which encapsulates:
+* the grade (`Grade`),
+* The timestamp (the moment of the response),
+* and optionally timing information (step durations).
 
-`SRSState` ne consomme jamais directement un `Grade`.
-Il interprète un `ExerciseAnswer`, qui encapsule :
-* la note (`Grade`),
-* le moment de la réponse,
-* et éventuellement des informations temporelles (durées d’étapes).
-
+---
 
 ## SRSConfig
 
-`SRSConfig` regroupe les paramètres du modèle SRS.
+`SRSConfig` groups the parameters of the SRS model.
 
-* Fourni à la `Session`
-* Utilisé lors de la mise à jour du `SRSState`
-* Ne contient aucune logique runtime
+* Provided to the `Session`.
+* Used when updating `SRSState`.
+* Contains no runtime logic.
 
+---
 
 ## SentenceState
 
-`SentenceState` représente l’état d’exposition/usage d’une phrase. Il est mis à jour par les exercices de type `SentenceExercise` (typiquement un état par phrase du groupe), indépendamment du SRS : il ne calcule pas d’intervalle de révision mais sert au suivi de progression “contextuelle”.
+`SentenceState` represents the exposure/usage state of a sentence. It is updated by `SentenceExercise` objects (typically one state per sentence in the group), independently of the SRS: it does not compute a review interval but serves contextual progression tracking.
 
-Son Rôle est de garder les informations permettant à `SentenceExercise` de choisir la phrase à afficher. Typiquement : phrase la moins montrée / la moins réussie du groupe.
+Its role is to hold the information that allows `SentenceExercise` to choose which sentence to display — typically: the least shown / least successfully answered sentence in the group.
+
+---
 
 ## ExerciseAnswer
 
-Le SRS ne traite pas directement des notes brutes, mais des **réponses utilisateur modélisées**.
+The SRS does not process raw grades directly, but **modelled user responses**.
 
-`ExerciseAnswer` est un type scellé représentant une interaction avec un exercice :
+`ExerciseAnswer` is a sealed type representing an interaction with an exercise:
 
-* `RealExerciseAnswer` correspond à une réponse effective de l’utilisateur, et entraine une mise à jour persisté du `SRSState`.
+* `RealExerciseAnswer` corresponds to an actual user response and triggers a persisted update to `SRSState`.
 
-* `PreviewExerciseAnswer` représente une réponse hypothétique, permet de simuler l’évolution de l’interval  et n’a **aucun effet de bord**.
+* `PreviewExerciseAnswer` represents a hypothetical response, allows simulation of interval evolution, and has **no side effects**.
 
-Cette distinction garantit que :
-* la prévisualisation n’altère jamais l’état persisté,
-* toute mise à jour réelle du SRS est explicitement intentionnelle.
+This distinction guarantees that:
+* preview never alters the persisted state,
+* every real SRS update is explicitly intentional.
 
+---
 
 ## Grade
 
-`Grade` représente la qualité d’une réponse utilisateur (ex. échec, réussite partielle, réussite). Il est fourni par la couche applicative, mais son interprétation (effet sur la progression) est entièrement gérée par l’exercice et le SRS.
-Certains grades ne sont pas possible pour tous les types d'exercice.
+`Grade` represents the quality of a user response (e.g. failure, partial success, success). It is provided by the application layer, but its interpretation (effect on progression) is entirely managed by the exercise and the SRS.
+Not all grades are valid for every exercise type.
 
 ---
 
-## Intra-session vs inter-session
+## Intra-Session vs Inter-Session
 
-### Interval théorique
+### Theoretical Interval
 
-Après une réponse, le SRS calcule un interval **indépendant du contexte** :
+After a response, the SRS computes an interval **independent of context**:
 
-* minutes
-* heures
-* jours
+* minutes,
+* hours,
+* days.
 
+### Intra-Session Usage
 
-### Utilisation intra-session
+The `Session` may use the interval to:
 
-La `Session` peut utiliser l’interval pour :
+* reorder exercises,
+* re-present an exercise within the session,
+* ignore intervals that exceed the session duration.
 
-* réordonner les exercices,
-* reproposer un exercice pendant la session,
-* ignorer les intervalles dépassant la session.
+The session:
 
-La session :
+* never modifies the interval,
+* only applies an orchestration policy.
 
-* ne modifie jamais l’interval,
-* applique uniquement une politique d’orchestration.
+### Inter-Session Usage
 
-### Utilisation inter-session
+Outside of a session:
 
-En dehors d’une session :
-
-* l’interval sert à planifier la prochaine révision,
-* aucune logique de session n’intervient.
+* the interval is used to schedule the next review,
+* no session logic is involved.
 
 ---
 
-## Utilisation pratique
+## Practical Usage
 
-### Preview d’interval
+### Interval Preview
 
-La session peut exposer une **prévisualisation d’interval** :
+The session can expose an **interval preview**:
 
-* sans modifier le `SRSState`,
-* en utilisant une `PreviewExerciseAnswer`,
-* avec une logique strictement identique à celle d’une réponse réelle.
-* à des fins d’information utilisateur : l'utilisateur sait quand il reverra le même exercice s’il obtient un grade précis.
+* without modifying `SRSState`,
+* using a `PreviewExerciseAnswer`,
+* with logic strictly identical to that of a real response,
+* for informational purposes: the user knows when they will see the same exercise again if they achieve a given grade.
 
+### Persistence: Fundamental Rule
 
+`SRSState` objects are persisted **after each valid user response**.
 
-### Persistance: Règle fondamentale
+* The Domain updates the SRS.
+* The application layer triggers persistence.
+* Sessions and exercises are never persisted.
 
-Les `SRSState` sont persistés **après chaque réponse utilisateur valide**.
+### Mobile Considerations
 
-* Le Domain met à jour le SRS
-* La couche applicative déclenche la persistance
-* Les sessions et exercices ne sont jamais persistés
-
-### Cas mobile
-
-* Une session interrompue est abandonnée
-* Les exercices non terminés sont perdus
-* Les `SRSState` persistés restent valides
-* Les statistiques temporelles sont best-effort
+* An interrupted session is abandoned.
+* Unfinished exercises are lost.
+* Already persisted `SRSState` objects remain valid.
+* Timing statistics are best-effort.
 
 ---
 
 ## Invariants
 
-* Le SRS calcule uniquement des intervalles théoriques
-* Le SRS ne connaît pas la notion de session
-* Toute mise à jour du SRS passe par un exercice
-* La persistance est immédiate après chaque réponse
+* The SRS computes only theoretical intervals.
+* The SRS has no concept of a session.
+* Every SRS update goes through an exercise.
+* Persistence is immediate after each response.

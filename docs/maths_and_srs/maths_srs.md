@@ -1,18 +1,18 @@
-# 🧮 Mathématiques du modèle SRS
+# 🧮 SRS Model Mathematics
 
-Ce document décrit les formules et les variables utilisées par le moteur SRS de l’application.
+This document describes the formulas and variables used by the SRS engine of the application.
 
 ---
 
-## 🔹 Modèle de base
+## 🔹 Base Model
 
-La probabilité de rétention après un délai $t$ est :
+The retention probability after a delay $t$ is:
 
 $$
 P(t) = (1 - w)\,e^{-k t} + w
 $$
 
-On cherche l’intervalle $I$ tel que $P(I) = R^*$ :
+We seek the interval $I$ such that $P(I) = R^*$:
 
 $$
 I = -\frac{1}{k}\ln\!\left(\frac{R^* - w}{1 - w}\right)
@@ -20,127 +20,127 @@ $$
 
 ---
 
-## 🔹 Variables principales
+## 🔹 Main Variables
 
-| Symbole | Nom (champ / param) | Description |
+| Symbol | Name (field / param) | Description |
 |---:|---|---|
-| $R^*$ | `rstar` | cible de probabilité de rappel |
-| $k$ | `kFactor` | coefficient d’oubli (court terme) |
-| $\text{easeFactor}$ | `easeFactor` | facteur d’aisance (ajuste $k$ en review) |
-| $w$ | `w` | poids de la mémoire long terme (déterminé par $\bar{R}$) |
-| $w_{\max}$ | `wMax` (dérivé) | $w_{\max} = \text{wMaxFactor}\cdot R^*$ |
-| $\bar{R}$ | `rbar` | moyenne pondérée des succès récents |
-| $\lambda$ | `lambdas[q]` | poids de pondération associé à la note $q$ |
-| $\mu$ | `mu` | taux de décroissance exponentielle en cas de longue pause |
-| `longPause` | `longPause` | délai (jours) après lequel on réinitialise complètement |
-| `minTolFactor` | `minTolFactor` | facteur minimal de tolérance pour retard |
-| $I$ | `interval` | intervalle courant (Duration) |
-| `nextReview` | `nextReview` | DateTime de la prochaine révision prévue |
-| `lastReview` | `lastReview` | DateTime de la dernière révision |
-| `history` | `history` | historique des notes (liste) |
-| `learningStepIndex` | `learningStepIndex` | index de l’étape d’apprentissage (-1 = review) |
-| `learningSteps` | `learningSteps` | durées des étapes d’apprentissage (List<Duration>) |
-| `easyInterval` | `easyInterval` | intervalle en jours pour "Easy" graduation |
-| `hardReviewFactor` | `hardReviewFactor` | multiplicateur pour "Hard" en review |
-| `hardLearningFactor` | `hardLearningFactor` | multiplicateur pour "Hard" en learning |
-| `easyBonus` | `easyBonus` | multiplicateur pour "Easy" en review |
-| `iMax` | `iMax` | intervalle max (jours) |
-| `defaultEF` | `defaultEF` | valeur EF par défaut (ease factor) |
-| `defaultW` | `defaultW` | valeur w par défaut |
-| `wMaxFactor` | `wMaxFactor` | facteur pour calculer $w_{\max}$ |
-| `dayBoundary` | `dayBoundary` | durée représentant la frontière de jour (Duration) |
+| $R^*$ | `rstar` | target recall probability |
+| $k$ | `kFactor` | forgetting coefficient (short-term) |
+| $\text{easeFactor}$ | `easeFactor` | ease factor (adjusts $k$ during review) |
+| $w$ | `w` | long-term memory weight (determined by $\bar{R}$) |
+| $w_{\max}$ | `wMax` (derived) | $w_{\max} = \text{wMaxFactor}\cdot R^*$ |
+| $\bar{R}$ | `rbar` | weighted average of recent successes |
+| $\lambda_q$ | `lambdas[q]` | weighting factor associated with grade $q$ |
+| $\mu$ | `mu` | exponential decay rate during long pauses |
+| `longPause` | `longPause` | delay (days) after which state is fully reset |
+| `minTolFactor` | `minTolFactor` | minimum tolerance factor for delay |
+| $I$ | `interval` | current interval (Duration) |
+| `nextReview` | `nextReview` | DateTime of the next scheduled review |
+| `lastReview` | `lastReview` | DateTime of the last review |
+| `history` | `history` | grade history (list) |
+| `learningStepIndex` | `learningStepIndex` | learning step index (-1 = review mode) |
+| `learningSteps` | `learningSteps` | learning step durations (List\<Duration\>) |
+| `easyInterval` | `easyInterval` | interval in days for "Easy" graduation |
+| `hardReviewFactor` | `hardReviewFactor` | multiplier for "Hard" in review mode |
+| `hardLearningFactor` | `hardLearningFactor` | multiplier for "Hard" in learning mode |
+| `easyBonus` | `easyBonus` | multiplier for "Easy" in review mode |
+| `iMax` | `iMax` | maximum interval (days) |
+| `defaultEF` | `defaultEF` | default ease factor value |
+| `defaultW` | `defaultW` | default `w` value |
+| `wMaxFactor` | `wMaxFactor` | factor used to compute $w_{\max}$ |
+| `dayBoundary` | `dayBoundary` | duration representing the day boundary (Duration) |
 
-(Vérifié : tous les champs présents dans `SRSState` et `SRSConfig` sont listés ci-dessus.)
+(Verified: all fields present in `SRSState` and `SRSConfig` are listed above.)
 
 ---
 
-## 🔹 Mise à jour des paramètres
+## 🔹 Parameter Updates
 
-### 1) Moyenne pondérée des succès
-Après une observation `obs` (1 = succès, 0 = échec) et un poids $\lambda$ dépendant de la note $q$ :
+### 1) Weighted success average
+After an observation `obs` (1 = success, 0 = failure) and a weight $\lambda_q$ depending on grade $q$:
 
 $$
-\bar{R}_{t+1} = \lambda\,\bar{R}_t + (1 - \lambda)\,\text{obs}
+\bar{R}_{t+1} = \lambda_q\,\bar{R}_t + (1 - \lambda_q)\,\text{obs}
 $$
 
-### 2) Mémoire long terme
+### 2) Long-term memory
 $$
 w = w_{\max}\cdot \bar{R},\qquad w_{\max} = \text{wMaxFactor}\cdot R^*
 $$
 
-### 3) Ajustement du taux d’oubli via easeFactor
-Lors d’une révision réussie :
+### 3) Forgetting rate adjustment via easeFactor
+On a successful review:
 
 $$
 k_{\text{new}} = \dfrac{k_{\text{old}}}{\text{easeFactor}}
 $$
 
-### 4) Calcul de l’intervalle suivant
-Avec $k_{\text{new}}$ et $w$ mis à jour :
+### 4) Next interval computation
+With updated $k_{\text{new}}$ and $w$:
 
 $$
 I_{\text{next}} = -\frac{1}{k_{\text{new}}}\ln\!\left(\frac{R^* - w}{1 - w}\right)
 $$
 
-Limitation appliquée : $I_{\text{next}} \le iMax$ (en jours).
+Constraint applied: $I_{\text{next}} \le iMax$ (in days).
 
 ---
 
-## 🔹 Gestion des longues pauses (retard) et rôle de $\mu$
+## 🔹 Long Pause (Delay) Handling and the Role of $\mu$
 
-Soit $\Delta t$ le temps écoulé depuis la dernière révision et $I$ l’intervalle attendu. Définir :
+Let $\Delta t$ be the time elapsed since the last review and $I$ the expected interval. Define:
 
 $$
 l = \max(0,\Delta t - I)
 $$
 
-Tolérance :
+Tolerance:
 
 $$
 \text{tol} = \min(\text{longPause},\; \text{minTolFactor}\cdot I)
 $$
 
-- Si $l \ge \text{longPause}$ et que la note $q < 2$ (review is failed) alors réinitialisation :
+- If $l \ge \text{longPause}$ and grade $q < 2$ (review is failed), then reset:
   $$
   \bar{R}\leftarrow 0,\quad w\leftarrow 0
   $$
-- Sinon si $l > \text{tol}$ alors décroissance exponentielle :
+- Otherwise, if $l > \text{tol}$, apply exponential decay:
   $$
   \bar{R}_{t+1} = \bar{R}_t\,e^{-\mu l}
   $$
-  puis
+  then:
   $$
   w \leftarrow w_{\max}\cdot \bar{R}_{t+1}
   $$
 
-$\mu$ contrôle la vitesse de perte de mémoire après une longue absence.
+$\mu$ controls the rate of memory loss after a long absence.
 
-Le produit de `wMax` par `Rbar` permet de s'assurer que `w <= wMax` tout en évitant une discontinuité brutale.
-
----
-
-## 🔹 Remarques d’implémentation
-
-- Les valeurs extrêmes sont bornées pour éviter divisions par zéro ou logarithmes invalides (on clamppe les arguments dans le code).  
-- Les transitions entre mode *learning* et *review* se font via `learningStepIndex == -1`.  
-- Les boutons (grades $q\in\{0..5\}$) déterminent $\lambda$ via `getLambda(q)` et influencent à la fois $\bar{R}$ et l’évolution d’`easeFactor`:
-  - Bouton Again :  $q=0$ 
-  - Bouton Hard :   $q=2$  > Nouveau bouton inexistant sur Anki
-  - Bouton Medium : $q=3$  > Equivalent au bouton Hard de Anki
-  - Bouton Good :   $q=4$
-  - Bouton Easy :   $q=5$
-- Les formules présentées sont celles utilisées implicitement par `computePreview*` et `apply*` dans `SRSState`.
+Multiplying `wMax` by `Rbar` ensures that `w <= wMax` while avoiding an abrupt discontinuity.
 
 ---
 
-## 🔹 Cycle résumé
+## 🔹 Implementation Notes
 
-1. L’utilisateur donne une note $q$.  
-2. Application éventuelle de la décroissance ($\mu$) si retard important.  
-4. Ajustement de $k$ (via `easeFactor`) et mise à jour d’`easeFactor` si en review.  
-5. Calcul de $I_{\text{next}}$ et mise à jour de `interval`, `nextReview`, `lastReview`, `history`.
-6. Calcul/maj de $\bar{R}$, $w$.  
+- Extreme values are clamped to avoid division by zero or invalid logarithms (arguments are clamped in code).
+- Transitions between *learning* and *review* mode are handled via `learningStepIndex == -1`.
+- Buttons (grades $q\in\{0..5\}$) determine $\lambda$ via `getLambda(q)` and influence both $\bar{R}$ and the evolution of `easeFactor`:
+  - Again button: $q=0$
+  - Hard button:  $q=2$  → New button, does not exist in Anki
+  - Medium button: $q=3$ → Equivalent to Anki's Hard button
+  - Good button:  $q=4$
+  - Easy button:  $q=5$
+- The formulas presented are those implicitly used by `computePreview*` and `apply*` in `SRSState`.
 
 ---
 
-_Fichier : `docs/models/maths_srs.md` — formules et variables clés du SRS._
+## 🔹 Summary Cycle
+
+1. The user gives a grade $q$.
+2. Optional decay ($\mu$) applied if delay is significant.
+3. Adjustment of $k$ (via `easeFactor`) and update of `easeFactor` if in review mode.
+4. Computation of $I_{\text{next}}$ and update of `interval`, `nextReview`, `lastReview`, `history`.
+5. Computation/update of $\bar{R}$ and $w$.
+
+---
+
+_File: `docs/maths_and_srs/maths_srs.md` — key formulas and variables of the SRS._

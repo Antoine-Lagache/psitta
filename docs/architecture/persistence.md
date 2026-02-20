@@ -1,23 +1,23 @@
 # `docs/architecture/persistence.md`
 
-## Objectif
+## Purpose
 
-Décrire la couche **Persistence**, responsable du stockage et de la récupération des données de l’application.
+Describe the **Persistence** layer, responsible for storing and retrieving application data.
 
-Cette couche :
+This layer:
 
-* encapsule **SQLite**,
-* implémente les **repositories**,
-* gère le **mapping DB ↔ Domain**,
-* isole toutes les décisions techniques liées aux performances.
+* encapsulates **SQLite**,
+* implements the **repositories**,
+* handles **DB ↔ Domain mapping**,
+* isolates all technical decisions related to performance.
 
-Aucune logique métier ne doit se trouver ici.
+No business logic should reside here.
 
-⚠️ La Persistence ne fait qu’enregistrer les états calculés par le Domain.
+⚠️ Persistence only records states computed by the Domain.
 
 ---
 
-## Diagramme
+## Diagram
 
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
@@ -26,7 +26,7 @@ classDiagram
 namespace Persistence {
   class WordRepository
   class SentenceRepository
-  class ExerciceRepository
+  class ExerciseRepository
   class ChapterRepository
   class SrsRepository
   class SettingsRepository
@@ -36,7 +36,7 @@ class SQLiteDatabase
 
 WordRepository --> SQLiteDatabase
 SentenceRepository --> SQLiteDatabase
-ExerciceRepository --> SQLiteDatabase
+ExerciseRepository --> SQLiteDatabase
 ChapterRepository --> SQLiteDatabase
 SrsRepository --> SQLiteDatabase
 SettingsRepository --> SQLiteDatabase
@@ -44,116 +44,115 @@ SettingsRepository --> SQLiteDatabase
 
 ---
 
-## Responsabilités des repositories
+## Repository Responsibilities
 
-### Principe général
+### General Principle
 
-Un **repository** représente un **concept métier utilisé par l’application**,
-pas nécessairement une table SQL unique.
+A **repository** represents a **business concept used by the application**,
+not necessarily a single SQL table.
 
-Chaque repository :
+Each repository:
 
-* expose des méthodes orientées métier,
-* cache le SQL,
-* retourne uniquement des objets du **Domain**.
+* exposes business-oriented methods,
+* hides SQL,
+* returns only **Domain** objects.
 
 ---
 
-### Repositories principaux
+### Main Repositories
 
 #### `WordRepository`
 
-* charge les mots par chapitre
-* charge les mots dus (via SRS)
-* sauvegarde l’état SRS des mots
+* loads words by chapter,
+* loads due words (via SRS),
+* saves the SRS state of words.
 
 #### `SentenceRepository`
 
-* charge les phrases par groupe ou par chapitre
-* utilisée principalement pour la génération d’exercices
+* loads sentences by group or by chapter,
+* used primarily for exercise generation.
 
-#### `ExerciceRepository`
+#### `ExerciseRepository`
 
-* création d'exercice en utilisant `WordRepository`, `SentenceRepository` et `SrsRepository`
-* Les exercices ne sont pas persisté, mais créer sur la demande de la couche applicative grace aux autres repository qui sont eux, persisté.
+* creates exercises using `WordRepository`, `SentenceRepository`, and `SrsRepository`,
+* exercises are not persisted, but created on demand by the application layer through the other repositories, which are themselves persisted.
 
 #### `ChapterRepository`
 
-* charge la structure pédagogique
-* ordre et contenu des chapitres, métadonnées
+* loads the pedagogical structure,
+* chapter order and content, metadata.
 
 #### `SrsRepository`
 
-* gère **SRSState**, **SRSConfig** et **SentenceState**
-* persiste :
+* manages **SRSState**, **SRSConfig**, and **SentenceState**,
+* persists:
 
-  * les états de progression calculés par le Domain
-  * prochaine date de révision
-  * niveau / intervalle
+  * progression states computed by the Domain,
+  * next review date,
+  * level / interval.
 
-👉 Pour le MVP, `SRSState` et `SRSConfig` et `SentenceState` sont volontairement regroupés ici (pourra etre séparé plus tard)
+👉 For the MVP, `SRSState`, `SRSConfig`, and `SentenceState` are intentionally grouped here (may be split later).
 
 #### `SettingsRepository`
 
-* paramètres globaux de l’application
-* ex :
+* global application parameters, e.g.:
 
-  * langues A / B
-  * taille des sessions
-  * préférences utilisateur
-  * paramètres SRS
-
----
-
-## Mapping DB ↔ Domain
-
-Le mapping entre SQLite et le Domain est **confiné à la Persistence**.
-
-Deux implémentations possibles :
-
-* mapping privé dans le repository (recommandé MVP)
-* classes `Row` dédiées si la complexité augmente
-
-Dans tous les cas :
-
-* aucun `Map<String, dynamic>` ne sort de la Persistence
-* le Domain ne connaît pas le schéma SQL
+  * languages A / B,
+  * session size,
+  * user preferences,
+  * SRS parameters.
 
 ---
 
-## Optimisations et performances
+## DB ↔ Domain Mapping
 
-Toutes les optimisations techniques sont **exclusivement gérées dans cette couche**, notamment :
+Mapping between SQLite and the Domain is **confined to Persistence**.
 
-* index SQL,
-* jointures complexes,
-* cache mémoire,
-* transactions multi-tables.
+Two possible implementations:
 
-Ces optimisations peuvent évoluer **sans impacter** :
+* private mapping inside the repository (recommended for MVP),
+* dedicated `Row` classes if complexity grows.
 
-* le Domain,
-* les Controllers,
-* l’UI.
+In all cases:
 
----
-
-## Points sensibles à l’implémentation (⚠️ important)
-
-### 1. Frontières à ne jamais franchir
-
-* ❌ SQL dans les Controllers
-* ❌ SQL dans le Domain
-* ❌ `Map<String, dynamic>` hors Persistence
+* no `Map<String, dynamic>` leaves the Persistence layer,
+* the Domain does not know the SQL schema.
 
 ---
 
-### 2. Méthodes des repositories
+## Optimisations and Performance
 
-Les méthodes doivent être :
+All technical optimisations are **exclusively managed within this layer**, including:
 
-* orientées **cas d’usage**
-* pas orientées **table**
+* SQL indexes,
+* complex joins,
+* in-memory cache,
+* multi-table transactions.
+
+These optimisations can evolve **without impacting**:
+
+* the Domain,
+* Controllers,
+* the UI.
+
+---
+
+## Key Implementation Boundaries ⚠️
+
+### 1. Boundaries never to cross
+
+* ❌ SQL in Controllers
+* ❌ SQL in the Domain
+* ❌ `Map<String, dynamic>` outside Persistence
+
+---
+
+### 2. Repository methods
+
+Methods must be:
+
+* oriented towards **use cases**,
+* not oriented towards **tables**.
 
 ❌ `getAllWordsFromTable()`
 
@@ -161,25 +160,16 @@ Les méthodes doivent être :
 
 ---
 
-### 3. Évolution future
+### 3. Future evolution
 
-* Si les stats deviennent complexes :
-
-  * ajouter un `StatsRepository`
-* Si le SRS évolue :
-
-  * modifier uniquement `SrsRepository`
-* Si la DB change :
-
-  * la Persistence absorbe le changement
-* Si les repository deviennent trop gros
-  
-  * Ajouter des DAO pour le CRUD
+* If statistics become complex → add a `StatsRepository`.
+* If the SRS evolves → modify only `SrsRepository`.
+* If the DB changes → Persistence absorbs the change.
+* If repositories become too large → add DAOs for CRUD operations.
 
 ---
 
-## Règle d’or
+## Golden Rule
 
-> **Tout ce qui concerne “comment c’est stocké” ou “comment c’est rapide”
-> appartient à la Persistence, et uniquement à elle.**
-
+> **Everything related to "how it is stored" or "how it is fast"
+> belongs to Persistence, and to Persistence alone.**
