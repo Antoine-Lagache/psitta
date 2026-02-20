@@ -91,7 +91,7 @@ The current focus is completing the Domain layer implementation and ensuring ful
 
 ## Getting Started
 
-> ⚠️ The application is not yet runnable end-to-end. The UI and persistence layers are not implemented. This section will be updated as the project progresses.
+> ⚠️ This project is currently a **work in progress**. Core architectural pieces are present, but several features are still being built or stabilized.
 
 **Prerequisites:** Flutter SDK 3.x, Dart 3.x
 
@@ -99,6 +99,7 @@ The current focus is completing the Domain layer implementation and ensuring ful
 git clone https://github.com/Antoine-Lagache/language-study-engine.git
 cd language-study-engine
 flutter pub get
+flutter run
 ```
 
 Domain logic and SRS unit tests can be run independently once the domain layer implementation is complete:
