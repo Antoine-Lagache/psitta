@@ -1,5 +1,5 @@
-import 'package:flutter_application_1/domain/content/sentence.dart';
-import 'package:flutter_application_1/domain/srs/sentence_state.dart';
+import 'package:psitta/domain/content/sentence.dart';
+import 'package:psitta/domain/srs/sentence_state.dart';
 
 class SentenceInstance {
   final int id;

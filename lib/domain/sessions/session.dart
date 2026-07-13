@@ -1,8 +1,9 @@
-import '../exercises/exercise.dart';
-import '../srs/srs_config.dart';
-import 'session_result.dart';
-import 'session_type.dart';
-import '../exercises/answer/exercise_answer.dart';
+import 'package:psitta/domain/exercises/exercise.dart';
+import 'package:psitta/domain/sessions/session_result.dart';
+import 'package:psitta/domain/sessions/session_type.dart';
+
+export 'package:psitta/domain/sessions/session_result.dart';
+export 'package:psitta/domain/sessions/session_type.dart';
 
 /// Classe représentant une session d'exercices avec SRS.
 /// Les méthodes sont implémentées par les classes concrètes (WordSession, SentenceSession, etc.)

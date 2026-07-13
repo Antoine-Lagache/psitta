@@ -1,20 +1,20 @@
-// ignore_for_file: unused_field, prefer_final_fields, unused_element
-
-import '../exercises/answer/exercise_answer.dart';
-import '../srs/srs_config.dart';
-import '../srs/grade.dart';
 import 'dart:math';
-import 'srs_utils.dart';
 
-/// Représente l'état SRS d'un exercice.
-/// Gère les informations nécessaires pour l'algorithme SRS.
+import 'package:psitta/domain/exercises/answer/exercise_answer.dart';
+import 'package:psitta/domain/srs/srs_config.dart';
+import 'package:psitta/utils/conversion/time_conversion.dart';
+
+/// Represents the SRS state of an exercise.
+/// Contains the necessary information for the SRS algorithm.
+/// See the documentation for more details on the algorithm and the meaning of the parameters.
+/// all the mathematical formulas are in the documentation
 class SRSState {
   double _easeFactor;
   Duration _interval; // duration for review intervals
   Duration get interval => _interval;
   double _kFactor;
-  double _w; //correspond à la mémoire long terme
-  double _rbar; //moyenne pondéré des dernière victoire
+  double _w;
+  double _rbar;
 
   DateTime? _lastReview;
   DateTime? get nextReview => _lastReview?.add(_interval);
@@ -63,9 +63,6 @@ class SRSState {
     _learningStepIndex = other._learningStepIndex;
   }
 
-  /// Calcule et renvoie l'intervalle prévisionnel
-  /// dans le cas où on est en mode review (learningStepIndex == -1)
-  /// update les paramètre seulement si updateSelf == true
   Duration _reviewState(ExerciseAnswer answer, SRSConfig config, bool updateSelf) {
     assert(_learningStepIndex == -1);
 
@@ -73,14 +70,13 @@ class SRSState {
     final q = answer.grade.toInt();
     final bool isSuccess = q >= 3;
 
-    //l'idée est de modifié les champs de results,
-    // puis à la fin seulement on utilise updateSelf et on modifie this si besoin.
-    // Cela évite de créer une variable pour chaque champs
+    // the idea is to modify the fields of results,
+    // and at the end only, we use copyFrom to update the current state if updateSelf is true
     final SRSState result = SRSState.clone(this);
     final double intervalDays = durationToDays(result._interval);
 
     // Step 1
-    // Cas où il y a un retard sur l'intervalle prévu
+    // If there is a delay on the expected interval
     final double deltaDays = durationToDays(now.difference(result._lastReview ?? now));
     final double lateness = max(0.0, deltaDays - intervalDays);
     final double tolerance = min(config.longPause.toDouble(), config.minTolFactor * intervalDays);
@@ -149,9 +145,6 @@ class SRSState {
     return result._interval;
   }
 
-  /// Calcule et renvoie l'intervalle prévisionnel
-  /// dans le cas où on est en mode learning (learningStepIndex >= 0)
-  /// update les paramètre seulement si updateSelf == true
   Duration _learningState(ExerciseAnswer answer, SRSConfig config, bool updateSelf) {
     // _learningStepIndex >= config.config.learningSteps.length is OK (config can change)
     assert(_learningStepIndex >= 0);
@@ -194,7 +187,7 @@ class SRSState {
           result._learningStepIndex = nextIdx;
           result._interval = s[nextIdx];
         } else {
-          //cas de la dernière step du config (1 days par défaut)
+          // we are at the last step of the learning steps, we will switch to review mode
           result._learningStepIndex = -1;
           final double arg = ((config.rstar - result._w) / (1.0 - result._w));
           final double logArg = log(arg.clamp(1e-9, 1.0 - 1e-9));
@@ -221,11 +214,12 @@ class SRSState {
     return result._interval;
   }
 
-  /// Met à jour l'état SRS en fonction de la note, de l'heure et de la configuration
+  /// apply the answer to the SRS state
+  /// updating the internal state according to the given answer and configuration.
   void applyAnswer(RealExerciseAnswer answer, SRSConfig config) {
     if (_learningStepIndex == -1) {
-      // Note : on évite répétition du code en utilisant les meme fonction
-      // pour updateState et pour getPreviewInterval
+      // Note : we use the same function for updateState
+      // and getPreviewInterval to avoid code repetition
       _reviewState(answer, config, true);
     } else {
       _learningState(answer, config, true);
@@ -235,7 +229,7 @@ class SRSState {
     _checkInvariants(config);
   }
 
-  /// renvoie l'intervalle prévisionnel pour une note donnée
+  /// returns the expected interval for a given answer, without modifying the internal state.
   Duration previewInterval(PreviewExerciseAnswer answer, SRSConfig config) {
     final Duration? res;
     if (_learningStepIndex == -1) {
@@ -246,11 +240,11 @@ class SRSState {
     return res;
   }
 
-  /// Vérifie les invariants de l'état SRS à la fin de chaque mise à jour
+  /// verify that the state is consistent with the configuration, and correct it if necessary.
   void _checkInvariants(SRSConfig config) {
     const double eps = 1e-9;
 
-    //invariants temporels
+    //temporal invariants
     //intervals
     if (!durationToDays(_interval).isFinite) {
       _interval = Duration(minutes: 1);
@@ -260,12 +254,9 @@ class SRSState {
       _interval = Duration(days: config.iMax);
     }
 
-    //invariants mathématiques
+    //mathematical invariants
     //kFactor
     if (!_kFactor.isFinite) {
-      // J'espère que ces cas n'arriveront jamais à un utilisateur
-      // car ils se traduisent dans l'algorithme par une réinitialisation du coefficient d'oubli
-      // et donc reset de l'inerval
       _kFactor = config.defaultKFactor;
     } else if (_kFactor <= eps) {
       _kFactor = config.defaultKFactor;
@@ -293,7 +284,8 @@ class SRSState {
       _easeFactor = config.efMin;
     }
 
-    //invariants d'état logique
+    // Logical state invariants
+    //learning step index
     if (_learningStepIndex < -1) {
       _learningStepIndex = -1;
     } else if (_learningStepIndex >= config.learningSteps.length) {

@@ -5,8 +5,6 @@ class SRSConfig {
   final double wMaxFactor;
   final List<double> lambdas;
   final int easyInterval; // days
-  final int
-  firstIntervalFallback; // TOD: je crois que ce paramètre doit etre supprimé       (used for SM-2 first review)
   final double efMin;
   final int iMax;
   final double defaultEF;
@@ -21,7 +19,7 @@ class SRSConfig {
   final double hardReviewFactor;
   final double hardLearningFactor;
   final double easyBonus;
-  final Duration dayBoundary; // 0..23, Anki-like day boundary
+  final Duration dayBoundary; // 0..23, Anki-like day boundary (also used for time zone offset)
 
   final int newCount;
 
@@ -33,7 +31,6 @@ class SRSConfig {
     this.wMaxFactor = 0.95,
     List<double>? lambdas,
     this.easyInterval = 4,
-    this.firstIntervalFallback = 1,
     this.efMin = 1.3,
     this.iMax = 5 * 365,
     this.defaultEF = 2.5,

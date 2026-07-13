@@ -1,7 +1,9 @@
-import 'grade.dart';
+import 'package:psitta/domain/srs/grade.dart';
 
-/// État spécifique pour les exercices de phrases
-/// utile pour pouvoir choisir une phrase parmi le groupe de phrase (cf SentenceExercice._getSentence())
+export 'package:psitta/domain/srs/grade.dart';
+
+/// Specific state for sentence exercises
+/// use to choose a sentence among the group of sentences (see SentenceExercice._getSentence())
 class SentenceState {
   int shownCount;
   double accumulatedScore;
@@ -12,8 +14,8 @@ class SentenceState {
 
   SentenceState({this.shownCount = 0, this.accumulatedScore = 0.0, this.isInLearning = false});
 
-  /// Met à jour l'état de la phrase en fonction de la note donnée
-  /// appelé cette fonction une seule fois dans submitAnswer de Exercice
+  /// update the state of the sentence group according to the given grade
+  /// called this function only once in submitAnswer of Exercice
   void updateState(Grade grade) {
     assert(grade.q >= 0 && grade.q < gradeValue.length);
 
@@ -26,16 +28,18 @@ class SentenceState {
     }
   }
 
-  /// Calcule le score de la phrase en pourcentage de bonnes réponses
-  /// utilisé pour comparer les phrases d'un SentenceExercice et choisir la phrase à afficher
+  /// calculate the score of the sentence in percentage of good answers
+  /// used to compare the sentences of a SentenceExercice and choose the sentence to display
+  /// small score means the sentence is not well known, so it should be shown more often
   double getscore() {
-    // ce score me semble convenable, mais peut etre pas le meilleur
+    // This score seems suitable to me, but may not be the best
     if (shownCount == 0) {
       return 0.0; // == 0
     }
     if (isInLearning) {
-      return double.infinity; // > 1
+      return double.negativeInfinity; // < 0
     }
+    // This is a wheighted average of the grades, with a maximum of 1.0 (for q=4) and a minimum of 0.0 (for q=3)
     return accumulatedScore / shownCount; // <= 1
   }
 }

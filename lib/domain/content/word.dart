@@ -1,4 +1,3 @@
-
 /// Classe représentant un mot avec son texte et sa signification.
 /// représente uniquement les données statiques et immuables d'un mot.
 class Word {

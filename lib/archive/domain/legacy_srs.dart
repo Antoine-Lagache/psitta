@@ -1,6 +1,6 @@
 // lib/models/srs.dart
 import 'dart:math';
-import '../../utils/convert_utils.dart';
+import '../../utils/conversion/conversion.dart';
 
 class LegacySRSState {
   DateTime? nextReview;

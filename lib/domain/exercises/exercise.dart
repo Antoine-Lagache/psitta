@@ -1,9 +1,14 @@
-import 'answer/exercise_answer.dart';
-import '../srs/srs_config.dart';
-import '../srs/srs_state.dart';
-import '../prompt/exercice_prompt.dart';
-import 'exercise_status.dart';
-import '../srs/grade.dart';
+import 'package:psitta/domain/exercises/answer/exercise_answer.dart';
+import 'package:psitta/domain/exercises/exercise_status.dart';
+import 'package:psitta/domain/prompt/exercice_prompt.dart';
+import 'package:psitta/domain/srs/srs_config.dart';
+import 'package:psitta/domain/srs/srs_state.dart';
+
+export 'package:psitta/domain/exercises/answer/exercise_answer.dart';
+export 'package:psitta/domain/exercises/exercise_status.dart';
+export 'package:psitta/domain/prompt/exercice_prompt.dart';
+export 'package:psitta/domain/srs/srs_config.dart';
+export 'package:psitta/domain/srs/srs_state.dart';
 
 /// Classe abstraite représentant un exercice générique.
 /// gère l'algo intra-session et l'état SRS de l'exercice.

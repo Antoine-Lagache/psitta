@@ -1,9 +1,9 @@
-/// État d'un exercice dans une session d'apprentissage.
-/// l'état n'est pas persisté, existe uniquement pendant la session.
+/// Status of an exercise in a learning session.
+/// The status is not persisted, exists only during the session.
 enum ExerciseStatus {
-  newExercise, //nouvel exercice
-  toreview, // exercice à revoir
-  learning, // nouvel exercice en cours d'apprentissage
-  relearning, // exercice à réapprendre
-  completed, // exercice terminé pour la session
+  newExercise, // new exercise
+  toreview, // exercise to review
+  learning, // new exercise being learned
+  relearning, // exercise to relearn
+  completed, // exercise completed for the session
 }

@@ -2,7 +2,8 @@ import 'package:sqflite/sqflite.dart';
 import '../archive/domain/legacy_note.dart';
 import '../archive/domain/legacy_exercice.dart';
 import '../archive/domain/legacy_srs.dart';
-import '../utils/convert_utils.dart';
+import '../utils/conversion/time_conversion.dart';
+import '../utils/conversion/json_conversion.dart';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._init();

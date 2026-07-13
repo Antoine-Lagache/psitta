@@ -1,5 +1,5 @@
 import '../../persistence/database_service.dart';
-import '../../utils/convert_utils.dart';
+import '../../utils/conversion/conversion.dart';
 
 class Note {
   int? id;
@@ -7,17 +7,13 @@ class Note {
   final List<String> tags;
   final DateTime createdTime;
 
-  Note({
-    this.id,
-    required this.data,
-    this.tags = const [],
-    DateTime? createdTime,
-  }) : createdTime = createdTime ?? DateTime.now();
+  Note({this.id, required this.data, this.tags = const [], DateTime? createdTime})
+    : createdTime = createdTime ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'data': safeJsonEncode(data) ?? "{}",   // encode propre
+      'data': safeJsonEncode(data) ?? "{}", // encode propre
       'tags': safeJsonEncode(tags),
       'created_time': toIsoUtc(createdTime),
     };
@@ -38,18 +34,10 @@ class CardTemplate {
   final String rectoHtml;
   final String versoHtml;
 
-  CardTemplate(
-    this.id,
-    this.rectoHtml,
-    this.versoHtml,
-  );
+  CardTemplate(this.id, this.rectoHtml, this.versoHtml);
 
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'recto_html': rectoHtml,
-      'verso_html': versoHtml,
-    };
+    return {'id': id, 'recto_html': rectoHtml, 'verso_html': versoHtml};
   }
 
   factory CardTemplate.fromMap(Map<String, dynamic> map) {
@@ -66,11 +54,7 @@ class Card {
   final Note note;
   final CardTemplate template;
 
-  Card(
-    this.id,
-    this.note,
-    this.template
-  );
+  Card(this.id, this.note, this.template);
 
   Future<void> saveToDb() async {
     final db = DatabaseService.instance;
@@ -82,18 +66,10 @@ class Card {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'note_id': note.id,
-      'template_id': template.id,
-    };
+    return {'id': id, 'note_id': note.id, 'template_id': template.id};
   }
 
   factory Card.fromMap(Map<String, dynamic> map, Note note, CardTemplate template) {
-    return Card(
-      safeToInt(map['id']),
-      note,
-      template,
-    );
+    return Card(safeToInt(map['id']), note, template);
   }
 }

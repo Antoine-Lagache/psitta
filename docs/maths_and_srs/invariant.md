@@ -154,17 +154,6 @@ Default value of `easeFactor`.
 
 Default value of `w`.
 
----
-
-### 1.9. Suspect / unclear parameters
-
-- `firstIntervalFallback`
-
-This parameter currently has **no clear conceptual role** in the model
-and is not used in the legacy implementation.
-
-It is considered a **candidate for removal from the MVP** until its purpose
-is formally defined.
 
 ---
 

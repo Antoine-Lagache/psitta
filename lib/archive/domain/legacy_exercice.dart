@@ -1,5 +1,6 @@
 import '../../persistence/database_service.dart';
-import '../../utils/convert_utils.dart';
+import '../../utils/conversion/time_conversion.dart';
+import '../../utils/conversion/safe_numeric_conversion.dart';
 import 'legacy_srs.dart';
 import 'legacy_note.dart';
 
@@ -27,12 +28,7 @@ abstract class Exercice {
   final LegacySRSState srsData;
   DateTime? availableAt;
 
-  Exercice({
-    this.id,
-    required this.type,
-    required this.srsData,
-    this.availableAt,
-  });
+  Exercice({this.id, required this.type, required this.srsData, this.availableAt});
 
   Future<void> saveToDb();
 
@@ -42,14 +38,8 @@ abstract class Exercice {
 class WordExercice extends Exercice {
   final Card card;
 
-  WordExercice({
-    super.id,
-    required this.card,
-    required super.srsData,
-    super.availableAt,
-  }) : super(
-          type: ExerciceType.word,
-        );
+  WordExercice({super.id, required this.card, required super.srsData, super.availableAt})
+    : super(type: ExerciceType.word);
 
   @override
   Future<void> saveToDb() async {
@@ -60,6 +50,7 @@ class WordExercice extends Exercice {
       await db.updateWordExercice(this);
     }
   }
+
   @override
   Map<String, dynamic> toMap() {
     assert(card.id != null, 'Card must be inserted before WordExercice.');
