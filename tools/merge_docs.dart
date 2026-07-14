@@ -21,17 +21,17 @@ void main() async {
   buffer.writeln('# 📘 Full Documentation Snapshot');
   buffer.writeln('> ⚙️ Auto-generated for ChatGPT context loading.\n');
   buffer.writeln('> Each section below corresponds to a file inside /docs.\n');
-  buffer.writeln('> Source project: Flutter App Langue\n');
+  buffer.writeln('> Source project: Psitta\n');
   buffer.writeln('---\n');
 
   // Recursively collect all .md files except FULL_DOC.md
-  final mdFiles = docsDir
-      .listSync(recursive: true)
-      .whereType<File>()
-      .where((f) =>
-          f.path.endsWith('.md') && !f.path.endsWith('FULL_DOC.md'))
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+  final mdFiles =
+      docsDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.md') && !f.path.endsWith('FULL_DOC.md'))
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
 
   for (final file in mdFiles) {
     final relativePath = file.path.replaceFirst('${docsDir.path}/', '');

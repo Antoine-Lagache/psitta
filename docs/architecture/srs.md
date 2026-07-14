@@ -1,3 +1,5 @@
+[Documentation Index](../index.md)
+
 # `docs/architecture/srs.md`
 
 ## Purpose

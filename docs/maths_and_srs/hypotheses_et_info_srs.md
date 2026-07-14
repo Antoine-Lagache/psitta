@@ -1,3 +1,5 @@
+[Documentation Index](../index.md)
+
 # Hypotheses and Scope of the SRS Model
 
 This document describes the **non-mathematical hypotheses** of the spaced repetition model (SRS) used in the application.

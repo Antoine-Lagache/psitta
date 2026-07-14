@@ -1,3 +1,5 @@
+[Documentation Index](../index.md)
+
 # `docs/architecture/overview.md`
 
 ## Purpose

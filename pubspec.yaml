@@ -17,9 +17,9 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
-homepage: https://github.com/Antoine-Lagache/language-study-engine
-repository: https://github.com/Antoine-Lagache/language-study-engine
-issue_tracker: https://github.com/Antoine-Lagache/language-study-engine/issues
+homepage: https://github.com/Antoine-Lagache/psitta
+repository: https://github.com/Antoine-Lagache/psitta
+issue_tracker: https://github.com/Antoine-Lagache/psitta/issues
 
 environment:
   sdk: ^3.9.0

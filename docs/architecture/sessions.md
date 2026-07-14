@@ -1,3 +1,5 @@
+[Documentation Index](../index.md)
+
 # `docs/architecture/sessions.md`
 
 ## Purpose

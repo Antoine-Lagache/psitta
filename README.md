@@ -1,11 +1,11 @@
-# Language Study Engine
+# Psitta
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart)](https://dart.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-In%20Development-orange)]()
 
-**Language Study Engine** is a cross-platform Flutter application built around a custom Spaced Repetition System (SRS) inspired by the SM-2 algorithm. The goal is not just to ship a language learning app — but to engineer a rigorous, modular, and extensible study engine with clearly defined architectural boundaries and a formally documented memory model.
+**psitta** is a cross-platform Flutter application built around a custom Spaced Repetition System (SRS) inspired by the SM-2 algorithm. The goal is not just to ship a language learning app — but to engineer a rigorous, modular, and extensible study engine with clearly defined architectural boundaries and a formally documented memory model.
 
 This project serves as both a personal deep-dive into Dart/Flutter and a demonstration of clean software architecture applied to a non-trivial domain.
 
@@ -56,7 +56,7 @@ This layer has zero dependencies on Flutter or SQLite and can be tested in isola
 ### Persistence
 Data access through the repository pattern. Responsible for SQL queries, database ↔ domain mapping, and storage optimizations. All storage concerns are strictly confined to this layer.
 
-Full architectural documentation is available in [`docs/architecture/`](docs/architecture/).
+Full architectural documentation is available in [`docs/architecture/`](docs/index.md).
 
 ---
 
@@ -66,6 +66,7 @@ The SRS model is formally documented and covers modeling assumptions, scheduling
 
 - [`docs/maths_and_srs/maths_srs.md`](docs/maths_and_srs/maths_srs.md) — mathematical model and scheduling logic
 - [`docs/maths_and_srs/hypotheses_et_info_srs.md`](docs/maths_and_srs/hypotheses_et_info_srs.md) — modeling hypotheses and design decisions
+- [`docs/maths_and_srs/invariant.md`](docs/maths_and_srs/invariant.md) - formal invariants
 
 The implementation is progressively aligned with this formal specification.
 
@@ -87,6 +88,8 @@ The project is under active development. Here is a transparent breakdown of prog
 
 The current focus is completing the Domain layer implementation and ensuring full conformance with the formal SRS specification. The codebase is being incrementally refactored to strictly conform to the defined architecture.
 
+> Code comments are being progressively translated to English
+
 ---
 
 ## Getting Started
@@ -96,8 +99,8 @@ The current focus is completing the Domain layer implementation and ensuring ful
 **Prerequisites:** Flutter SDK 3.x, Dart 3.x
 
 ```bash
-git clone https://github.com/Antoine-Lagache/language-study-engine.git
-cd language-study-engine
+git clone https://github.com/Antoine-Lagache/psitta.git
+cd psitta
 flutter pub get
 flutter run
 ```
