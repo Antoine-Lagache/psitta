@@ -155,13 +155,14 @@ Implementation details are covered in:
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
 
-namespace Content {
-  class Word
-  class Sentence
+namespace Contents {
+  class Content
+  class Field
 }
 
 namespace Runtime {
   class Session
+  class ExerciseScheduler
   class Exercise
   class WordExercise
   class SentenceExercise
@@ -178,11 +179,6 @@ namespace Boundary {
   class ExercisePrompt
 }
 
-namespace Answer {
-  class ExerciseAnswer
-  class RealExerciseAnswer
-  class PreviewExerciseAnswer
-}
 
 
 %% Inheritance
@@ -190,7 +186,8 @@ Exercise <|-- WordExercise
 Exercise <|-- SentenceExercise
 
 %% Session
-Session "1" --> "0..*" Exercise : orchestrates
+Session "1" --> "1" ExerciseScheduler : orchestrates
+ExerciseScheduler "1" --> "0..*" Exercise : schedule
 Session "1" --> "1" SRSConfig : config
 
 %% Exercise core
@@ -198,8 +195,9 @@ Exercise "1" --> "1" SRSState : srsState
 Exercise "1" --> "1" ExerciseStatus : status
 
 %% Targets (content)
-WordExercise "1" --> "1" Word : target
-SentenceExercise "1" --> "1..*" Sentence : sentences
+WordExercise "1" --> "1" Content : target
+SentenceExercise "1" --> "1..*" Content : sentences
+Content "1" --> "1..*" Field : fields
 
 %% Sentence-specific progression
 SentenceExercise "1" --> "1..*" SentenceState : updates
@@ -207,12 +205,6 @@ SentenceExercise "1" --> "1..*" SentenceState : updates
 %% Boundary projection (created on demand)
 Exercise ..> ExercisePrompt : getPrompt()
 
-%% Answer hierarchy
-ExerciseAnswer <|-- RealExerciseAnswer
-ExerciseAnswer <|-- PreviewExerciseAnswer
-
-%% Answer consumption
-SRSState ..> ExerciseAnswer : apply / preview
 ```
 
 ---
@@ -221,32 +213,25 @@ SRSState ..> ExerciseAnswer : apply / preview
 
 ### 1) Content
 
-* `Word` and `Sentence` are **static/immutable data** (loaded from the DB).
-* They do not carry progression state — only content (words, sentences).
+* `Content` and `Field` are **static/immutable data** (loaded from the DB).
+* They do not carry progression state — only content.
 
 ### 2) Progression
 
 * `SRSState` is **attached to `Exercise`** (not to `Word` or `SentenceExercise`). It manages inter-session progression logic.
 * `SentenceState` is **separate from the SRS** and exists **for each `Sentence`** within a `SentenceExercise`.
-* `SRSConfig` is provided to the `Session` and used for updates/previews through exercises.
+* `SRSConfig` is provided by the `Session` and used for updates/previews through exercises.
 
-### 3) ExerciseAnswer (user responses)
 
-The Domain explicitly models user responses via `ExerciseAnswer`, a sealed type that distinguishes:
-* real responses (`RealExerciseAnswer`), resulting from an actual user interaction and applied to the SRS engine,
-* hypothetical responses (`PreviewExerciseAnswer`), used to simulate a future interval with no side effects.
-
-`ExerciseAnswer` is consumed by `Session`, `Exercise`, and `SRSState` during an interaction, but is not a persistent Domain state.
-
-### 4) Runtime
+### 3) Runtime
 
 * `Exercise` is a **stateful runtime object**: `status`, `srsState`, intra-session logic.
 * `WordExercise` and `SentenceExercise` only specialise the target and certain rules (allowed grades, `SentenceState` updates, etc.).
-* `Session` is an **orchestrator**: it sequences exercises and holds the `SRSConfig`.
+* `Session` is an **orchestrator**: it sequences exercises using `ExerciseSchedule` and holds the `SRSConfig`.
 
 > Note: `SessionType` (see [sessions.md](sessions.md)) is an initialisation detail (validation/consistency) and is not a persistent state of `Session`.
 
-### 5) Boundary (`ExercisePrompt`)
+### 4) Boundary (`ExercisePrompt`)
 
 * `ExercisePrompt` is an **immutable projection** built **on demand** via `Exercise.getPrompt()`.
 * It is not persisted.
@@ -316,18 +301,38 @@ An exercise:
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
-    class Exercise
+  class Exercise
+  namespace Exercises {
     class WordExercise
     class SentenceExercise
-    class ExerciseStatus
-    class SRSState
+  }
+
     class SentenceState
-    class Word
-    class Sentence
     class ExercisePrompt
+
+  namespace Answer {
     class ExerciseAnswer
     class RealExerciseAnswer
     class PreviewExerciseAnswer
+  }
+
+  namespace Contents {
+    class Content
+    class Field
+  }
+
+  namespace Other {
+    class SRSState
+    class ExerciseStatus
+  }
+
+  namespace Sentences {
+    class SentenceGroup
+    class SentenceInstance
+  }
+  
+
+
 
     Exercise <|-- WordExercise
     Exercise <|-- SentenceExercise
@@ -335,15 +340,23 @@ classDiagram
     Exercise "1" --> "1" ExerciseStatus : status
     Exercise "1" --> "1" SRSState : srsState
 
-    WordExercise "1" --> "1" Word : target
-    SentenceExercise "1" --> "1..*" Sentence : sentences
-    SentenceExercise "1" --> "1..*" SentenceState : updates
+
+    SentenceInstance "1" --> "1..*" SentenceState : updates
+    SentenceExercise "1" --> "1" SentenceGroup
+    SentenceGroup "1" --> "1..*" SentenceInstance
 
     ExerciseAnswer <|-- RealExerciseAnswer
     ExerciseAnswer <|-- PreviewExerciseAnswer
 
     Exercise ..> ExerciseAnswer : submit / preview answer
     Exercise ..> ExercisePrompt : getPrompt()
+
+    Content "1" --> "1..*" Field
+
+    WordExercise "1" --> "1" Content
+    SentenceInstance "1" --> "1" Content
+
+
 ```
 
 ---
@@ -371,7 +384,7 @@ It knows nothing about:
 It is used by:
 
 * the exercise (to manage its transitions),
-* the session (to orchestrate the presentation order).
+* the Scheduler (to orchestrate the presentation order).
 
 Typical status examples: not yet attempted, new exercise, already answered, completed.
 
@@ -383,7 +396,7 @@ User interactions are modelled by the `ExerciseAnswer` type.
 
 An exercise can receive:
 
-* a **real response** (`RealExerciseAnswer`):
+* the **submitted response** (`SubmittedExerciseAnswer`):
   * resulting from an actual user interaction,
   * applied to the exercise and SRS state.
 
@@ -404,7 +417,7 @@ The exercise is responsible for:
 
 A `WordExercise`:
 
-* targets a `Word`,
+* targets a `Content`,
 * uses its `SRSState`.
 
 It does not manipulate any `SentenceState`.
@@ -413,9 +426,13 @@ It does not manipulate any `SentenceState`.
 
 A `SentenceExercise`:
 
-* targets a **group of sentences** (`Sentence`),
 * has its own `SRSState` (at the group level),
-* updates a `SentenceState` for each sentence involved.
+* targets a **group of sentences** (`SentenceGroup`),
+* The `SentenceGroup` is composed of a list of `SentenceInstance`
+* Each `SentenceInstance` Have:
+  * his own `Content`
+  * a `SentenceState` updated by the `SentenceExercise`
+
 
 Using a group of sentences allows:
 
@@ -424,7 +441,21 @@ Using a group of sentences allows:
 
 ---
 
-## Exercise Projection
+## Content and Exercise Projection
+
+### Content
+
+Each Words and Sentences have their own `Content`.
+
+A `Content` can have as many `Field` as needed :
+* A `Field` can store any value (Text, Audio, Image, ...)
+* A `Field` have name.
+* And a set of tags that describe the purpose of the field.
+
+> The name of the `Field` doesn't need to be unique, but it is recommended to have an explicit name.
+
+
+### Exercise Projection
 
 An exercise can produce an **immutable snapshot of its state**
 via `Exercise.getPrompt()`.
@@ -435,6 +466,8 @@ This projection (`ExercisePrompt`):
 * is not persisted,
 * contains no presentation logic,
 * is the only information exposed to the UI.
+
+The Projection is composed of every `field` that the UI need.
 
 ---
 
@@ -486,11 +519,9 @@ flowchart TD
 
     %% Domain (with internal structure)
     subgraph DOM["Domain"]
-        DOM_SESS["<u>Sessions</u><br/>Session / SessionResult / SessionType"]
-        DOM_EXO["<u>Exercises</u><br/> Exercise (abstract) / WordExercise / SentenceExercise / ExerciseStatus"]
-        DOM_ANSWER["<u>Answer</u><br/> ExerciseAnswer (sealed) / RealExerciseAnswer / PreviewExerciseAnswer"]
-        DOM_CONTENT["<u>Content</u><br/> Word / Sentence"]
-        DOM_SRS["<u>SRS</u><br/> SRSState / SRSConfig / SentenceState / Grade"]
+        DOM_SESS["<u>Sessions</u>"]
+        DOM_EXO["<u>Exercises</u>"]
+        DOM_CONTENT["<u>Content</u>"]
         DOM_PROMPT["ExercisePrompt"]
     end
 
@@ -515,12 +546,12 @@ flowchart TD
 
 ## Reading the Diagram
 
-### UI
+### [UI](ui.md)
 
 The **UI** block groups all Flutter screens and widgets.
 It is solely responsible for rendering and handling user interactions.
 
-### Application / Controllers
+### [Application](application.md) / Controllers
 
 The **Application** block is the entry point for application logic.
 Controllers:
@@ -529,7 +560,7 @@ Controllers:
 * orchestrate business operations,
 * coordinate the use of the Domain and Persistence layers.
 
-### Domain
+### [Domain](domain.md)
 
 The **Domain** groups all business logic of the application.
 It is intentionally represented as a **single block**, but structured into conceptual sub-components:
@@ -543,19 +574,15 @@ It is intentionally represented as a **single block**, but structured into conce
 
   The UI only knows exercises through `ExercisePrompt`, which is a projection of an `Exercise`.
 
-* **Answers**
-  Represents user responses (`ExerciseAnswer`) passed to exercises.
-
 * **Sessions**
-  Manages the organisation of exercises into learning sessions.
-  Sessions only orchestrate exercises.
+  Manages the organisation of exercises into learning sessions. It's the starting point of the domain.
 
 * **SRS**
   Implements spaced repetition logic and progression state.
 
 The Domain is **independent of all technology** (UI, DB, Flutter, SQLite).
 
-### Persistence
+### [Persistence](persistence.md)
 
 The **Persistence** block is responsible for storing and reconstructing Domain data.
 
@@ -825,21 +852,30 @@ It is **not responsible** for:
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
+
+namespace Answer {
+  class ExerciseAnswer
+  class SubmittedExerciseAnswer
+  class PreviewExerciseAnswer
+}
     class SessionType
     class Session
     class Exercise
     class SessionResult
     class SRSConfig
 
-    class ExerciseAnswer
-    class RealExerciseAnswer
-    class PreviewExerciseAnswer
+    class ExerciseScheduler
 
-    Session "1" --> "0..*" Exercise : orchestrates
+    
+
+    Session --> ExerciseScheduler : Orchestrate
+    Session <-- SessionType : Initialisation
+
+    ExerciseScheduler "1" --> "0..*" Exercise : Schedule
     Session "1" --> "1" SRSConfig : config
     Session "1" --> "1" SessionResult : result
 
-    ExerciseAnswer <|-- RealExerciseAnswer
+    ExerciseAnswer <|-- SubmittedExerciseAnswer
     ExerciseAnswer <|-- PreviewExerciseAnswer
 
     Session ..> ExerciseAnswer : submit / preview
@@ -869,33 +905,31 @@ A session follows a **strict lifecycle**:
 
    * The session:
 
-     * maintains a current exercise,
+     * ask the `ExerciseShceduler` for the next exercise,
      * is called with user responses (`ExerciseAnswer`) by the application layer,
      * delegates processing to exercises,
-     * selects the next exercise.
 
 4. **End**
 
-   * The session terminates:
-
-     * either naturally (no more active exercises),
-     * or early (user-triggered).
-   * A final `SessionResult` is produced.
+* The session can terminated by the user at any moment
+* `Session.isSessionFinished()` tell you when there are no exercise left.
+* When a session is terminated no exercise can answered anymore.
+* A final `SessionResult` is produced when the session is terminated.
 
 ---
 
 ## Exercise Sequencing
 
-The session:
+The `ExerciseScheduler`:
 
-* holds a **pre-existing list of exercises** maintained dynamically in order of presentation,
+* holds a **pre-existing list of exercises** 
 * maintains a **current exercise**,
 * determines the presentation order based on:
 
-  * exercise state (`ExerciseStatus`),
+  * exercise state (`ExerciseStatus`, `SRSState`),
   * simple orchestration rules.
 
-The session:
+The Scheduler:
 
 * **observes** exercise state,
 * **never directly modifies** their internal logic.
@@ -916,16 +950,16 @@ When a user response is submitted:
 
 The session does not know:
 
-* the meaning of a response (`Grade`, durations, timing),
+* the meaning of a response (`Grade`, durations),
 * evaluation or progression rules.
 
 ---
 
-## Preview vs Real Submission
+## Preview vs Submitted Submission
 
 The session distinguishes two types of user interactions:
 
-* **Real submission** (`RealExerciseAnswer`)
+* **Real submission** (`SubmittedExerciseAnswer`)
   * modifies the exercise and SRS state,
   * updates `SessionResult`,
   * triggers persistence on the application side.
