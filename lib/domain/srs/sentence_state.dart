@@ -32,7 +32,6 @@ class SentenceState {
   /// used to compare the sentences of a SentenceExercice and choose the sentence to display
   /// small score means the sentence is not well known, so it should be shown more often
   double getscore() {
-    // This score seems suitable to me, but may not be the best
     if (shownCount == 0) {
       return 0.0; // == 0
     }

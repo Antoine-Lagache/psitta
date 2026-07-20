@@ -1,11 +1,11 @@
-# Psitta
+[github.com/Antoine-Lagache/psitta](https://github.com/Antoine-Lagache/psitta)
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart)](https://dart.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-In%20Development-orange)]()
 
-**psitta** is a cross-platform Flutter application built around a custom Spaced Repetition System (SRS) inspired by the SM-2 algorithm. The goal is not just to ship a language learning app — but to engineer a rigorous, modular, and extensible study engine with clearly defined architectural boundaries and a formally documented memory model.
+**Psitta** is a cross-platform Flutter application built around a custom Spaced Repetition System (SRS) inspired by the SM-2 algorithm. The goal is not just to ship a language learning app — but to engineer a rigorous, modular, and extensible study engine with clearly defined architectural boundaries and a formally documented memory model.
 
 This project serves as both a personal deep-dive into Dart/Flutter and a demonstration of clean software architecture applied to a non-trivial domain.
 
@@ -81,14 +81,13 @@ The project is under active development. Here is a transparent breakdown of prog
 | Layered architecture | ✅ Defined and documented |
 | SRS model (formal spec) | ✅ Complete |
 | Domain layer — class & method design | ✅ Complete |
-| Domain layer — implementation | 🔄 ~60–70% complete |
-| Persistence layer | ⏳ Not started |
+| Domain layer — implementation | ✅ Complete |
+| Persistence layer | 🔄 0.01% complete |
 | Application / Controllers | ⏳ Not started |
 | UI | ⏳ Not started |
 
 The current focus is completing the Domain layer implementation and ensuring full conformance with the formal SRS specification. The codebase is being incrementally refactored to strictly conform to the defined architecture.
 
-> Code comments are being progressively translated to English
 
 ---
 
@@ -115,12 +114,12 @@ flutter test
 
 ## Roadmap
 
-- [ ] Complete Domain layer implementation
+
 - [ ] Implement Persistence layer (SQLite repositories)
 - [ ] Implement Application / Controllers layer
 - [ ] Build core UI screens (Home, Session, Statistics)
 - [ ] Full integration and end-to-end testing
-- [ ] Translate all inline code documentation to English
+
 
 ---
 

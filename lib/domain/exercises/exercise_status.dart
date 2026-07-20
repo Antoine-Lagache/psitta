@@ -6,4 +6,5 @@ enum ExerciseStatus {
   learning, // new exercise being learned
   relearning, // exercise to relearn
   completed, // exercise completed for the session
+  consolidating, // exercise being trained (after completion, SRS is not updated in that status)
 }

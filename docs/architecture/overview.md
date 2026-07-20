@@ -21,11 +21,9 @@ flowchart TD
 
     %% Domain (with internal structure)
     subgraph DOM["Domain"]
-        DOM_SESS["<u>Sessions</u><br/>Session / SessionResult / SessionType"]
-        DOM_EXO["<u>Exercises</u><br/> Exercise (abstract) / WordExercise / SentenceExercise / ExerciseStatus"]
-        DOM_ANSWER["<u>Answer</u><br/> ExerciseAnswer (sealed) / RealExerciseAnswer / PreviewExerciseAnswer"]
-        DOM_CONTENT["<u>Content</u><br/> Word / Sentence"]
-        DOM_SRS["<u>SRS</u><br/> SRSState / SRSConfig / SentenceState / Grade"]
+        DOM_SESS["<u>Sessions</u>"]
+        DOM_EXO["<u>Exercises</u>"]
+        DOM_CONTENT["<u>Content</u>"]
         DOM_PROMPT["ExercisePrompt"]
     end
 
@@ -50,12 +48,12 @@ flowchart TD
 
 ## Reading the Diagram
 
-### UI
+### [UI](ui.md)
 
 The **UI** block groups all Flutter screens and widgets.
 It is solely responsible for rendering and handling user interactions.
 
-### Application / Controllers
+### [Application](application.md) / Controllers
 
 The **Application** block is the entry point for application logic.
 Controllers:
@@ -64,7 +62,7 @@ Controllers:
 * orchestrate business operations,
 * coordinate the use of the Domain and Persistence layers.
 
-### Domain
+### [Domain](domain.md)
 
 The **Domain** groups all business logic of the application.
 It is intentionally represented as a **single block**, but structured into conceptual sub-components:
@@ -78,19 +76,15 @@ It is intentionally represented as a **single block**, but structured into conce
 
   The UI only knows exercises through `ExercisePrompt`, which is a projection of an `Exercise`.
 
-* **Answers**
-  Represents user responses (`ExerciseAnswer`) passed to exercises.
-
 * **Sessions**
-  Manages the organisation of exercises into learning sessions.
-  Sessions only orchestrate exercises.
+  Manages the organisation of exercises into learning sessions. It's the starting point of the domain.
 
 * **SRS**
   Implements spaced repetition logic and progression state.
 
 The Domain is **independent of all technology** (UI, DB, Flutter, SQLite).
 
-### Persistence
+### [Persistence](persistence.md)
 
 The **Persistence** block is responsible for storing and reconstructing Domain data.
 

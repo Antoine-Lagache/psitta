@@ -19,7 +19,7 @@ class SRSState {
   DateTime? _lastReview;
   DateTime? get nextReview => _lastReview?.add(_interval);
 
-  List<RealExerciseAnswer> _history;
+  List<SubmittedExerciseAnswer> _history;
 
   int _learningStepIndex; // index in learning steps (-1 = not in learning)
   bool get isInLearning => _learningStepIndex >= 0;
@@ -31,7 +31,7 @@ class SRSState {
     double w = 0.0,
     double rbar = 0.0,
     DateTime? lastReview,
-    List<RealExerciseAnswer>? history,
+    List<SubmittedExerciseAnswer>? history,
     int learningStepIndex = 0,
   }) : _easeFactor = easeFactor,
        _interval = interval,
@@ -216,7 +216,7 @@ class SRSState {
 
   /// apply the answer to the SRS state
   /// updating the internal state according to the given answer and configuration.
-  void applyAnswer(RealExerciseAnswer answer, SRSConfig config) {
+  void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
     if (_learningStepIndex == -1) {
       // Note : we use the same function for updateState
       // and getPreviewInterval to avoid code repetition

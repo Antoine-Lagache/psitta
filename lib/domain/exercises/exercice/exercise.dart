@@ -1,29 +1,29 @@
 import 'package:psitta/domain/exercises/answer/exercise_answer.dart';
 import 'package:psitta/domain/exercises/exercise_status.dart';
-import 'package:psitta/domain/prompt/exercice_prompt.dart';
+import 'package:psitta/domain/prompt/exercise_prompt.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/domain/srs/srs_state.dart';
 
 export 'package:psitta/domain/exercises/answer/exercise_answer.dart';
 export 'package:psitta/domain/exercises/exercise_status.dart';
-export 'package:psitta/domain/prompt/exercice_prompt.dart';
+export 'package:psitta/domain/prompt/exercise_prompt.dart';
 export 'package:psitta/domain/srs/srs_config.dart';
 export 'package:psitta/domain/srs/srs_state.dart';
 
-/// Classe abstraite représentant un exercice générique.
-/// gère l'algo intra-session et l'état SRS de l'exercice.
+/// Abstract class representing an exercise.
+/// Manages the intra-session algorithm and SRS state of the exercise.
 abstract class Exercise {
   ExerciseStatus status;
 
   SRSState srsState;
 
-  Exercise(this.status, this.srsState);
+  Exercise({required this.status, required this.srsState});
 
-  /// renvoie le prompt de l'exercice (pour l'UI)
-  ExercicePrompt getPrompt();
+  /// Returns the exercise prompt (for the UI)
+  ExercisePrompt getPrompt();
 
-  /// Soumet la réponse de l'utilisateur avec une note Grade et met à jour l'état SRS
-  void applyAnswer(RealExerciseAnswer answer, SRSConfig config) {
+  /// Submits the user's answer with a Grade and updates the SRS state
+  void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
     assert(status != ExerciseStatus.completed);
     srsState.applyAnswer(answer, config);
 
@@ -44,14 +44,14 @@ abstract class Exercise {
     }
   }
 
-  /// renvoie l'intervalle prévisionnel pour une note donnée
+  /// Returns the preview interval for a given grade
   Duration previewInterval(PreviewExerciseAnswer answer, SRSConfig config) {
     return srsState.previewInterval(answer, config);
   }
 
-  /// Vérifie si une note Grade est autorisée pour cet exercice
+  /// Checks if a Grade is allowed for this exercise
   bool isGradeAllowed(Grade grade) {
-    // Par défaut, toutes les notes sont autorisées
+    // By default, all grades are allowed
     return true;
   }
 }

@@ -41,21 +41,30 @@ It is **not responsible** for:
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
+
+namespace Answer {
+  class ExerciseAnswer
+  class SubmittedExerciseAnswer
+  class PreviewExerciseAnswer
+}
     class SessionType
     class Session
     class Exercise
     class SessionResult
     class SRSConfig
 
-    class ExerciseAnswer
-    class RealExerciseAnswer
-    class PreviewExerciseAnswer
+    class ExerciseScheduler
 
-    Session "1" --> "0..*" Exercise : orchestrates
+    
+
+    Session --> ExerciseScheduler : Orchestrate
+    Session <-- SessionType : Initialisation
+
+    ExerciseScheduler "1" --> "0..*" Exercise : Schedule
     Session "1" --> "1" SRSConfig : config
     Session "1" --> "1" SessionResult : result
 
-    ExerciseAnswer <|-- RealExerciseAnswer
+    ExerciseAnswer <|-- SubmittedExerciseAnswer
     ExerciseAnswer <|-- PreviewExerciseAnswer
 
     Session ..> ExerciseAnswer : submit / preview
@@ -85,33 +94,31 @@ A session follows a **strict lifecycle**:
 
    * The session:
 
-     * maintains a current exercise,
+     * ask the `ExerciseShceduler` for the next exercise,
      * is called with user responses (`ExerciseAnswer`) by the application layer,
      * delegates processing to exercises,
-     * selects the next exercise.
 
 4. **End**
 
-   * The session terminates:
-
-     * either naturally (no more active exercises),
-     * or early (user-triggered).
-   * A final `SessionResult` is produced.
+* The session can terminated by the user at any moment
+* `Session.isSessionFinished()` tell you when there are no exercise left.
+* When a session is terminated no exercise can answered anymore.
+* A final `SessionResult` is produced when the session is terminated.
 
 ---
 
 ## Exercise Sequencing
 
-The session:
+The `ExerciseScheduler`:
 
-* holds a **pre-existing list of exercises** maintained dynamically in order of presentation,
+* holds a **pre-existing list of exercises** 
 * maintains a **current exercise**,
 * determines the presentation order based on:
 
-  * exercise state (`ExerciseStatus`),
+  * exercise state (`ExerciseStatus`, `SRSState`),
   * simple orchestration rules.
 
-The session:
+The Scheduler:
 
 * **observes** exercise state,
 * **never directly modifies** their internal logic.
@@ -132,16 +139,16 @@ When a user response is submitted:
 
 The session does not know:
 
-* the meaning of a response (`Grade`, durations, timing),
+* the meaning of a response (`Grade`, durations),
 * evaluation or progression rules.
 
 ---
 
-## Preview vs Real Submission
+## Preview vs Submitted Submission
 
 The session distinguishes two types of user interactions:
 
-* **Real submission** (`RealExerciseAnswer`)
+* **Real submission** (`SubmittedExerciseAnswer`)
   * modifies the exercise and SRS state,
   * updates `SessionResult`,
   * triggers persistence on the application side.

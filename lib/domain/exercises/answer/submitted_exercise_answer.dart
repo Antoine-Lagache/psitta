@@ -1,13 +1,13 @@
 part of 'exercise_answer.dart';
 
-// is the real answer
-final class RealExerciseAnswer extends ExerciseAnswer {
+// is the submitted answer
+final class SubmittedExerciseAnswer extends ExerciseAnswer {
   @override
   final Grade grade;
   final DateTime answeredAt; // time when the Exercise was ended
-  final List<Duration> stepDurations;
+  final List<Duration> stepDurations; // not used for now, honestly I forgot about this.
 
-  RealExerciseAnswer({
+  SubmittedExerciseAnswer({
     required this.grade,
     required this.answeredAt,
     required List<Duration> stepDurations,

@@ -39,18 +39,38 @@ An exercise:
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
-    class Exercise
+  class Exercise
+  namespace Exercises {
     class WordExercise
     class SentenceExercise
-    class ExerciseStatus
-    class SRSState
+  }
+
     class SentenceState
-    class Word
-    class Sentence
     class ExercisePrompt
+
+  namespace Answer {
     class ExerciseAnswer
     class RealExerciseAnswer
     class PreviewExerciseAnswer
+  }
+
+  namespace Contents {
+    class Content
+    class Field
+  }
+
+  namespace Other {
+    class SRSState
+    class ExerciseStatus
+  }
+
+  namespace Sentences {
+    class SentenceGroup
+    class SentenceInstance
+  }
+  
+
+
 
     Exercise <|-- WordExercise
     Exercise <|-- SentenceExercise
@@ -58,15 +78,23 @@ classDiagram
     Exercise "1" --> "1" ExerciseStatus : status
     Exercise "1" --> "1" SRSState : srsState
 
-    WordExercise "1" --> "1" Word : target
-    SentenceExercise "1" --> "1..*" Sentence : sentences
-    SentenceExercise "1" --> "1..*" SentenceState : updates
+
+    SentenceInstance "1" --> "1..*" SentenceState : updates
+    SentenceExercise "1" --> "1" SentenceGroup
+    SentenceGroup "1" --> "1..*" SentenceInstance
 
     ExerciseAnswer <|-- RealExerciseAnswer
     ExerciseAnswer <|-- PreviewExerciseAnswer
 
     Exercise ..> ExerciseAnswer : submit / preview answer
     Exercise ..> ExercisePrompt : getPrompt()
+
+    Content "1" --> "1..*" Field
+
+    WordExercise "1" --> "1" Content
+    SentenceInstance "1" --> "1" Content
+
+
 ```
 
 ---
@@ -94,7 +122,7 @@ It knows nothing about:
 It is used by:
 
 * the exercise (to manage its transitions),
-* the session (to orchestrate the presentation order).
+* the Scheduler (to orchestrate the presentation order).
 
 Typical status examples: not yet attempted, new exercise, already answered, completed.
 
@@ -106,7 +134,7 @@ User interactions are modelled by the `ExerciseAnswer` type.
 
 An exercise can receive:
 
-* a **real response** (`RealExerciseAnswer`):
+* the **submitted response** (`SubmittedExerciseAnswer`):
   * resulting from an actual user interaction,
   * applied to the exercise and SRS state.
 
@@ -127,7 +155,7 @@ The exercise is responsible for:
 
 A `WordExercise`:
 
-* targets a `Word`,
+* targets a `Content`,
 * uses its `SRSState`.
 
 It does not manipulate any `SentenceState`.
@@ -136,9 +164,13 @@ It does not manipulate any `SentenceState`.
 
 A `SentenceExercise`:
 
-* targets a **group of sentences** (`Sentence`),
 * has its own `SRSState` (at the group level),
-* updates a `SentenceState` for each sentence involved.
+* targets a **group of sentences** (`SentenceGroup`),
+* The `SentenceGroup` is composed of a list of `SentenceInstance`
+* Each `SentenceInstance` Have:
+  * his own `Content`
+  * a `SentenceState` updated by the `SentenceExercise`
+
 
 Using a group of sentences allows:
 
@@ -147,7 +179,21 @@ Using a group of sentences allows:
 
 ---
 
-## Exercise Projection
+## Content and Exercise Projection
+
+### Content
+
+Each Words and Sentences have their own `Content`.
+
+A `Content` can have as many `Field` as needed :
+* A `Field` can store any value (Text, Audio, Image, ...)
+* A `Field` have name.
+* And a set of tags that describe the purpose of the field.
+
+> The name of the `Field` doesn't need to be unique, but it is recommended to have an explicit name.
+
+
+### Exercise Projection
 
 An exercise can produce an **immutable snapshot of its state**
 via `Exercise.getPrompt()`.
@@ -158,6 +204,8 @@ This projection (`ExercisePrompt`):
 * is not persisted,
 * contains no presentation logic,
 * is the only information exposed to the UI.
+
+The Projection is composed of every `field` that the UI need.
 
 ---
 

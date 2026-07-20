@@ -26,13 +26,14 @@ Implementation details are covered in:
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
 
-namespace Content {
-  class Word
-  class Sentence
+namespace Contents {
+  class Content
+  class Field
 }
 
 namespace Runtime {
   class Session
+  class ExerciseScheduler
   class Exercise
   class WordExercise
   class SentenceExercise
@@ -49,11 +50,6 @@ namespace Boundary {
   class ExercisePrompt
 }
 
-namespace Answer {
-  class ExerciseAnswer
-  class RealExerciseAnswer
-  class PreviewExerciseAnswer
-}
 
 
 %% Inheritance
@@ -61,7 +57,8 @@ Exercise <|-- WordExercise
 Exercise <|-- SentenceExercise
 
 %% Session
-Session "1" --> "0..*" Exercise : orchestrates
+Session "1" --> "1" ExerciseScheduler : orchestrates
+ExerciseScheduler "1" --> "0..*" Exercise : schedule
 Session "1" --> "1" SRSConfig : config
 
 %% Exercise core
@@ -69,8 +66,9 @@ Exercise "1" --> "1" SRSState : srsState
 Exercise "1" --> "1" ExerciseStatus : status
 
 %% Targets (content)
-WordExercise "1" --> "1" Word : target
-SentenceExercise "1" --> "1..*" Sentence : sentences
+WordExercise "1" --> "1" Content : target
+SentenceExercise "1" --> "1..*" Content : sentences
+Content "1" --> "1..*" Field : fields
 
 %% Sentence-specific progression
 SentenceExercise "1" --> "1..*" SentenceState : updates
@@ -78,12 +76,6 @@ SentenceExercise "1" --> "1..*" SentenceState : updates
 %% Boundary projection (created on demand)
 Exercise ..> ExercisePrompt : getPrompt()
 
-%% Answer hierarchy
-ExerciseAnswer <|-- RealExerciseAnswer
-ExerciseAnswer <|-- PreviewExerciseAnswer
-
-%% Answer consumption
-SRSState ..> ExerciseAnswer : apply / preview
 ```
 
 ---
@@ -92,32 +84,25 @@ SRSState ..> ExerciseAnswer : apply / preview
 
 ### 1) Content
 
-* `Word` and `Sentence` are **static/immutable data** (loaded from the DB).
-* They do not carry progression state — only content (words, sentences).
+* `Content` and `Field` are **static/immutable data** (loaded from the DB).
+* They do not carry progression state — only content.
 
 ### 2) Progression
 
 * `SRSState` is **attached to `Exercise`** (not to `Word` or `SentenceExercise`). It manages inter-session progression logic.
 * `SentenceState` is **separate from the SRS** and exists **for each `Sentence`** within a `SentenceExercise`.
-* `SRSConfig` is provided to the `Session` and used for updates/previews through exercises.
+* `SRSConfig` is provided by the `Session` and used for updates/previews through exercises.
 
-### 3) ExerciseAnswer (user responses)
 
-The Domain explicitly models user responses via `ExerciseAnswer`, a sealed type that distinguishes:
-* real responses (`RealExerciseAnswer`), resulting from an actual user interaction and applied to the SRS engine,
-* hypothetical responses (`PreviewExerciseAnswer`), used to simulate a future interval with no side effects.
-
-`ExerciseAnswer` is consumed by `Session`, `Exercise`, and `SRSState` during an interaction, but is not a persistent Domain state.
-
-### 4) Runtime
+### 3) Runtime
 
 * `Exercise` is a **stateful runtime object**: `status`, `srsState`, intra-session logic.
 * `WordExercise` and `SentenceExercise` only specialise the target and certain rules (allowed grades, `SentenceState` updates, etc.).
-* `Session` is an **orchestrator**: it sequences exercises and holds the `SRSConfig`.
+* `Session` is an **orchestrator**: it sequences exercises using `ExerciseSchedule` and holds the `SRSConfig`.
 
 > Note: `SessionType` (see [sessions.md](sessions.md)) is an initialisation detail (validation/consistency) and is not a persistent state of `Session`.
 
-### 5) Boundary (`ExercisePrompt`)
+### 4) Boundary (`ExercisePrompt`)
 
 * `ExercisePrompt` is an **immutable projection** built **on demand** via `Exercise.getPrompt()`.
 * It is not persisted.

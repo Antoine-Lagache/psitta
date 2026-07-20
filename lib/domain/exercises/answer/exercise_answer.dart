@@ -2,7 +2,7 @@ import 'package:psitta/domain/srs/grade.dart';
 
 export 'package:psitta/domain/srs/grade.dart';
 
-part 'real_exercise_answer.dart';
+part 'submitted_exercise_answer.dart';
 part 'preview_exercise_answer.dart';
 
 /// represent the answer of the user to an Exercise.
