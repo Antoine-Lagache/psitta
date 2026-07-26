@@ -1,35 +1,16 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:psitta/infrastructure/persistence/database/sqlite_database.dart';
 // ignore: unnecessary_import
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+//import 'package:psitta/ui/screens/main_router.dart';
 
-import 'package:psitta/ui/screens/main_router.dart';
-
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  }
-  debugPrint('\n\nDatabase path:');
-  debugPrint(await getDatabasesPath());
+  final database = SqliteDatabase();
 
-  //runApp(const MyApp());
-  runApp(const MyApp());
-}
+  await database.open();
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  print('Database opened');
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "App pour apprentissage de langue",
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue)),
-      home: MainRouter(),
-    );
-  }
+  await database.close();
 }

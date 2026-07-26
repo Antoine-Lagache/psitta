@@ -19,8 +19,6 @@ class SRSState {
   DateTime? _lastReview;
   DateTime? get nextReview => _lastReview?.add(_interval);
 
-  List<SubmittedExerciseAnswer> _history;
-
   int _learningStepIndex; // index in learning steps (-1 = not in learning)
   bool get isInLearning => _learningStepIndex >= 0;
 
@@ -39,7 +37,6 @@ class SRSState {
        _w = w,
        _rbar = rbar,
        _lastReview = lastReview,
-       _history = history ?? [],
        _learningStepIndex = learningStepIndex;
 
   SRSState.clone(SRSState other)
@@ -49,7 +46,6 @@ class SRSState {
       _w = other._w,
       _rbar = other._rbar,
       _lastReview = other._lastReview,
-      _history = List.of(other._history),
       _learningStepIndex = other._learningStepIndex;
 
   void copyFrom(SRSState other) {
@@ -59,7 +55,6 @@ class SRSState {
     _w = other._w;
     _rbar = other._rbar;
     _lastReview = other._lastReview;
-    _history = other._history;
     _learningStepIndex = other._learningStepIndex;
   }
 
@@ -225,7 +220,6 @@ class SRSState {
       _learningState(answer, config, true);
     }
 
-    _history.add(answer);
     _checkInvariants(config);
   }
 

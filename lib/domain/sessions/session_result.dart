@@ -1,4 +1,5 @@
 import 'package:psitta/domain/exercises/exercise_status.dart';
+import 'package:psitta/domain/sessions/session_type.dart';
 
 export 'package:psitta/domain/exercises/exercise_status.dart';
 
@@ -6,14 +7,16 @@ export 'package:psitta/domain/exercises/exercise_status.dart';
 /// This result is modified each time an exercise is answered.
 /// It is modified only by the Session class.
 class SessionResult {
+  SessionType sessionType;
+
   List<int> numberOfExercicesByStatus;
   int numberOfUniqueExercisesCompleted;
 
-  DateTime startedAt;
+  DateTime? startedAt;
   DateTime? endAt;
-  Duration? get totalTimeSpent => endAt?.difference(startedAt);
+  Duration? get totalTimeSpent => (startedAt == null) ? null : endAt?.difference(startedAt!);
 
-  SessionResult({required this.startedAt})
+  SessionResult({required this.sessionType})
     : numberOfExercicesByStatus = List<int>.filled(ExerciseStatus.values.length, 0),
       numberOfUniqueExercisesCompleted = 0,
       endAt = null;

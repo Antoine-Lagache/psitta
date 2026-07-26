@@ -39,6 +39,8 @@ class Session {
           throw Exception("All exercises must be SentenceExercise for a sentence session");
         }
     }
+
+    _intermediateResult = SessionResult(sessionType: sessionType);
   }
 
   /// Starts the session at the given date and time.
@@ -46,7 +48,7 @@ class Session {
   void beginSession(DateTime now) {
     assert(_startedAt == null);
     _startedAt ??= now;
-    _intermediateResult = SessionResult(startedAt: now);
+    _intermediateResult!.startedAt = now;
     _scheduler.selectNextExercise(now);
   }
 

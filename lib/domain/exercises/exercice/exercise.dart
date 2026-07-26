@@ -16,8 +16,9 @@ abstract class Exercise {
   ExerciseStatus status;
 
   SRSState srsState;
+  List<SubmittedExerciseAnswer> history;
 
-  Exercise({required this.status, required this.srsState});
+  Exercise({required this.status, required this.srsState, required this.history});
 
   /// Returns the exercise prompt (for the UI)
   ExercisePrompt getPrompt();
@@ -26,6 +27,7 @@ abstract class Exercise {
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
     assert(status != ExerciseStatus.completed);
     srsState.applyAnswer(answer, config);
+    history.add(answer);
 
     final DateTime nextDay = DateTime(
       answer.at.year,

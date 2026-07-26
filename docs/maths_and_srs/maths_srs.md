@@ -11,13 +11,13 @@ This document describes the formulas and variables used by the SRS engine of the
 The retention probability after a delay $t$ is:
 
 $$
-P(t) = (1 - w)\,e^{-k t} + w
+P(t) = (1 - w)e^{-k t} + w
 $$
 
 We seek the interval $I$ such that $P(I) = R^*$:
 
 $$
-I = -\frac{1}{k}\ln\!\left(\frac{R^* - w}{1 - w}\right)
+I = -\frac{1}{k}\ln\left(\frac{R^* - w}{1 - w}\right)
 $$
 
 ---
@@ -62,7 +62,7 @@ $$
 After an observation `obs` (1 = success, 0 = failure) and a weight $\lambda_q$ depending on grade $q$:
 
 $$
-\bar{R}_{t+1} = \lambda_q\,\bar{R}_t + (1 - \lambda_q)\,\text{obs}
+\bar{R}_{t+1} = \lambda_q\bar{R}_t + (1 - \lambda_q)\,\text{obs}
 $$
 
 ### 2) Long-term memory
@@ -81,7 +81,7 @@ $$
 With updated $k_{\text{new}}$ and $w$:
 
 $$
-I_{\text{next}} = -\frac{1}{k_{\text{new}}}\ln\!\left(\frac{R^* - w}{1 - w}\right)
+I_{\text{next}} = -\frac{1}{k_{\text{new}}}\ln\left(\frac{R^* - w}{1 - w}\right)
 $$
 
 Constraint applied: $I_{\text{next}} \le iMax$ (in days).
@@ -99,21 +99,21 @@ $$
 Tolerance:
 
 $$
-\text{tol} = \min(\text{longPause},\; \text{minTolFactor}\cdot I)
+\text{tol} = \min(\text{longPause}, \text{minTolFactor}\cdot I)
 $$
 
 - If $l \ge \text{longPause}$ and grade $q < 2$ (review is failed), then reset:
-  $$
-  \bar{R}\leftarrow 0,\quad w\leftarrow 0
-  $$
+$$
+\bar{R}\leftarrow 0,\quad w\leftarrow 0
+$$
 - Otherwise, if $l > \text{tol}$, apply exponential decay:
-  $$
-  \bar{R}_{t+1} = \bar{R}_t\,e^{-\mu l}
-  $$
+$$
+\bar{R}_{t+1} = \bar{R}_t \space e^{-\mu l}
+$$
   then:
-  $$
-  w \leftarrow w_{\max}\cdot \bar{R}_{t+1}
-  $$
+$$
+w \leftarrow w_{\max}\cdot \bar{R}_{t+1}
+$$
 
 $\mu$ controls the rate of memory loss after a long absence.
 

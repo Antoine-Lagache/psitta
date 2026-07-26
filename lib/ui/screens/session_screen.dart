@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../archive/domain/legacy_session.dart';
 import '../../archive/domain/legacy_exercice.dart';
 import '../../archive/domain/legacy_srs.dart';
-import '../../persistence/database_service.dart';
+import '../../archive/persistence/database_service.dart';
 import 'utils.dart';
 
 enum _FinishAction { retry, quitAnyway }

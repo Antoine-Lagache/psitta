@@ -5,18 +5,18 @@ final class SubmittedExerciseAnswer extends ExerciseAnswer {
   @override
   final Grade grade;
   final DateTime answeredAt; // time when the Exercise was ended
-  final List<Duration> stepDurations; // not used for now, honestly I forgot about this.
+  //final List<Duration> stepDurations; // TODO: Store step durations if needed.
 
   SubmittedExerciseAnswer({
     required this.grade,
     required this.answeredAt,
-    required List<Duration> stepDurations,
-  }) : stepDurations = List.unmodifiable(stepDurations);
+    //required List<Duration> stepDurations,
+  }); //: stepDurations = List.unmodifiable(stepDurations);
 
   @override
   DateTime get at => answeredAt;
 
-  Duration get totalDuration => stepDurations.fold(Duration.zero, (a, b) => a + b);
+  //Duration get totalDuration => stepDurations.fold(Duration.zero, (a, b) => a + b);
 
-  DateTime get startedAt => answeredAt.subtract(totalDuration);
+  //DateTime get startedAt => answeredAt.subtract(totalDuration);
 }

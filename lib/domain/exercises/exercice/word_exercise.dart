@@ -5,7 +5,12 @@ import 'package:psitta/domain/content/content.dart';
 class WordExercise extends Exercise {
   final Content content;
 
-  WordExercise(this.content, {required super.status, required super.srsState});
+  WordExercise(
+    this.content, {
+    required super.status,
+    required super.srsState,
+    required super.history,
+  });
 
   @override
   ExercisePrompt getPrompt() {

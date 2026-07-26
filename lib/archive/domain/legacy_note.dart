@@ -1,4 +1,4 @@
-import '../../persistence/database_service.dart';
+import '../persistence/database_service.dart';
 import '../../utils/conversion/conversion.dart';
 
 class Note {

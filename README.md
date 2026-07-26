@@ -82,7 +82,7 @@ The project is under active development. Here is a transparent breakdown of prog
 | SRS model (formal spec) | ✅ Complete |
 | Domain layer — class & method design | ✅ Complete |
 | Domain layer — implementation | ✅ Complete |
-| Persistence layer | 🔄 0.01% complete |
+| Persistence layer | 🔄 35% complete |
 | Application / Controllers | ⏳ Not started |
 | UI | ⏳ Not started |
 

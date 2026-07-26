@@ -18,6 +18,7 @@ class SentenceExercise extends Exercise {
     this.trainingCount, {
     required super.status,
     required super.srsState,
+    required super.history,
   }) {
     assert(trainingCount <= _sentences.sentences.length);
   }
