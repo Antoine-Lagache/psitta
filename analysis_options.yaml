@@ -11,6 +11,9 @@ analyzer:
   exclude:
     - lib/archive/**/*.dart
 
+formatter:
+  page_width: 90
+
 linter:
   rules:
     # ===== Core code quality (important) =====

@@ -7,6 +7,7 @@ class MigrationRunner {
 
   MigrationRunner({required this.migrations});
 
+  /// migrate de DB to the last version
   Future<void> migrate(sqlite.SqliteDatabase database) async {
     final currentVersion = await _getCurrentVersion(database);
 
@@ -17,6 +18,7 @@ class MigrationRunner {
         continue;
       }
 
+      // execute write transaction to ensure that all migrations and the version update are atomic
       await database.writeTransaction((tx) async {
         await migration.migrate(tx);
         await _setVersion(tx, migration.version);

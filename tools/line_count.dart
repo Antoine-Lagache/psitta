@@ -20,7 +20,8 @@ void main() {
         }
       } else if (entity is Directory) {
         // Ne pas descendre dans playground
-        if (!entity.path.contains('lib/playground')) {
+        if (!entity.path.contains('lib/playground') &&
+            !entity.path.contains('lib/archive')) {
           countLines(entity);
         }
       }
@@ -29,5 +30,5 @@ void main() {
 
   countLines(libDir);
 
-  print('\nTotal de lignes Dart (hors playground) : $totalLines');
+  print('\nTotal de lignes Dart (hors playground and archive) : $totalLines');
 }
