@@ -21,14 +21,15 @@ String? toIsoUtc(DateTime? date) {
 Duration safeToDuration(dynamic value, {Duration fallback = Duration.zero}) {
   if (value == null) return fallback;
   final intVal = safeToInt(value, fallback: -1);
-  return intVal >= 0 ? Duration(milliseconds: intVal) : fallback;
+  return intVal >= 0 ? Duration(microseconds: intVal) : fallback;
 }
 
 int safeFromDuration(Duration duration) {
-  return duration.inMilliseconds;
+  return duration.inMicroseconds;
 }
 
-double durationToDays(Duration duration) => duration.inMicroseconds / Duration.microsecondsPerDay;
+double durationToDays(Duration duration) =>
+    duration.inMicroseconds / Duration.microsecondsPerDay;
 
 Duration daysToduration(double days) {
   return Duration(microseconds: (days * Duration.microsecondsPerDay).round());

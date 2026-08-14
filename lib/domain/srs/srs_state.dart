@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:psitta/domain/exercises/answer/exercise_answer.dart';
+import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/utils/conversion/time_conversion.dart';
 
@@ -10,13 +10,23 @@ import 'package:psitta/utils/conversion/time_conversion.dart';
 /// all the mathematical formulas are in the documentation
 class SRSState {
   double _easeFactor;
+  double get easeFactor => _easeFactor;
+
   Duration _interval; // duration for review intervals
   Duration get interval => _interval;
+
   double _kFactor;
+  double get kFactor => _kFactor;
+
   double _w;
+  double get w => _w;
+
   double _rbar;
+  double get rbar => _rbar;
 
   DateTime? _lastReview;
+  DateTime? get lastReview => _lastReview;
+
   DateTime? get nextReview => _lastReview?.add(_interval);
 
   int _learningStepIndex; // index in learning steps (-1 = not in learning)
@@ -29,7 +39,6 @@ class SRSState {
     double w = 0.0,
     double rbar = 0.0,
     DateTime? lastReview,
-    List<SubmittedExerciseAnswer>? history,
     int learningStepIndex = 0,
   }) : _easeFactor = easeFactor,
        _interval = interval,
@@ -74,7 +83,10 @@ class SRSState {
     // If there is a delay on the expected interval
     final double deltaDays = durationToDays(now.difference(result._lastReview ?? now));
     final double lateness = max(0.0, deltaDays - intervalDays);
-    final double tolerance = min(config.longPause.toDouble(), config.minTolFactor * intervalDays);
+    final double tolerance = min(
+      config.longPause.toDouble(),
+      config.minTolFactor * intervalDays,
+    );
     if (lateness >= tolerance && !isSuccess) {
       if (lateness >= config.longPause) {
         result._rbar = 0.0;
@@ -87,7 +99,10 @@ class SRSState {
 
     // Step 2
     // SM-2 alg
-    final double arg = ((config.rstar - result._w) / (1.0 - result._w)).clamp(1e-9, 1.0 - 1e-9);
+    final double arg = ((config.rstar - result._w) / (1.0 - result._w)).clamp(
+      1e-9,
+      1.0 - 1e-9,
+    );
     final double logArg = log(arg);
 
     if (!isSuccess) {
@@ -106,7 +121,9 @@ class SRSState {
     } else {
       result._learningStepIndex = -1;
       if (q == 3) {
-        result._interval = daysToduration(max(1.0, intervalDays * config.hardReviewFactor));
+        result._interval = daysToduration(
+          max(1.0, intervalDays * config.hardReviewFactor),
+        );
         result._kFactor = -(logArg / durationToDays(result._interval));
       } else {
         result._kFactor = result._kFactor / result._easeFactor;
@@ -116,7 +133,9 @@ class SRSState {
 
     // apply multipliers
     if (q == 5) {
-      result._interval = daysToduration(durationToDays(result._interval) * config.easyBonus);
+      result._interval = daysToduration(
+        durationToDays(result._interval) * config.easyBonus,
+      );
     }
     result._interval = daysToduration(
       min(durationToDays(result._interval), config.iMax.toDouble()),
@@ -162,7 +181,9 @@ class SRSState {
         } else {
           result._interval = (s.length > 1)
               ? daysToduration(
-                  (durationToDays(s[0]) + durationToDays(s[1])) * 0.5 * config.hardLearningFactor,
+                  (durationToDays(s[0]) + durationToDays(s[1])) *
+                      0.5 *
+                      config.hardLearningFactor,
                 )
               : Duration(minutes: 4);
         }
@@ -194,7 +215,10 @@ class SRSState {
       case Grade.easy: // q=5
         result._learningStepIndex = -1;
         // set a provisional interval as easyInterval days -> review branch will use it next review
-        final double arg = ((config.rstar - result._w) / (1.0 - result._w)).clamp(1e-9, 1.0 - 1e-9);
+        final double arg = ((config.rstar - result._w) / (1.0 - result._w)).clamp(
+          1e-9,
+          1.0 - 1e-9,
+        );
         final double logArg = log(arg);
         result._kFactor = -(logArg / config.easyInterval);
         result._interval = Duration(days: config.easyInterval);
@@ -244,7 +268,8 @@ class SRSState {
       _interval = Duration(minutes: 1);
     } else if (durationToDays(_interval) <= eps) {
       _interval = Duration(minutes: 1);
-    } else if (durationToDays(_interval) > durationToDays(Duration(days: config.iMax)) + eps) {
+    } else if (durationToDays(_interval) >
+        durationToDays(Duration(days: config.iMax)) + eps) {
       _interval = Duration(days: config.iMax);
     }
 

@@ -1,29 +1,29 @@
-import 'package:psitta/utils/conversion/time_conversion.dart';
-
 class ExerciseHistoryPersistence {
   final int? id;
   final int exerciseId;
+  final int? sentenceInstanceId;
+
   final int grade;
-  final DateTime answeredAt;
+  final String answeredAt;
+  final int status;
 
   ExerciseHistoryPersistence({
     this.id,
     required this.exerciseId,
+    this.sentenceInstanceId,
     required this.grade,
     required this.answeredAt,
+    required this.status,
   });
 
   factory ExerciseHistoryPersistence.fromRow(Map<String, Object?> row) {
-    final answeredAt = safeParseDate(row['answered_at'] as String?);
-
-    if (answeredAt == null) {
-      throw StateError('Invalid answered_at value: ${row['answered_at']}');
-    }
     return ExerciseHistoryPersistence(
       id: row['id'] as int?,
       exerciseId: row['exercise_id'] as int,
+      sentenceInstanceId: row['sentence_instance_id'] as int?,
       grade: row['grade'] as int,
-      answeredAt: answeredAt,
+      answeredAt: row['answered_at'] as String,
+      status: row['status'] as int,
     );
   }
 
@@ -31,8 +31,10 @@ class ExerciseHistoryPersistence {
     return {
       'id': id,
       'exercise_id': exerciseId,
+      'sentence_instance_id': sentenceInstanceId,
       'grade': grade,
-      'answered_at': toIsoUtc(answeredAt),
+      'answered_at': answeredAt,
+      'status': status,
     };
   }
 }

@@ -1,6 +1,5 @@
 /// Configuration parameters for the Spaced Repetition System (SRS).
 class SRSConfig {
-  final int id;
   final double rstar;
   final double wMaxFactor;
   final List<double> lambdas;
@@ -19,14 +18,14 @@ class SRSConfig {
   final double hardReviewFactor;
   final double hardLearningFactor;
   final double easyBonus;
-  final Duration dayBoundary; // 0..23, Anki-like day boundary (also used for time zone offset)
+  final Duration
+  dayBoundary; // 0..23, Anki-like day boundary (also used for time zone offset)
 
   final int newCount;
 
   static const List<double> _defaultLambdas = [0.60, 0.90, 0.80, 0.95, 0.85, 0.70];
 
   SRSConfig({
-    required this.id,
     this.rstar = 0.9,
     this.wMaxFactor = 0.95,
     List<double>? lambdas,

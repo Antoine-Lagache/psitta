@@ -1,6 +1,6 @@
-import 'package:psitta/domain/exercises/exercice/sentence_exercise.dart';
-import 'package:psitta/domain/exercises/exercice/word_exercise.dart';
-import 'package:psitta/domain/exercises/exercise_scheduler.dart';
+import 'package:psitta/domain/exercise/sentence_exercise.dart';
+import 'package:psitta/domain/exercise/word_exercise.dart';
+import 'package:psitta/domain/sessions/session_scheduler.dart';
 import 'package:psitta/domain/sessions/session_result.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 
@@ -20,11 +20,10 @@ class Session {
   /// returned by endSession or endSessionEarly
   SessionResult? _intermediateResult;
 
-  final ExerciseScheduler _scheduler;
-  ExercisePrompt? get currentPrompt => _scheduler.nextExercise?.getPrompt();
+  final SessionScheduler _scheduler;
 
   Session(List<Exercise> exercises, SessionType sessionType, {required this.config})
-    : _scheduler = ExerciseScheduler(exercises) {
+    : _scheduler = SessionScheduler(exercises) {
     _initSession(sessionType);
   }
 
@@ -36,7 +35,9 @@ class Session {
         }
       case SessionType.sentenceSession:
         if (!_scheduler.exercises.every((a) => a is SentenceExercise)) {
-          throw Exception("All exercises must be SentenceExercise for a sentence session");
+          throw Exception(
+            "All exercises must be SentenceExercise for a sentence session",
+          );
         }
     }
 
@@ -71,7 +72,10 @@ class Session {
       throw Exception("Cannot submit answer for a finished session");
     }
 
-    _intermediateResult!.numberOfExercicesByStatus[_scheduler.nextExercise!.status.index]++;
+    _intermediateResult!.numberOfExercicesByStatus[_scheduler
+        .nextExercise!
+        .status
+        .code]++;
 
     _scheduler.nextExercise!.applyAnswer(answer, config);
 

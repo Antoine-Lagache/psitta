@@ -16,17 +16,19 @@ class SessionResultDao {
       final result = await txn.execute(
         '''
         INSERT INTO session_result (
+          session_type_index,
           number_unique_exercises_completed,
           started_at,
           end_at
         )
-        VALUES (?, ?, ?)
+        VALUES (?, ?, ?, ?)
         RETURNING id
         ''',
         [
+          sessionResult.sessionTypeIndex,
           sessionResult.uniqueExercisesCompleted,
-          sessionResult.startedAt?.toIso8601String(),
-          sessionResult.endAt?.toIso8601String(),
+          sessionResult.startedAt,
+          sessionResult.endAt,
         ],
       );
 
@@ -42,7 +44,7 @@ class SessionResultDao {
           )
           VALUES (?, ?, ?)
           ''',
-          [id, statusCount.statusIndex, statusCount.exercisesCompleted],
+          [id, statusCount.statusCode, statusCount.exercisesCompleted],
         );
       }
 
@@ -56,6 +58,7 @@ class SessionResultDao {
         '''
         SELECT
           id,
+          session_type_index,
           number_unique_exercises_completed,
           started_at,
           end_at
@@ -64,8 +67,6 @@ class SessionResultDao {
         ''',
         [id],
       );
-
-      resultRows.asMap();
 
       if (resultRows.isEmpty) {
         return null;
@@ -87,6 +88,59 @@ class SessionResultDao {
     });
   }
 
+  Future<List<SessionResultPersistence>> getList({String? startDate, String? endDate}) {
+    return database.readTransaction((txn) async {
+      final conditions = <String>[];
+      final parameters = <Object?>[];
+
+      if (startDate != null) {
+        conditions.add('started_at >= ?');
+        parameters.add(startDate);
+      }
+
+      if (endDate != null) {
+        conditions.add('started_at < ?');
+        parameters.add(endDate);
+      }
+
+      final whereClause = conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
+
+      final resultRows = await txn.getAll('''
+        SELECT
+          id,
+          session_type_index,
+          number_unique_exercises_completed,
+          started_at,
+          end_at
+        FROM session_result
+        $whereClause
+        ORDER BY started_at ASC
+      ''', parameters);
+
+      final results = <SessionResultPersistence>[];
+
+      for (final row in resultRows) {
+        final int id = row['id'] as int;
+
+        final statusRows = await txn.getAll(
+          '''
+            SELECT
+              id_session_result,
+              status_index,
+              number_exercise_completed
+            FROM session_result_status_count
+            WHERE id_session_result = ?
+          ''',
+          [id],
+        );
+
+        results.add(SessionResultPersistence.fromRow(row, statusRows));
+      }
+
+      return results;
+    });
+  }
+
   Future<void> update(SessionResultPersistence sessionResult) {
     if (sessionResult.id == null) {
       throw ArgumentError('Cannot update a SessionResult without an id');
@@ -97,15 +151,17 @@ class SessionResultDao {
         '''
         UPDATE session_result
         SET
+          session_type_index = ?,
           number_unique_exercises_completed = ?,
           started_at = ?,
           end_at = ?
         WHERE id = ?
         ''',
         [
+          sessionResult.sessionTypeIndex,
           sessionResult.uniqueExercisesCompleted,
-          sessionResult.startedAt?.toIso8601String(),
-          sessionResult.endAt?.toIso8601String(),
+          sessionResult.startedAt,
+          sessionResult.endAt,
           id,
         ],
       );
@@ -128,7 +184,7 @@ class SessionResultDao {
           )
           VALUES (?, ?, ?)
           ''',
-          [id, statusCount.statusIndex, statusCount.exercisesCompleted],
+          [id, statusCount.statusCode, statusCount.exercisesCompleted],
         );
       }
     });

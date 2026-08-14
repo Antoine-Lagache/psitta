@@ -1,18 +1,18 @@
-import 'package:psitta/domain/exercises/exercice/exercise.dart';
+import 'package:psitta/domain/exercise/exercise.dart';
 
-export 'package:psitta/domain/exercises/exercice/exercise.dart';
+export 'package:psitta/domain/exercise/exercise.dart';
 
 /// Class responsible for scheduling exercises based on their SRS state.
-class ExerciseScheduler {
+class SessionScheduler {
   final List<Exercise> exercises;
 
   Exercise? _nextExercise;
   Exercise? get nextExercise => _nextExercise;
 
-  ExerciseScheduler(this.exercises);
+  SessionScheduler(this.exercises);
 
-  // should only be called once per exercise
-  // Then, use nextExercise to get the exercise
+  // Selects a new exercise to present in the session.
+  // The selected exercise can be accessed through nextExercise.
   void selectNextExercise(DateTime now) {
     Exercise? learning; // was at least already saw once in the session
     Exercise? candidate; // exercise not seen in this session or in training/consolidating
@@ -26,7 +26,9 @@ class ExerciseScheduler {
           if (learning.srsState.nextReview!.isAfter(a.srsState.nextReview!)) {
             learning = a;
           }
-        case ExerciseStatus.consolidating || ExerciseStatus.newExercise || ExerciseStatus.toreview:
+        case ExerciseStatus.consolidating ||
+            ExerciseStatus.newExercise ||
+            ExerciseStatus.toReview:
           candidate ??= a; // new exercise picked at random
         case ExerciseStatus.completed:
           continue;

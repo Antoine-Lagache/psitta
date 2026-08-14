@@ -1,8 +1,8 @@
 import 'sentence_instance.dart';
 
 class SentenceGroup {
-  final int groupId;
+  final int id;
   final List<SentenceInstance> sentences;
 
-  SentenceGroup({required this.groupId, required this.sentences});
+  SentenceGroup({required this.id, required this.sentences});
 }

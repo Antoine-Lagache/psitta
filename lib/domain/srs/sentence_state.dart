@@ -10,17 +10,28 @@ class SentenceState {
 
   bool isInLearning;
 
-  List<double> gradeValue = [0.0, 0.0, 0.0, 0.7, 1.0, 1.4]; // not allowed grade is not checked here
+  static const List<double> gradeWeights = [
+    0.0,
+    0.0,
+    0.0,
+    0.7,
+    1.0,
+    1.4,
+  ]; // not allowed grade is not checked here
 
-  SentenceState({this.shownCount = 0, this.accumulatedScore = 0.0, this.isInLearning = false});
+  SentenceState({
+    this.shownCount = 0,
+    this.accumulatedScore = 0.0,
+    this.isInLearning = false,
+  });
 
   /// update the state of the sentence group according to the given grade
   /// called this function only once in submitAnswer of Exercice
   void updateState(Grade grade) {
-    assert(grade.q >= 0 && grade.q < gradeValue.length);
+    assert(grade.q >= 0 && grade.q < gradeWeights.length);
 
     shownCount += 1;
-    accumulatedScore += gradeValue[grade.q];
+    accumulatedScore += gradeWeights[grade.q];
     if (grade.q >= 3) {
       isInLearning = false;
     } else {

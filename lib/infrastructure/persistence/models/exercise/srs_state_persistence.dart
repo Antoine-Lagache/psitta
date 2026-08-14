@@ -1,12 +1,14 @@
-import 'package:psitta/utils/conversion/time_conversion.dart';
-
 class SrsStatePersistence {
   final double easeFactor;
   final int interval;
   final double kFactor;
   final double w;
   final double rBar;
-  final DateTime? lastReview;
+  final String? lastReview;
+
+  // not present in the domain, but used to determine if the exercise is due for review
+  // use int (in microsecond) for calculation and comparison.
+  final int? nextReview;
 
   SrsStatePersistence({
     required this.easeFactor,
@@ -15,6 +17,7 @@ class SrsStatePersistence {
     required this.w,
     required this.rBar,
     this.lastReview,
+    this.nextReview,
   });
 
   factory SrsStatePersistence.fromRow(Map<String, Object?> row) {
@@ -24,7 +27,8 @@ class SrsStatePersistence {
       kFactor: row['kfactor'] as double,
       w: row['w'] as double,
       rBar: row['rbar'] as double,
-      lastReview: safeParseDate(row['last_review'] as String?),
+      lastReview: row['last_review'] as String?,
+      nextReview: row['next_review'] as int?,
     );
   }
 
@@ -36,7 +40,8 @@ class SrsStatePersistence {
       'kfactor': kFactor,
       'w': w,
       'rbar': rBar,
-      'last_review': toIsoUtc(lastReview),
+      'last_review': lastReview,
+      'next_review': nextReview,
     };
   }
 }

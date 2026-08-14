@@ -14,7 +14,6 @@ class V1InitialSchema implements DatabaseMigration {
       CREATE TABLE exercise (
         id INTEGER PRIMARY KEY,
         type TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     ''');
 
@@ -51,19 +50,6 @@ class V1InitialSchema implements DatabaseMigration {
     ''');
 
     await database.execute('''
-      CREATE TABLE exercise_history (
-        id INTEGER PRIMARY KEY,
-        exercise_id INTEGER NOT NULL,
-        grade INTEGER NOT NULL,
-        answered_at TEXT NOT NULL,
-
-        FOREIGN KEY (exercise_id)
-          REFERENCES exercise(id)
-          ON DELETE CASCADE
-      );
-    ''');
-
-    await database.execute('''
       CREATE TABLE srs_state (
         exercise_id INTEGER PRIMARY KEY,
 
@@ -73,6 +59,7 @@ class V1InitialSchema implements DatabaseMigration {
         w REAL NOT NULL,
         rbar REAL NOT NULL,
         last_review TEXT,
+        next_review INTEGER,
 
         FOREIGN KEY (exercise_id)
           REFERENCES exercise(id)
@@ -98,6 +85,7 @@ class V1InitialSchema implements DatabaseMigration {
       CREATE TABLE sentence_exercise (
         exercise_id INTEGER PRIMARY KEY,
         sentence_group_id INTEGER NOT NULL,
+        training_count INTEGER NOT NULL,
 
         FOREIGN KEY (exercise_id)
           REFERENCES exercise(id)
@@ -141,6 +129,28 @@ class V1InitialSchema implements DatabaseMigration {
     ''');
 
     await database.execute('''
+      CREATE TABLE exercise_history (
+        id INTEGER PRIMARY KEY,
+
+        exercise_id INTEGER NOT NULL,
+
+        sentence_instance_id INTEGER,
+
+        grade INTEGER NOT NULL,
+        answered_at TEXT NOT NULL,
+        status INTEGER NOT NULL,
+
+        FOREIGN KEY (exercise_id)
+          REFERENCES exercise(id)
+          ON DELETE CASCADE,
+        
+        FOREIGN KEY (sentence_instance_id)
+          REFERENCES sentence_instance(id)
+          ON DELETE CASCADE
+      );
+    ''');
+
+    await database.execute('''
       CREATE TABLE field_value (
         id INTEGER PRIMARY KEY,
 
@@ -168,6 +178,7 @@ class V1InitialSchema implements DatabaseMigration {
     await database.execute('''
       CREATE TABLE session_result (
         id INTEGER PRIMARY KEY,
+        session_type_index INTEGER NOT NULL,
 
         number_unique_exercises_completed INTEGER NOT NULL,
 

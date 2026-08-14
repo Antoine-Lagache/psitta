@@ -1,34 +1,129 @@
 // ignore_for_file: avoid_print
 
 import 'dart:io';
+import 'dart:math';
 
-/// Script pour compter le nombre de lignes de code Dart dans le répertoire lib,
-/// en excluant les fichiers dans lib/playground/.
+/// Script pour afficher l'arborescence du dossier lib,
+/// avec le nombre de lignes Dart pour chaque fichier et dossier.
+///
+/// Exclusions:
+/// - lib/playground/
+/// - lib/archive/
 void main() {
   final libDir = Directory('lib');
-  int totalLines = 0;
 
-  // Parcours récursif
-  void countLines(Directory dir) {
-    for (var entity in dir.listSync(recursive: false)) {
-      if (entity is File && entity.path.endsWith('.dart')) {
-        // Ignore les fichiers dans lib/playground/
-        if (!entity.path.contains('lib/playground/')) {
-          final lines = entity.readAsLinesSync().length;
-          totalLines += lines;
-          print('${entity.path}: $lines lignes');
-        }
-      } else if (entity is Directory) {
-        // Ne pas descendre dans playground
-        if (!entity.path.contains('lib/playground') &&
-            !entity.path.contains('lib/archive')) {
-          countLines(entity);
-        }
-      }
+  final root = buildTree(libDir);
+
+  final widths = getAllLineCounts(root);
+  final width = widths.reduce(max).toString().length;
+
+  print(yellow + root.name + reset);
+  printTree(root, '', width);
+
+  print('\nTotal Dart lines: $yellow${root.lines}$reset');
+}
+
+class TreeNode {
+  final String name;
+  final bool isDirectory;
+  final int lines;
+  final List<TreeNode> children;
+
+  TreeNode({
+    required this.name,
+    required this.isDirectory,
+    required this.lines,
+    this.children = const [],
+  });
+}
+
+/// Construit récursivement l'arbre.
+TreeNode buildTree(Directory dir) {
+  final children = <TreeNode>[];
+  var totalLines = 0;
+
+  for (final entity in dir.listSync()) {
+    if (_shouldIgnore(entity.path)) {
+      continue;
+    }
+
+    if (entity is Directory) {
+      final child = buildTree(entity);
+
+      children.add(child);
+      totalLines += child.lines;
+    } else if (entity is File && entity.path.endsWith('.dart')) {
+      final lines = entity.readAsLinesSync().length;
+
+      children.add(
+        TreeNode(name: entity.uri.pathSegments.last, isDirectory: false, lines: lines),
+      );
+
+      totalLines += lines;
     }
   }
 
-  countLines(libDir);
+  // Dossiers avant fichiers, puis ordre alphabétique.
+  children.sort((a, b) {
+    if (a.isDirectory != b.isDirectory) {
+      return a.isDirectory ? -1 : 1;
+    }
 
-  print('\nTotal de lignes Dart (hors playground and archive) : $totalLines');
+    return a.name.compareTo(b.name);
+  });
+
+  return TreeNode(
+    name: dir.uri.pathSegments.lastWhere((segment) => segment.isNotEmpty),
+    isDirectory: true,
+    lines: totalLines,
+    children: children,
+  );
 }
+
+bool _shouldIgnore(String path) {
+  return path.contains('lib/playground') || path.contains('lib/archive');
+}
+
+/// Récupère les nombres de lignes de tous les nœuds.
+List<int> getAllLineCounts(TreeNode node) {
+  return [node.lines, ...node.children.expand(getAllLineCounts)];
+}
+
+/// Affichage façon tree.
+void printTree(TreeNode node, String prefix, int width) {
+  for (var i = 0; i < node.children.length; i++) {
+    final child = node.children[i];
+
+    final isLast = i == node.children.length - 1;
+    final branch = isLast ? '└─ ' : '├─ ';
+
+    final count = child.lines.toString().padLeft(width, ' ');
+
+    String coloredCount;
+    if (child.lines < 100) {
+      coloredCount = child.isDirectory
+          ? '$blue$count lines$reset ─'
+          : '$green$count lines$reset ─';
+    } else {
+      coloredCount = child.isDirectory
+          ? '$brightBlue$count lines$reset ─'
+          : '$brightGreen$count lines$reset ─';
+    }
+
+    print('$prefix$branch$coloredCount ${child.name}${child.isDirectory ? '/' : ''}');
+
+    if (child.isDirectory) {
+      printTree(child, prefix + (isLast ? '   ' : '│  '), width);
+    }
+  }
+}
+
+// ANSI colors
+
+const reset = '\x1B[0m';
+const green = '\x1B[32m';
+const blue = '\x1B[34m';
+const brightGreen = '\x1B[92m';
+const brightBlue = '\x1B[94m';
+
+const yellow = '\x1B[93m';

@@ -1,11 +1,12 @@
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
-
 import "package:psitta/infrastructure/persistence/models/exercise/exercise_persistence.dart";
 
 class ExerciseDao {
   final sqlite.SqliteDatabase database;
 
   ExerciseDao(this.database);
+
+  // Public operations
 
   Future<int> insert(ExercisePersistence exercise) {
     if (exercise.id != null) {
@@ -30,61 +31,112 @@ class ExerciseDao {
   }
 
   Future<ExercisePersistence?> getById(int id) {
+    return database.readTransaction((txn) => _getExercise(txn, id));
+  }
+
+  /// If [type] is null, exercises of all types are included.
+  Future<List<ExercisePersistence>> getDueExercises(
+    int nowInMicroseconds,
+    int count,
+    String? type,
+  ) {
     return database.readTransaction((txn) async {
-      final exerciseRow = await _getExerciseRow(txn, id);
-      if (exerciseRow == null) {
-        return null;
+      final typeCondition = type == null ? '' : 'AND e.type = ?';
+
+      final arguments = type == null
+          ? [nowInMicroseconds, count]
+          : [nowInMicroseconds, type, count];
+
+      final exerciseRows = await txn.getAll('''
+      SELECT e.id
+      FROM exercise e
+      JOIN srs_state s ON s.exercise_id = e.id
+      WHERE s.next_review IS NOT NULL
+        AND s.next_review <= ?
+        $typeCondition
+      ORDER BY s.next_review ASC
+      LIMIT ?
+      ''', arguments);
+
+      final exercises = <ExercisePersistence>[];
+
+      for (final row in exerciseRows) {
+        final id = row['id'] as int;
+        final exercise = await _getExercise(txn, id);
+
+        if (exercise == null) {
+          throw StateError('Exercise $id disappeared while retrieving due exercises');
+        }
+
+        exercises.add(exercise);
       }
 
-      final srsState = await _getSrsState(txn, id);
-
-      switch (exerciseRow['type']) {
-        case 'word':
-          final wordRow = await _getWordExerciseRow(txn, id);
-          if (wordRow == null) {
-            throw StateError('Missing word_exercise for exercise $id');
-          }
-          return WordExercisePersistence.fromRow(exerciseRow, wordRow, srsState);
-
-        case 'sentence':
-          final sentenceRow = await _getSentenceExerciseRow(txn, id);
-          if (sentenceRow == null) {
-            throw StateError('Missing sentence_exercise for exercise $id');
-          }
-          return SentenceExercisePersistence.fromRow(exerciseRow, sentenceRow, srsState);
-
-        default:
-          throw StateError('Unknown exercise type: ${exerciseRow['type']}');
-      }
+      return exercises;
     });
   }
 
-  Future<void> update(ExercisePersistence exercise) {
+  /// If [type] is null, exercises of all types are included.
+  Future<List<ExercisePersistence>> getNewExercises(int count, String? type) {
+    return database.readTransaction((txn) async {
+      final typeCondition = type == null ? '' : 'AND e.type = ?';
+
+      final arguments = type == null ? [count] : [type, count];
+
+      final exerciseRows = await txn.getAll('''
+        SELECT e.id
+        FROM exercise e
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM exercise_history h
+          WHERE h.exercise_id = e.id
+        )
+        $typeCondition
+        ORDER BY e.id ASC
+        LIMIT ?
+        ''', arguments);
+
+      final exercises = <ExercisePersistence>[];
+
+      for (final row in exerciseRows) {
+        final int id = row['id'] as int;
+        final exercise = await _getExercise(txn, id);
+
+        if (exercise == null) {
+          // would be magical if that happened XD
+          throw StateError('Exercise $id disappeared while retrieving new exercises');
+        }
+
+        exercises.add(exercise);
+      }
+
+      return exercises;
+    });
+  }
+
+  Future<void> update(sqlite.SqliteWriteContext txn, ExercisePersistence exercise) async {
     if (exercise.id == null) {
       throw ArgumentError('Cannot update an exercise without an id');
     }
     final exerciseId = exercise.id!;
 
-    return database.writeTransaction((txn) async {
-      final currentExercise = await _getExerciseRow(txn, exerciseId);
-      if (currentExercise == null) {
-        throw StateError('Exercise $exerciseId does not exist');
-      }
+    final currentExercise = await _getExerciseRow(txn, exerciseId);
+    if (currentExercise == null) {
+      throw StateError('Exercise $exerciseId does not exist');
+    }
 
-      _checkExerciseType(currentExercise, exercise);
+    _checkExerciseType(currentExercise, exercise);
 
-      await _updateExercise(txn, exercise);
+    await _updateExercise(txn, exercise);
 
-      await _updateSrsState(txn, exerciseId, exercise.srsState);
+    await updateSrsState(txn, exerciseId, exercise.srsState);
 
-      switch (exercise) {
-        case WordExercisePersistence():
-          await _updateWordExercise(txn, exerciseId, exercise);
+    switch (exercise) {
+      case WordExercisePersistence():
+        await _updateWordExercise(txn, exerciseId, exercise);
 
-        case SentenceExercisePersistence():
-          await _updateSentenceExercise(txn, exerciseId, exercise);
-      }
-    });
+      case SentenceExercisePersistence():
+        await _updateSentenceExercise(txn, exerciseId, exercise);
+    }
   }
 
   Future<void> delete(int id) {
@@ -99,6 +151,40 @@ class ExerciseDao {
     });
   }
 
+  // Transactional operations
+  Future<void> updateSrsState(
+    sqlite.SqliteWriteContext txn,
+    int exerciseId,
+    SrsStatePersistence srsState,
+  ) async {
+    await txn.execute(
+      '''
+    UPDATE srs_state
+    SET
+      ease_factor = ?,
+      interval = ?,
+      kfactor = ?,
+      w = ?,
+      rbar = ?,
+      last_review = ?,
+      next_review = ?
+    WHERE exercise_id = ?
+    ''',
+      [
+        srsState.easeFactor,
+        srsState.interval,
+        srsState.kFactor,
+        srsState.w,
+        srsState.rBar,
+        srsState.lastReview,
+        srsState.nextReview,
+        exerciseId,
+      ],
+    );
+  }
+
+  // Private insert operations
+
   Future<int> _insertExercise(
     sqlite.SqliteWriteContext txn,
     ExercisePersistence exercise,
@@ -106,13 +192,12 @@ class ExerciseDao {
     final result = await txn.execute(
       '''
     INSERT INTO exercise (
-      type,
-      created_at
+      type
     )
     VALUES (?, ?)
     RETURNING id
     ''',
-      [exercise.type, toIsoUtc(exercise.createdAt)],
+      [exercise.type],
     );
 
     return result.first['id'] as int;
@@ -132,9 +217,10 @@ class ExerciseDao {
       kfactor,
       w,
       rbar,
-      last_review
+      last_review,
+      next_review
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ''',
       [
         exerciseId,
@@ -143,7 +229,8 @@ class ExerciseDao {
         srsState.kFactor,
         srsState.w,
         srsState.rBar,
-        toIsoUtc(srsState.lastReview),
+        srsState.lastReview,
+        srsState.nextReview,
       ],
     );
   }
@@ -174,12 +261,43 @@ class ExerciseDao {
       '''
     INSERT INTO sentence_exercise (
       exercise_id,
-      sentence_group_id
+      sentence_group_id,
+      training_count
     )
-    VALUES (?, ?)
+    VALUES (?, ?, ?)
     ''',
-      [exerciseId, sentenceExercise.sentenceGroupId],
+      [exerciseId, sentenceExercise.sentenceGroupId, sentenceExercise.trainingCountMax],
     );
+  }
+
+  // Private read operations
+
+  Future<ExercisePersistence?> _getExercise(sqlite.SqliteReadContext txn, int id) async {
+    final exerciseRow = await _getExerciseRow(txn, id);
+    if (exerciseRow == null) {
+      return null;
+    }
+
+    final srsState = await _getSrsState(txn, id);
+
+    switch (exerciseRow['type']) {
+      case 'word':
+        final wordRow = await _getWordExerciseRow(txn, id);
+        if (wordRow == null) {
+          throw StateError('Missing word_exercise for exercise $id');
+        }
+        return WordExercisePersistence.fromRow(exerciseRow, wordRow, srsState);
+
+      case 'sentence':
+        final sentenceRow = await _getSentenceExerciseRow(txn, id);
+        if (sentenceRow == null) {
+          throw StateError('Missing sentence_exercise for exercise $id');
+        }
+        return SentenceExercisePersistence.fromRow(exerciseRow, sentenceRow, srsState);
+
+      default:
+        throw StateError('Unknown exercise type: ${exerciseRow['type']}');
+    }
   }
 
   Future<Map<String, Object?>?> _getExerciseRow(
@@ -190,8 +308,7 @@ class ExerciseDao {
       '''
     SELECT
       id,
-      type,
-      created_at
+      type
     FROM exercise
     WHERE id = ?
     ''',
@@ -217,7 +334,8 @@ class ExerciseDao {
       kfactor,
       w,
       rbar,
-      last_review
+      last_review,
+      next_review
     FROM srs_state
     WHERE exercise_id = ?
     ''',
@@ -259,7 +377,8 @@ class ExerciseDao {
     final rows = await txn.getAll(
       '''
     SELECT
-      sentence_group_id
+      sentence_group_id,
+      training_count
     FROM sentence_exercise
     WHERE exercise_id = ?
     ''',
@@ -273,6 +392,8 @@ class ExerciseDao {
     return rows.first;
   }
 
+  // Private update operations
+
   void _checkExerciseType(Map<String, Object?> row, ExercisePersistence exercise) {
     if (row['type'] != exercise.type) {
       throw StateError(
@@ -282,49 +403,11 @@ class ExerciseDao {
     }
   }
 
+  /// this method is useless for now, but might be useful in the future
   Future<void> _updateExercise(
     sqlite.SqliteWriteContext txn,
     ExercisePersistence exercise,
-  ) async {
-    await txn.execute(
-      '''
-    UPDATE exercise
-    SET
-      created_at = ?
-    WHERE id = ?
-    ''',
-      [toIsoUtc(exercise.createdAt), exercise.id],
-    );
-  }
-
-  Future<void> _updateSrsState(
-    sqlite.SqliteWriteContext txn,
-    int exerciseId,
-    SrsStatePersistence srsState,
-  ) async {
-    await txn.execute(
-      '''
-    UPDATE srs_state
-    SET
-      ease_factor = ?,
-      interval = ?,
-      kfactor = ?,
-      w = ?,
-      rbar = ?,
-      last_review = ?
-    WHERE exercise_id = ?
-    ''',
-      [
-        srsState.easeFactor,
-        srsState.interval,
-        srsState.kFactor,
-        srsState.w,
-        srsState.rBar,
-        toIsoUtc(srsState.lastReview),
-        exerciseId,
-      ],
-    );
-  }
+  ) async {}
 
   Future<void> _updateWordExercise(
     sqlite.SqliteWriteContext txn,
@@ -351,10 +434,11 @@ class ExerciseDao {
       '''
     UPDATE sentence_exercise
     SET
-      sentence_group_id = ?
+      sentence_group_id = ?,
+      training_count = ?
     WHERE exercise_id = ?
     ''',
-      [sentenceExercise.sentenceGroupId, exerciseId],
+      [sentenceExercise.sentenceGroupId, sentenceExercise.trainingCountMax, exerciseId],
     );
   }
 }

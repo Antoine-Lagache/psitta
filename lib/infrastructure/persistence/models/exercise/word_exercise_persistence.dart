@@ -5,7 +5,6 @@ final class WordExercisePersistence extends ExercisePersistence {
 
   const WordExercisePersistence({
     super.id,
-    required super.createdAt,
     required super.srsState,
     required this.contentId,
   });
@@ -17,7 +16,6 @@ final class WordExercisePersistence extends ExercisePersistence {
   ) {
     return WordExercisePersistence(
       id: exerciseRow['id'] as int?,
-      createdAt: ExercisePersistence.parseCreatedAt(exerciseRow),
       srsState: srsState,
       contentId: wordRow['content_id'] as int,
     );

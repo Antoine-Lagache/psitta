@@ -1,33 +1,39 @@
-import 'package:psitta/domain/exercises/answer/exercise_answer.dart';
-import 'package:psitta/domain/exercises/exercise_status.dart';
-import 'package:psitta/domain/prompt/exercise_prompt.dart';
+import 'package:psitta/domain/answer/exercise_answer.dart';
+import 'package:psitta/domain/history/exercise_history_entry.dart';
+import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/domain/srs/srs_state.dart';
 
-export 'package:psitta/domain/exercises/answer/exercise_answer.dart';
-export 'package:psitta/domain/exercises/exercise_status.dart';
-export 'package:psitta/domain/prompt/exercise_prompt.dart';
+export 'package:psitta/domain/answer/exercise_answer.dart';
+export 'package:psitta/domain/exercise/exercise_status.dart';
+export 'package:psitta/archive/domain/prompt/exercise_prompt.dart';
 export 'package:psitta/domain/srs/srs_config.dart';
 export 'package:psitta/domain/srs/srs_state.dart';
+export 'package:psitta/domain/history/exercise_history_entry.dart';
 
 /// Abstract class representing an exercise.
 /// Manages the intra-session algorithm and SRS state of the exercise.
 abstract class Exercise {
+  final int id;
   ExerciseStatus status;
 
   SRSState srsState;
-  List<SubmittedExerciseAnswer> history;
 
-  Exercise({required this.status, required this.srsState, required this.history});
+  // Contain only, new history entries that have not been saved yet.
+  List<ExerciseHistoryEntry> newHistoryEntry;
 
-  /// Returns the exercise prompt (for the UI)
-  ExercisePrompt getPrompt();
+  Exercise({required this.id, required this.status, required this.srsState})
+    : newHistoryEntry = [];
+
+  /// Returns the id of the content
+  /// The domain doesn't need to know the content itself,
+  /// only its id is needed to retrieve it from the database
+  int getContentId();
 
   /// Submits the user's answer with a Grade and updates the SRS state
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
     assert(status != ExerciseStatus.completed);
     srsState.applyAnswer(answer, config);
-    history.add(answer);
 
     final DateTime nextDay = DateTime(
       answer.at.year,
@@ -35,12 +41,13 @@ abstract class Exercise {
       answer.at.day,
     ).add(config.dayBoundary).toUtc();
 
-    if (answer.at.toUtc().add(srsState.interval).isAfter(nextDay) && !srsState.isInLearning) {
+    if (answer.at.toUtc().add(srsState.interval).isAfter(nextDay) &&
+        !srsState.isInLearning) {
       status = ExerciseStatus.completed;
     } else {
       if (status == ExerciseStatus.newExercise) {
         status = ExerciseStatus.learning;
-      } else if (status == ExerciseStatus.toreview) {
+      } else if (status == ExerciseStatus.toReview) {
         status = ExerciseStatus.relearning;
       }
     }

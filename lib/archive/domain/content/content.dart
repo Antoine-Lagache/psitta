@@ -1,4 +1,4 @@
-import 'package:psitta/domain/content/field.dart';
+import 'package:psitta/archive/domain/content/field.dart';
 
 /// Class representing the content of an exercise.
 class Content {

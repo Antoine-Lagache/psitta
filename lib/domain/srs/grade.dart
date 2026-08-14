@@ -14,4 +14,15 @@ enum Grade {
   const Grade(this.q);
 
   int toInt() => q;
+
+  static Grade fromInt(int q) {
+    return switch (q) {
+      0 => Grade.again,
+      2 => Grade.hard,
+      3 => Grade.medium,
+      4 => Grade.good,
+      5 => Grade.easy,
+      _ => throw ArgumentError('Invalid grade value: $q'),
+    };
+  }
 }

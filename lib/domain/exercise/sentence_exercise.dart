@@ -1,33 +1,33 @@
-import 'package:psitta/domain/exercises/exercice/exercise.dart';
-import 'package:psitta/domain/exercises/sentence/sentence_group.dart';
-import 'package:psitta/domain/exercises/sentence/sentence_instance.dart';
-import 'package:psitta/domain/content/content.dart';
+import 'package:psitta/domain/exercise/exercise.dart';
+import 'package:psitta/domain/sentences/sentence_group.dart';
+import 'package:psitta/domain/sentences/sentence_instance.dart';
 
-export 'package:psitta/domain/exercises/sentence/sentence_group.dart';
+export 'package:psitta/domain/sentences/sentence_group.dart';
 
 /// class representing a sentence exercise. (contains several sentences)
 class SentenceExercise extends Exercise {
   final SentenceGroup _sentences;
+  int get groupId => _sentences.id;
+  SentenceGroup get sentences => _sentences;
 
   // The number of times the user will train after the exercise is completed.
   // (the user will be asked to answer this number of sentences)
   int trainingCount;
+  final int trainingCountMax;
 
-  SentenceExercise(
-    this._sentences,
-    this.trainingCount, {
+  SentenceExercise({
+    required SentenceGroup sentences,
+    required this.trainingCountMax,
+    required super.id,
     required super.status,
     required super.srsState,
-    required super.history,
-  }) {
+  }) : _sentences = sentences,
+       trainingCount = trainingCountMax {
     assert(trainingCount <= _sentences.sentences.length);
   }
 
   @override
-  ExercisePrompt getPrompt() {
-    Content content = _getSentence().content;
-    return ExercisePrompt.fromFields(content.fields);
-  }
+  int getContentId() => _getSentence().contentId;
 
   /// Returns the sentence with the lowest score (the one that is less known)
   /// No randomness is used here
@@ -54,9 +54,18 @@ class SentenceExercise extends Exercise {
 
   @override
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
+    newHistoryEntry.add(
+      ExerciseHistoryEntry.fromAnswer(
+        answer: answer,
+        exerciseId: id,
+        status: status,
+        sentenceInstanceId: _getSentence().id,
+      ),
+    );
     if (status == ExerciseStatus.consolidating) {
       _getSentence().state.updateState(answer.grade);
-      trainingCount--;
+      if (!answer.grade.isFail) trainingCount--;
+
       if (trainingCount == 0) {
         status = ExerciseStatus.completed;
       }
