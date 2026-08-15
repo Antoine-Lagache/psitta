@@ -1,4 +1,4 @@
-[Documentation Index](../index.md)
+[Documentation Index](/docs/index.md)
 
 # `docs/architecture/domain.md`
 
@@ -10,8 +10,6 @@ This document establishes:
 
 * the project vocabulary,
 * the major responsibilities (`Session`, `Exercise`, content, progression),
-* the display boundary via `ExercisePrompt`.
-
 Implementation details are covered in:
 
 * `sessions.md` (lifecycle and orchestration),
@@ -25,11 +23,6 @@ Implementation details are covered in:
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
-
-namespace Contents {
-  class Content
-  class Field
-}
 
 namespace Runtime {
   class Session
@@ -46,11 +39,6 @@ namespace Progression {
   class SentenceState
 }
 
-namespace Boundary {
-  class ExercisePrompt
-}
-
-
 
 %% Inheritance
 Exercise <|-- WordExercise
@@ -65,17 +53,8 @@ Session "1" --> "1" SRSConfig : config
 Exercise "1" --> "1" SRSState : srsState
 Exercise "1" --> "1" ExerciseStatus : status
 
-%% Targets (content)
-WordExercise "1" --> "1" Content : target
-SentenceExercise "1" --> "1..*" Content : sentences
-Content "1" --> "1..*" Field : fields
-
 %% Sentence-specific progression
 SentenceExercise "1" --> "1..*" SentenceState : updates
-
-%% Boundary projection (created on demand)
-Exercise ..> ExercisePrompt : getPrompt()
-
 ```
 
 ---
@@ -84,8 +63,9 @@ Exercise ..> ExercisePrompt : getPrompt()
 
 ### 1) Content
 
-* `Content` and `Field` are **static/immutable data** (loaded from the DB).
-* They do not carry progression state — only content.
+* In the domain, only the `contentId` is saved. The domain does not need to what the content is. 
+* `Exercise` have a getter to get the `contentId`. This id is used by the application layer to create the content for the UI.
+  * For `SentenceExercise`, the getter target the `contentId` of the current sentenceInstance in the group. (see: [exercise.md](/docs/architecture/domain_layer/exercises.md))
 
 ### 2) Progression
 
@@ -101,12 +81,6 @@ Exercise ..> ExercisePrompt : getPrompt()
 * `Session` is an **orchestrator**: it sequences exercises using `ExerciseSchedule` and holds the `SRSConfig`.
 
 > Note: `SessionType` (see [sessions.md](sessions.md)) is an initialisation detail (validation/consistency) and is not a persistent state of `Session`.
-
-### 4) Boundary (`ExercisePrompt`)
-
-* `ExercisePrompt` is an **immutable projection** built **on demand** via `Exercise.getPrompt()`.
-* It is not persisted.
-* It contains **no presentation logic** (no widget, no layout).
 
 ---
 

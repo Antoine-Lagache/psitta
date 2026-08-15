@@ -1,4 +1,4 @@
-[Documentation Index](../index.md)
+[Documentation Index](/docs/index.md)
 
 # SRS Model Invariants
 

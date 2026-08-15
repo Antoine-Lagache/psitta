@@ -1,4 +1,4 @@
-[Documentation Index](../index.md)
+[Documentation Index](/docs/index.md)
 
 # Hypotheses and Scope of the SRS Model
 

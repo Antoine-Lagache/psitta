@@ -1,4 +1,4 @@
-[Documentation Index](../index.md)
+[Documentation Index](/docs/index.md)
 
 # `docs/architecture/exercises.md`
 
@@ -46,17 +46,11 @@ classDiagram
   }
 
     class SentenceState
-    class ExercisePrompt
 
   namespace Answer {
     class ExerciseAnswer
     class RealExerciseAnswer
     class PreviewExerciseAnswer
-  }
-
-  namespace Contents {
-    class Content
-    class Field
   }
 
   namespace Other {
@@ -69,8 +63,6 @@ classDiagram
     class SentenceInstance
   }
   
-
-
 
     Exercise <|-- WordExercise
     Exercise <|-- SentenceExercise
@@ -87,13 +79,6 @@ classDiagram
     ExerciseAnswer <|-- PreviewExerciseAnswer
 
     Exercise ..> ExerciseAnswer : submit / preview answer
-    Exercise ..> ExercisePrompt : getPrompt()
-
-    Content "1" --> "1..*" Field
-
-    WordExercise "1" --> "1" Content
-    SentenceInstance "1" --> "1" Content
-
 
 ```
 
@@ -155,7 +140,7 @@ The exercise is responsible for:
 
 A `WordExercise`:
 
-* targets a `Content`,
+* targets a `ContentId`,
 * uses its `SRSState`.
 
 It does not manipulate any `SentenceState`.
@@ -168,7 +153,7 @@ A `SentenceExercise`:
 * targets a **group of sentences** (`SentenceGroup`),
 * The `SentenceGroup` is composed of a list of `SentenceInstance`
 * Each `SentenceInstance` Have:
-  * his own `Content`
+  * his own `ContentId`
   * a `SentenceState` updated by the `SentenceExercise`
 
 
@@ -179,33 +164,14 @@ Using a group of sentences allows:
 
 ---
 
-## Content and Exercise Projection
+## Content 
 
 ### Content
 
-Each Words and Sentences have their own `Content`.
+Each Words and Sentences have their own `ContentId`.
 
-A `Content` can have as many `Field` as needed :
-* A `Field` can store any value (Text, Audio, Image, ...)
-* A `Field` have name.
-* And a set of tags that describe the purpose of the field.
-
-> The name of the `Field` doesn't need to be unique, but it is recommended to have an explicit name.
-
-
-### Exercise Projection
-
-An exercise can produce an **immutable snapshot of its state**
-via `Exercise.getPrompt()`.
-
-This projection (`ExercisePrompt`):
-
-* is created **on demand**,
-* is not persisted,
-* contains no presentation logic,
-* is the only information exposed to the UI.
-
-The Projection is composed of every `field` that the UI need.
+- A `ContentId` is used by the application layer to create the content needed for the UI.
+- The domain, doen't need to know the content itself, because no logic have to be done on it.
 
 ---
 
@@ -226,4 +192,3 @@ An exercise ignores:
 * the global session sequencing,
 * user parameters,
 * the origin of data (DB, API),
-* the concept of chapters.

@@ -1,4 +1,4 @@
-[Documentation Index](../index.md)
+[Documentation Index](/docs/index.md)
 
 # `docs/architecture/application.md`
 
@@ -32,7 +32,6 @@ namespace Domain {
   class Exercise
   class WordExercise
   class SentenceExercise
-  class ExercisePrompt
 }
 
 
@@ -44,15 +43,14 @@ Exercise <|-- SentenceExercise
 HomeController --> SessionController : starts sessions
 SessionController --> Session : manages
 SessionController --> Exercise : produces/consumes
-SessionController --> ExercisePrompt : get projection
 
 %% Application -> Persistence
-SessionController --> Repository : **load**<br/> words, groups
-SessionController --> Repository : **load/save** SRS
+SessionController --> Repositories : **load**<br/> words, groups
+SessionController --> Repositories : **load/save** SRS
 
-StatsController --> Repository: read
+StatsController --> Repositories: read
 
-SettingsController --> Repository : read/write config
+SettingsController --> Repositories : read/write config
 ```
 
 ---
@@ -62,7 +60,7 @@ SettingsController --> Repository : read/write config
 ### Controllers (Application)
 
 * `HomeController`: entry-point logic (starting a session, application-side navigation).
-* `SessionController`: orchestrates the flow of a session (exercise and session creation; sending `ExercisePrompt` objects to the UI and collecting user input; session teardown).
+* `SessionController`: orchestrates the flow of a session (exercise and session creation; sending `Content` objects to the UI and collecting user input; session teardown).
 * `StatsController`: computes and exposes statistics from persisted data, without depending on sessions or the exercise runtime.
 * `SettingsController`: exposes and modifies configuration (e.g. SRS parameters).
 
@@ -70,14 +68,10 @@ SettingsController --> Repository : read/write config
 
 * `Session` orchestrates the exercises of a session.
 * `Exercise` is an abstract **runtime** object used during a session. `WordExercise` and `SentenceExercise` are two specialisations.
-* `ExercisePrompt` is a projection of an exercise created by the session for the UI. `SessionController` sends them to the UI, which renders them as widgets.
 
 ### Persistence
 
 Controllers access data through **repositories**:
-
-* content (`WordRepository`, `SentenceGroupRepository`, `ChapterRepository`)
-* progression/config (`SrsRepository`)
 
 SQL, DB mapping, and table definitions are confined to the Persistence diagram.
 

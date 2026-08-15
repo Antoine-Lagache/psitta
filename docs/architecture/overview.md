@@ -1,4 +1,4 @@
-[Documentation Index](../index.md)
+[Documentation Index](/docs/index.md)
 
 # `docs/architecture/overview.md`
 
@@ -23,8 +23,7 @@ flowchart TD
     subgraph DOM["Domain"]
         DOM_SESS["<u>Sessions</u>"]
         DOM_EXO["<u>Exercises</u>"]
-        DOM_CONTENT["<u>Content</u>"]
-        DOM_PROMPT["ExercisePrompt"]
+        DOM_SRS["SRS"]
     end
 
     %% Persistence
@@ -67,14 +66,9 @@ Controllers:
 The **Domain** groups all business logic of the application.
 It is intentionally represented as a **single block**, but structured into conceptual sub-components:
 
-* **Content**
-  Represents the learning content (words, sentences).
-
 * **Exercises**
   Represents the concrete exercises presented to the user.
   Exercises are stateful runtime objects, created before the session starts and destroyed at its end.
-
-  The UI only knows exercises through `ExercisePrompt`, which is a projection of an `Exercise`.
 
 * **Sessions**
   Manages the organisation of exercises into learning sessions. It's the starting point of the domain.

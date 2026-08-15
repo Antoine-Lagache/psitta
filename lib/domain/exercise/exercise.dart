@@ -6,7 +6,6 @@ import 'package:psitta/domain/srs/srs_state.dart';
 
 export 'package:psitta/domain/answer/exercise_answer.dart';
 export 'package:psitta/domain/exercise/exercise_status.dart';
-export 'package:psitta/archive/domain/prompt/exercise_prompt.dart';
 export 'package:psitta/domain/srs/srs_config.dart';
 export 'package:psitta/domain/srs/srs_state.dart';
 export 'package:psitta/domain/history/exercise_history_entry.dart';

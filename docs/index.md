@@ -15,33 +15,41 @@ The documentation is divided into two main parts:
 
 Provides a high-level view of the application's architecture and the dependency rules between the different layers.
 
-## [UI](architecture/ui.md)
+## [UI](architecture/ui_layer/ui.md)
 
 Describes the application's screens, their responsibilities, and the controllers they interact with.
 
-## [Application](architecture/application.md)
+## [Application](architecture/application_layer/application.md)
 
 Explains the role of the controllers and how they coordinate the UI, Domain, and Persistence layers.
 
-## [Domain](architecture/domain.md)
+## [Persistence](architecture/persistence_layer/persistence.md)
+
+Describes the Persistence layer and its role as the boundary between the application and data storage.
+
+### [Database](architecture/persistence_layer/database.md)
+
+Describes the SQLite database schema and the relationships between persisted entities.
+
+### [Repositories](architecture/persistence_layer/repositories.md)
+
+Describes the API exposed by the Persistence layer to the Application layer.
+
+## [Domain](architecture/domain_layer/domain.md)
 
 Introduces the core business model of the application, including sessions, exercises, content, and progression.
 
-## [Sessions](architecture/sessions.md)
+### [Sessions](architecture/domain_layer/sessions.md)
 
 Details the lifecycle of a learning session and how it orchestrates exercises.
 
-## [Exercises](architecture/exercises.md)
+### [Exercises](architecture/domain_layer/exercises.md)
 
 Describes runtime exercises, their responsibilities, state transitions, and interactions with the SRS.
 
-## [SRS](architecture/srs.md)
+### [SRS](architecture/domain_layer/srs.md)
 
 Explains how the spaced repetition system integrates into the Domain and how progression is managed.
-
-## [Persistence](architecture/persistence.md)
-
-Documents the Persistence layer, repositories, database mapping, and storage responsibilities.
 
 ---
 
