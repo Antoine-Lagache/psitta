@@ -82,8 +82,8 @@ The project is under active development. Here is a transparent breakdown of prog
 | SRS model (formal spec) | ✅ Complete |
 | Domain layer — class & method design | ✅ Complete |
 | Domain layer — implementation | ✅ Complete |
-| Persistence layer | 🔄 35% complete |
-| Application / Controllers | ⏳ Not started |
+| Persistence layer | ✅ Complete |
+| Application / Controllers | 🔄 0% complete |
 | UI | ⏳ Not started |
 
 The current focus is completing the Domain layer implementation and ensuring full conformance with the formal SRS specification. The codebase is being incrementally refactored to strictly conform to the defined architecture.
@@ -109,17 +109,6 @@ Domain logic and SRS unit tests can be run independently once the domain layer i
 ```bash
 flutter test
 ```
-
----
-
-## Roadmap
-
-
-- [ ] Implement Persistence layer (SQLite repositories)
-- [ ] Implement Application / Controllers layer
-- [ ] Build core UI screens (Home, Session, Statistics)
-- [ ] Full integration and end-to-end testing
-
 
 ---
 

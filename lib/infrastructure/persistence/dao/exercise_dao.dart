@@ -194,7 +194,7 @@ class ExerciseDao {
     INSERT INTO exercise (
       type
     )
-    VALUES (?, ?)
+    VALUES (?)
     RETURNING id
     ''',
       [exercise.type],

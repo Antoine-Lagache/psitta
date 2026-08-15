@@ -13,7 +13,7 @@ class V1InitialSchema implements DatabaseMigration {
     await database.execute('''
       CREATE TABLE exercise (
         id INTEGER PRIMARY KEY,
-        type TEXT NOT NULL,
+        type TEXT NOT NULL
       );
     ''');
 
