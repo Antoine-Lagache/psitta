@@ -4,15 +4,20 @@ import 'package:psitta/domain/exercise/exercise.dart';
 class WordExercise extends Exercise {
   final int contentId;
 
-  @override
-  int getContentId() => contentId;
-
   WordExercise({
     required this.contentId,
     required super.id,
     required super.status,
     required super.srsState,
   });
+
+  @override
+  int getContentId() => contentId;
+
+  @override
+  ExerciseResume getResume() {
+    return ExerciseResume(exerciseId: id, status: status);
+  }
 
   @override
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {

@@ -1,4 +1,4 @@
-import 'package:psitta/archive/domain/content/media.dart';
+import 'package:psitta/application/models/content/media.dart';
 
 sealed class FieldValue {
   const FieldValue();

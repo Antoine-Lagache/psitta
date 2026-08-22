@@ -7,38 +7,38 @@ import 'package:psitta/infrastructure/persistence/models/sentence/sentence_group
 class SentenceGroupRepository {
   final sqlite.SqliteDatabase database;
 
-  final SentenceGroupDao sentencesDao;
+  final SentenceGroupDao _sentencesDao;
 
-  SentenceGroupRepository(this.database) : sentencesDao = SentenceGroupDao(database);
+  SentenceGroupRepository(this.database) : _sentencesDao = SentenceGroupDao(database);
 
   Future<int> createGroup() async {
     final sentenceGroup = SentenceGroupPersistence(sentenceInstances: []);
-    return await sentencesDao.insertSentenceGroup(sentenceGroup);
+    return await _sentencesDao.insertSentenceGroup(sentenceGroup);
   }
 
   Future<int> createInstance(int sentenceGroupId, int contentId) async {
-    final sentenceGroup = await sentencesDao.getById(sentenceGroupId);
+    final sentenceGroup = await _sentencesDao.getById(sentenceGroupId);
     if (sentenceGroup == null) {
       throw StateError("Missing SentenceGroup with id $sentenceGroupId");
     }
 
     final SentenceInstancePersistence newInstance = SentenceMapper.newInstance(contentId);
-    return await sentencesDao.insertSentenceInstance(newInstance, sentenceGroupId);
+    return await _sentencesDao.insertSentenceInstance(newInstance, sentenceGroupId);
   }
 
   Future<void> moveSentenceInstance(int sentenceInstanceId, int targetGroupId) async {
-    final sentenceGroup = await sentencesDao.getById(targetGroupId);
+    final sentenceGroup = await _sentencesDao.getById(targetGroupId);
     if (sentenceGroup == null) {
       throw StateError("Missing SentenceGroup with id $targetGroupId");
     }
-    await sentencesDao.moveSentenceInstance(sentenceInstanceId, targetGroupId);
+    await _sentencesDao.moveSentenceInstance(sentenceInstanceId, targetGroupId);
   }
 
   Future<void> deleteSentenceGroup(int sentenceGroupId) async {
-    await sentencesDao.delete(sentenceGroupId);
+    await _sentencesDao.delete(sentenceGroupId);
   }
 
   Future<void> deleteSentenceInstance(int sentenceInstanceId) async {
-    await sentencesDao.deleteSentenceInstance(sentenceInstanceId);
+    await _sentencesDao.deleteSentenceInstance(sentenceInstanceId);
   }
 }

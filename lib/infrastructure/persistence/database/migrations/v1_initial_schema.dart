@@ -26,9 +26,7 @@ class V1InitialSchema implements DatabaseMigration {
     await database.execute('''
       CREATE TABLE field_definition (
         id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL UNIQUE,
         value_type TEXT NOT NULL,
-        renderer TEXT NOT NULL,
         side TEXT NOT NULL
       );
     ''');
@@ -202,6 +200,27 @@ class V1InitialSchema implements DatabaseMigration {
           REFERENCES session_result(id)
           ON DELETE CASCADE
       );
+    ''');
+
+    await database.execute('''
+      CREATE TABLE active_session_exercise (
+        session_result_id INTEGER NOT NULL,
+        exercise_id INTEGER NOT NULL,
+        
+        status_index INTEGER NOT NULL,
+
+        training_count INTEGER,
+
+
+        PRIMARY KEY (
+            session_result_id,
+            exercise_id
+        ),
+
+        FOREIGN KEY (session_result_id)
+            REFERENCES session_result(id)
+            ON DELETE CASCADE
+    );
     ''');
   }
 }

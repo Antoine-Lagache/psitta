@@ -23,8 +23,9 @@ class SessionResultPersistence {
 
   factory SessionResultPersistence.fromRow(
     Map<String, Object?> resultRow,
-    List<Map<String, Object?>> statusRows,
-  ) {
+    List<Map<String, Object?>> statusRows, {
+    List<Map<String, Object?>>? exerciseRows,
+  }) {
     return SessionResultPersistence(
       id: resultRow['id'] as int?,
       sessionTypeIndex: resultRow['session_type_index'] as int,

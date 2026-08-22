@@ -7,14 +7,16 @@ class SessionResultDao {
 
   SessionResultDao(this.database);
 
-  Future<int> insert(SessionResultPersistence sessionResult) {
+  Future<int> insert(
+    SessionResultPersistence sessionResult,
+    sqlite.SqliteWriteContext txn,
+  ) async {
     if (sessionResult.id != null) {
       throw ArgumentError('Cannot insert an entity that already has an id');
     }
 
-    return database.writeTransaction((txn) async {
-      final result = await txn.execute(
-        '''
+    final result = await txn.execute(
+      '''
         INSERT INTO session_result (
           session_type_index,
           number_unique_exercises_completed,
@@ -24,19 +26,19 @@ class SessionResultDao {
         VALUES (?, ?, ?, ?)
         RETURNING id
         ''',
-        [
-          sessionResult.sessionTypeIndex,
-          sessionResult.uniqueExercisesCompleted,
-          sessionResult.startedAt,
-          sessionResult.endAt,
-        ],
-      );
+      [
+        sessionResult.sessionTypeIndex,
+        sessionResult.uniqueExercisesCompleted,
+        sessionResult.startedAt,
+        sessionResult.endAt,
+      ],
+    );
 
-      final id = result.first['id'] as int;
+    final id = result.first['id'] as int;
 
-      for (final statusCount in sessionResult.statusCounts) {
-        await txn.execute(
-          '''
+    for (final statusCount in sessionResult.statusCounts) {
+      await txn.execute(
+        '''
           INSERT INTO session_result_status_count (
             id_session_result,
             status_index,
@@ -44,12 +46,11 @@ class SessionResultDao {
           )
           VALUES (?, ?, ?)
           ''',
-          [id, statusCount.statusCode, statusCount.exercisesCompleted],
-        );
-      }
+        [id, statusCount.statusCode, statusCount.exercisesCompleted],
+      );
+    }
 
-      return id;
-    });
+    return id;
   }
 
   Future<SessionResultPersistence?> getById(int id) {
@@ -141,14 +142,16 @@ class SessionResultDao {
     });
   }
 
-  Future<void> update(SessionResultPersistence sessionResult) {
+  Future<void> update(
+    SessionResultPersistence sessionResult,
+    sqlite.SqliteWriteContext txn,
+  ) async {
     if (sessionResult.id == null) {
       throw ArgumentError('Cannot update a SessionResult without an id');
     }
     final int id = sessionResult.id!;
-    return database.writeTransaction((txn) async {
-      await txn.execute(
-        '''
+    await txn.execute(
+      '''
         UPDATE session_result
         SET
           session_type_index = ?,
@@ -157,26 +160,26 @@ class SessionResultDao {
           end_at = ?
         WHERE id = ?
         ''',
-        [
-          sessionResult.sessionTypeIndex,
-          sessionResult.uniqueExercisesCompleted,
-          sessionResult.startedAt,
-          sessionResult.endAt,
-          id,
-        ],
-      );
+      [
+        sessionResult.sessionTypeIndex,
+        sessionResult.uniqueExercisesCompleted,
+        sessionResult.startedAt,
+        sessionResult.endAt,
+        id,
+      ],
+    );
 
-      await txn.execute(
-        '''
+    await txn.execute(
+      '''
         DELETE FROM session_result_status_count
         WHERE id_session_result = ?
         ''',
-        [id],
-      );
+      [id],
+    );
 
-      for (final statusCount in sessionResult.statusCounts) {
-        await txn.execute(
-          '''
+    for (final statusCount in sessionResult.statusCounts) {
+      await txn.execute(
+        '''
           INSERT INTO session_result_status_count (
             id_session_result,
             status_index,
@@ -184,10 +187,9 @@ class SessionResultDao {
           )
           VALUES (?, ?, ?)
           ''',
-          [id, statusCount.statusCode, statusCount.exercisesCompleted],
-        );
-      }
-    });
+        [id, statusCount.statusCode, statusCount.exercisesCompleted],
+      );
+    }
   }
 
   Future<void> delete(int id) {

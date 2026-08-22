@@ -6,10 +6,22 @@ export 'package:psitta/domain/exercise/exercise.dart';
 class SessionScheduler {
   final List<Exercise> exercises;
 
-  Exercise? _nextExercise;
-  Exercise? get nextExercise => _nextExercise;
+  Exercise? _currentExercise;
+  Exercise? get currentExercise => _currentExercise;
 
   SessionScheduler(this.exercises);
+
+  bool hasNextExercise() {
+    return exercises.any((a) => a.status != ExerciseStatus.completed);
+  }
+
+  int countExerciseByStatus(ExerciseStatus status) {
+    return exercises.where((a) => a.status == status).length;
+  }
+
+  List<ExerciseResume> getResumeList() {
+    return exercises.map((e) => e.getResume()).toList();
+  }
 
   // Selects a new exercise to present in the session.
   // The selected exercise can be accessed through nextExercise.
@@ -37,28 +49,20 @@ class SessionScheduler {
 
     // if one is null, we return the other
     if (learning == null) {
-      _nextExercise = candidate;
+      _currentExercise = candidate;
       return;
     }
     if (candidate == null) {
-      _nextExercise = learning;
+      _currentExercise = learning;
       return;
     }
 
     if (learning.srsState.nextReview!.isBefore((now))) {
       // if the next exercise inlearning should be review now we pick it
-      _nextExercise = learning;
+      _currentExercise = learning;
     } else {
       // else : we pick a new Exercise
-      _nextExercise = candidate;
+      _currentExercise = candidate;
     }
-  }
-
-  bool hasNextExercise() {
-    return exercises.any((a) => a.status != ExerciseStatus.completed);
-  }
-
-  int countExerciseByStatus(ExerciseStatus status) {
-    return exercises.where((a) => a.status == status).length;
   }
 }

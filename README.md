@@ -83,7 +83,7 @@ The project is under active development. Here is a transparent breakdown of prog
 | Domain layer — class & method design | ✅ Complete |
 | Domain layer — implementation | ✅ Complete |
 | Persistence layer | ✅ Complete |
-| Application / Controllers | 🔄 0% complete |
+| Application / Controllers | 🔄 40% complete |
 | UI | ⏳ Not started |
 
 The current focus is completing the Domain layer implementation and ensuring full conformance with the formal SRS specification. The codebase is being incrementally refactored to strictly conform to the defined architecture.

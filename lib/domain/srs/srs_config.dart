@@ -22,6 +22,7 @@ class SRSConfig {
   dayBoundary; // 0..23, Anki-like day boundary (also used for time zone offset)
 
   final int newCount;
+  final int reviewCount;
 
   static const List<double> _defaultLambdas = [0.60, 0.90, 0.80, 0.95, 0.85, 0.70];
 
@@ -48,6 +49,7 @@ class SRSConfig {
     this.easyBonus = 1.3,
     this.dayBoundary = Duration.zero,
     this.newCount = 10,
+    this.reviewCount = 9999,
   }) : lambdas = List.unmodifiable(
          List.generate(6, (i) {
            if (lambdas != null && i < lambdas.length) return lambdas[i].clamp(0.0, 1.0);

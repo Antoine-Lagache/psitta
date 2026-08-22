@@ -1,14 +1,16 @@
 import 'package:psitta/domain/answer/exercise_answer.dart';
+import 'package:psitta/domain/exercise/exercise_resume.dart';
 import 'package:psitta/domain/history/exercise_history_entry.dart';
 import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/domain/srs/srs_state.dart';
 
 export 'package:psitta/domain/answer/exercise_answer.dart';
+export 'package:psitta/domain/exercise/exercise_resume.dart';
+export 'package:psitta/domain/history/exercise_history_entry.dart';
 export 'package:psitta/domain/exercise/exercise_status.dart';
 export 'package:psitta/domain/srs/srs_config.dart';
 export 'package:psitta/domain/srs/srs_state.dart';
-export 'package:psitta/domain/history/exercise_history_entry.dart';
 
 /// Abstract class representing an exercise.
 /// Manages the intra-session algorithm and SRS state of the exercise.
@@ -29,9 +31,16 @@ abstract class Exercise {
   /// only its id is needed to retrieve it from the database
   int getContentId();
 
+  /// Return a short version of the Exercise
+  ExerciseResume getResume();
+
   /// Submits the user's answer with a Grade and updates the SRS state
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
     assert(status != ExerciseStatus.completed);
+    if (!isGradeAllowed(answer.grade)) {
+      throw StateError("The grade is not allowed by this exercise");
+    }
+
     srsState.applyAnswer(answer, config);
 
     final DateTime nextDay = DateTime(

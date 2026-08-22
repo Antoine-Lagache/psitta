@@ -18,16 +18,22 @@ class SentenceExercise extends Exercise {
   SentenceExercise({
     required SentenceGroup sentences,
     required this.trainingCountMax,
+    int? trainingCount,
     required super.id,
     required super.status,
     required super.srsState,
   }) : _sentences = sentences,
-       trainingCount = trainingCountMax {
-    assert(trainingCount <= _sentences.sentences.length);
+       trainingCount = trainingCount ?? trainingCountMax {
+    assert(this.trainingCount <= _sentences.sentences.length);
   }
 
   @override
   int getContentId() => _getSentence().contentId;
+
+  @override
+  ExerciseResume getResume() {
+    return ExerciseResume(exerciseId: id, status: status, trainingCount: trainingCount);
+  }
 
   /// Returns the sentence with the lowest score (the one that is less known)
   /// No randomness is used here

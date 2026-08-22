@@ -1,6 +1,6 @@
 /// Represents a media resource attached to content.
 class Media {
-  final int id;
+  final int? id;
   final String path;
   final String mimeType;
   final int size;

@@ -7,7 +7,7 @@ export 'package:psitta/domain/exercise/exercise_status.dart';
 /// This result is modified each time an exercise is answered.
 /// It is modified only by the Session class.
 class SessionResult {
-  final int? id;
+  int? id;
 
   SessionType sessionType;
 

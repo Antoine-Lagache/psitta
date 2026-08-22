@@ -10,16 +10,16 @@ import 'package:psitta/utils/conversion/time_conversion.dart';
 class ExerciseHistoryRepository {
   final sqlite.SqliteDatabase database;
 
-  final ExerciseHistoryDao historyDao;
+  final ExerciseHistoryDao _historyDao;
 
-  ExerciseHistoryRepository(this.database) : historyDao = ExerciseHistoryDao(database);
+  ExerciseHistoryRepository(this.database) : _historyDao = ExerciseHistoryDao(database);
 
   Future<List<ExerciseHistoryEntry>> getList({
     int? exerciseId,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    final list = await historyDao.getList(
+    final list = await _historyDao.getList(
       exerciseId: exerciseId,
       startDate: toIsoUtc(startDate),
       endDate: toIsoUtc(endDate),

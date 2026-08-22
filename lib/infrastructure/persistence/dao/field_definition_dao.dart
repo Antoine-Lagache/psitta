@@ -16,20 +16,13 @@ class FieldDefinitionDao {
       final fieldDefinitionResult = await txn.execute(
         '''
           INSERT INTO field_definition (
-            name,
             value_type,
-            renderer,
             side
           )
-          VALUES(?, ?, ?, ?)
+          VALUES(?, ?)
           RETURNING id
         ''',
-        [
-          fieldDefinition.name,
-          fieldDefinition.valueType,
-          fieldDefinition.renderer,
-          fieldDefinition.side,
-        ],
+        [fieldDefinition.valueType, fieldDefinition.side],
       );
 
       return fieldDefinitionResult.first['id'] as int;
@@ -42,9 +35,7 @@ class FieldDefinitionDao {
         '''
           SELECT
             id,
-            name,
             value_type,
-            renderer,
             side
           FROM field_definition
           WHERE id = ?
@@ -72,19 +63,11 @@ class FieldDefinitionDao {
         '''
           UPDATE field_definition
           SET
-            name = ?,
             value_type = ?,
-            renderer = ?,
             side = ?
           WHERE id = ?
         ''',
-        [
-          fieldDefinition.name,
-          fieldDefinition.valueType,
-          fieldDefinition.renderer,
-          fieldDefinition.side,
-          fieldDefinitionId,
-        ],
+        [fieldDefinition.valueType, fieldDefinition.side, fieldDefinitionId],
       );
     });
   }
