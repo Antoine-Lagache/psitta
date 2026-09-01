@@ -4,13 +4,13 @@ class Media {
   final String path;
   final String mimeType;
   final int size;
-  final String? checksum;
+  final String sha256;
 
   Media({
     required this.id,
     required this.path,
     required this.mimeType,
     required this.size,
-    this.checksum,
+    required this.sha256,
   });
 }

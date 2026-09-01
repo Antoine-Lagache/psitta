@@ -10,6 +10,10 @@ analyzer:
     flutter_style_todos: ignore
   exclude:
     - lib/archive/**/*.dart
+    - build/**
+    - android/**
+    - web/**
+    - linux/**
 
 formatter:
   page_width: 90

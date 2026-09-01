@@ -3,14 +3,14 @@ class MediaPersistence {
   final String path;
   final String mimeType;
   final int size;
-  final String? checksum;
+  final String sha256;
 
   MediaPersistence({
     this.id,
     required this.path,
     required this.mimeType,
     required this.size,
-    this.checksum,
+    required this.sha256,
   });
 
   factory MediaPersistence.fromRow(Map<String, Object?> mediaRow) {
@@ -19,11 +19,17 @@ class MediaPersistence {
       path: mediaRow['path'] as String,
       mimeType: mediaRow['mime_type'] as String,
       size: mediaRow['size'] as int,
-      checksum: mediaRow['checksum'] as String?,
+      sha256: mediaRow['sha256'] as String,
     );
   }
 
   Map<String, Object?> toRow() {
-    return {'id': id, 'path': path, 'mime_type': mimeType, 'size': size, 'checksum': checksum};
+    return {
+      'id': id,
+      'path': path,
+      'mime_type': mimeType,
+      'size': size,
+      'sha256': sha256,
+    };
   }
 }

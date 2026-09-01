@@ -8,10 +8,11 @@ class FieldDefinition {
 }
 
 enum FieldValueType {
+  text,
   html,
   image,
   audio,
-  text;
+  video;
 
   static FieldValueType fromString(String string) {
     return FieldValueType.values.firstWhere((e) => e.name == string);

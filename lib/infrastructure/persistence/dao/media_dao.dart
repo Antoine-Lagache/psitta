@@ -2,7 +2,7 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/models/content/media_persistence.dart';
 
-// TODO : add a getByChecksum method
+// TODO : add a getBy Sha256 method
 class MediaDao {
   final sqlite.SqliteDatabase database;
 
@@ -20,12 +20,12 @@ class MediaDao {
           path,
           mime_type,
           size,
-          checksum,
+          sha256,
         )
         VALUES (?, ?, ?, ?)
         RETURNING id
       ''',
-        [media.path, media.mimeType, media.size, media.checksum],
+        [media.path, media.mimeType, media.size, media.sha256],
       );
 
       return mediaResult.first['id'] as int;
@@ -41,11 +41,35 @@ class MediaDao {
           path,
           mime_type,
           size,
-          checksum
+          sha256
         FROM media
         WHERE id = ?
         ''',
         [id],
+      );
+
+      if (mediaRows.isEmpty) {
+        return null;
+      }
+
+      return MediaPersistence.fromRow(mediaRows.first);
+    });
+  }
+
+  Future<MediaPersistence?> getBySHA256(String sha256) {
+    return database.readTransaction((txn) async {
+      final mediaRows = await txn.getAll(
+        '''
+        SELECT
+          id,
+          path,
+          mime_type,
+          size,
+          sha256
+        FROM media
+        WHERE sha256 = ?
+        ''',
+        [sha256],
       );
 
       if (mediaRows.isEmpty) {
@@ -71,10 +95,10 @@ class MediaDao {
           path = ?,
           mime_type = ?,
           size = ?,
-          checksum = ?
+          sha256 = ?
         WHERE id = ?
         ''',
-        [media.path, media.mimeType, media.size, media.checksum, mediaId],
+        [media.path, media.mimeType, media.size, media.sha256, mediaId],
       );
     });
   }

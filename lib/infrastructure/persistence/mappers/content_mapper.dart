@@ -50,7 +50,7 @@ class ContentMapper {
           id: domain.id,
           fieldDefinitionId: domain.definition.id,
           textValue: null,
-          media: _mediaToPersistence(media.media),
+          media: mediaToPersistence(media.media),
           displayOrder: domain.displayOrder,
         );
     }
@@ -84,29 +84,29 @@ class ContentMapper {
     );
   }
 
-  static MediaPersistence _mediaToPersistence(Media mediaDomain) {
+  static MediaPersistence mediaToPersistence(Media mediaDomain) {
     return MediaPersistence(
       id: mediaDomain.id,
       path: mediaDomain.path,
       mimeType: mediaDomain.mimeType,
       size: mediaDomain.size,
-      checksum: mediaDomain.checksum,
+      sha256: mediaDomain.sha256,
     );
   }
 
-  static Media _mediaToDomain(MediaPersistence mediaPersistence) {
+  static Media mediaToDomain(MediaPersistence mediaPersistence) {
     return Media(
       id: mediaPersistence.id,
       path: mediaPersistence.path,
       mimeType: mediaPersistence.mimeType,
       size: mediaPersistence.size,
-      checksum: mediaPersistence.checksum,
+      sha256: mediaPersistence.sha256,
     );
   }
 
   static FieldValue _fieldValueToDomain(FieldValuePersistence persistence) {
     if (persistence.textValue == null && persistence.media != null) {
-      return MediaFieldValue(_mediaToDomain(persistence.media!));
+      return MediaFieldValue(mediaToDomain(persistence.media!));
     } else if (persistence.textValue != null && persistence.media == null) {
       return TextFieldValue(persistence.textValue!);
     }

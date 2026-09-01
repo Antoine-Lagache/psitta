@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../archive/domain/legacy_session.dart';
-import '../../archive/domain/legacy_exercice.dart';
-import '../../archive/domain/legacy_srs.dart';
-import '../../archive/persistence/database_service.dart';
+import '../../domain/legacy_session.dart';
+import '../../domain/legacy_exercice.dart';
+import '../../domain/legacy_srs.dart';
+import '../../persistence/database_service.dart';
 import 'utils.dart';
 
 enum _FinishAction { retry, quitAnyway }
@@ -127,7 +127,9 @@ class _SessionScreenState extends State<SessionScreen> {
   /// Affiche les intervalles prévus pour chaque niveau de réponse.
   Map<int, String> _predictNextIntervals(Exercice exo) {
     const grades = [0, 2, 3, 4, 5];
-    return {for (final q in grades) q: formatDuration(session.getPreviewInterval(exo, q))};
+    return {
+      for (final q in grades) q: formatDuration(session.getPreviewInterval(exo, q)),
+    };
   }
 
   /// Méthode unique pour terminer la session (utilisée pour "Quit" et "Completed").
@@ -197,7 +199,10 @@ class _SessionScreenState extends State<SessionScreen> {
                   : 'Session quittée. $answeredCount cartes répondues.',
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK')),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
             ],
           ),
         );
@@ -211,7 +216,10 @@ class _SessionScreenState extends State<SessionScreen> {
           title: const Text('Erreur'),
           content: Text('Une erreur est survenue lors de la finalisation : $e'),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
           ],
         ),
       );
@@ -316,7 +324,10 @@ class _SessionScreenState extends State<SessionScreen> {
         appBar: AppBar(
           title: const Text('Session'),
           actions: [
-            IconButton(icon: const Icon(Icons.exit_to_app), onPressed: () => _finishSession(false)),
+            IconButton(
+              icon: const Icon(Icons.exit_to_app),
+              onPressed: () => _finishSession(false),
+            ),
           ],
         ),
         body: Center(
@@ -325,7 +336,10 @@ class _SessionScreenState extends State<SessionScreen> {
             children: [
               const Text('Aucune carte à réviser pour l’instant.'),
               const SizedBox(height: 12),
-              ElevatedButton(onPressed: () => _finishSession(true), child: const Text('OK')),
+              ElevatedButton(
+                onPressed: () => _finishSession(true),
+                child: const Text('OK'),
+              ),
             ],
           ),
         ),
@@ -337,7 +351,10 @@ class _SessionScreenState extends State<SessionScreen> {
       appBar: AppBar(
         title: const Text('Session'),
         actions: [
-          IconButton(icon: const Icon(Icons.exit_to_app), onPressed: () => _finishSession(false)),
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: () => _finishSession(false),
+          ),
         ],
       ),
       body: Center(child: _buildCardView()),

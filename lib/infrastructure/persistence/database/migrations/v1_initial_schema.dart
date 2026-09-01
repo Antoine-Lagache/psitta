@@ -37,7 +37,7 @@ class V1InitialSchema implements DatabaseMigration {
         path TEXT NOT NULL,
         mime_type TEXT NOT NULL,
         size INTEGER NOT NULL,
-        checksum TEXT
+        sha256 TEXT NOT NULL
       );
     ''');
 

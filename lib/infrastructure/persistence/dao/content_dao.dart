@@ -33,12 +33,12 @@ class ContentDao {
               path,
               mime_type,
               size,
-              checksum
+              sha256
             )
             VALUES (?, ?, ?, ?)
             RETURNING id
             ''',
-            [media.path, media.mimeType, media.size, media.checksum],
+            [media.path, media.mimeType, media.size, media.sha256],
           );
 
           mediaId = mediaResult.first['id'] as int;
@@ -97,7 +97,7 @@ class ContentDao {
           m.path,
           m.mime_type,
           m.size,
-          m.checksum
+          m.sha256
 
         FROM field_value fv
 
@@ -119,7 +119,7 @@ class ContentDao {
             'path': row['path'],
             'mime_type': row['mime_type'],
             'size': row['size'],
-            'checksum': row['checksum'],
+            'sha256': row['sha256'],
           };
         }
 
@@ -158,12 +158,12 @@ class ContentDao {
               path,
               mime_type,
               size,
-              checksum
+              sha256
             )
             VALUES (?, ?, ?, ?)
             RETURNING id
             ''',
-            [media.path, media.mimeType, media.size, media.checksum],
+            [media.path, media.mimeType, media.size, media.sha256],
           );
 
           mediaId = mediaResult.first['id'] as int;
