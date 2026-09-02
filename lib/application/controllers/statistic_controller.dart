@@ -76,8 +76,6 @@ class StatisticController {
       }
     }
 
-    // TODO(review): Define the average for an empty range; dividing by zero
-    // currently produces a non-finite value.
     return SessionStatistics(
       numberOfSessions: sessions.length,
       numberOfSessionsBySessionType: numberOfSessionsBySessionType,
@@ -89,7 +87,9 @@ class StatisticController {
       averageTimePerSession: numberOfTimedSessions == 0
           ? Duration.zero
           : totalTimeSpent ~/ numberOfTimedSessions,
-      averageNumberOfExercisesPerSession: numberOfExercisesAnswered / sessions.length,
+      averageNumberOfExercisesPerSession: sessions.isEmpty
+          ? 0.0
+          : numberOfExercisesAnswered / sessions.length,
     );
   }
 

@@ -53,17 +53,22 @@ class SRSConfig {
     this.dayBoundary = Duration.zero,
     this.newCount = 10,
     this.reviewCount = 9999,
-  // TODO(review): Decide whether an empty [learningSteps] configuration is
-  // supported; the learning-state `good` path indexes its last element.
+    // TODO(review): Decide whether an empty [learningSteps] configuration is
+    // supported; the learning-state `good` path indexes its last element.
   }) : lambdas = List.unmodifiable(
          List.generate(6, (i) {
            if (lambdas != null && i < lambdas.length) return lambdas[i].clamp(0.0, 1.0);
            return _defaultLambdas[i];
          }),
        ),
-       learningSteps = List.unmodifiable(learningSteps),
-       assert(rstar > 0 && rstar < 1),
-       assert(wMaxFactor > 0 && wMaxFactor < 1);
+       learningSteps = List.unmodifiable(learningSteps) {
+    if (rstar <= 0 || rstar >= 1) {
+      throw ArgumentError.value(rstar, 'rstar');
+    }
+    if (wMaxFactor <= 0 || wMaxFactor >= 1) {
+      throw ArgumentError.value(wMaxFactor, 'wMaxFactor');
+    }
+  }
 
   double get wMax => wMaxFactor * rstar;
 

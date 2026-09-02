@@ -33,7 +33,9 @@ abstract class Exercise {
 
   /// Applies an answer to the SRS state and advances the session status.
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
-    assert(status != ExerciseStatus.completed);
+    if (status == ExerciseStatus.completed) {
+      throw StateError('Cannot answer a completed exercise');
+    }
     if (!isGradeAllowed(answer.grade)) {
       throw StateError("The grade is not allowed by this exercise");
     }

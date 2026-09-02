@@ -104,9 +104,10 @@ class SessionController {
     final contentId = activeSession!.getCurrentContentId();
 
     final content = await _contentRepository.getById(contentId);
-    // TODO(review): Replace the forced unwrap with an explicit invariant or a
-    // domain error when an exercise references missing content.
-    return content!;
+    if (content == null) {
+      throw StateError('Missing content with id $contentId');
+    }
+    return content;
   }
 
   List<Grade> getCurrentExerciseAllowedGrade() {
@@ -126,12 +127,12 @@ class SessionController {
       throw StateError("This Grade is not allowed by the exercise");
     }
 
+    final answeredExercise = activeSession!.currentExercise;
     activeSession!.submitAnswer(
       SubmittedExerciseAnswer(grade: grade, answeredAt: DateTime.now()),
     );
+    await _exerciseRepository.save(answeredExercise);
 
-    // TODO(review): Persist the answered exercise as part of this use case;
-    // session persistence alone does not save SRS, sentence, or history state.
     if (isSessionFinished()) {
       await endSession();
     } else {

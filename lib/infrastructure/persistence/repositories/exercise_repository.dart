@@ -77,7 +77,7 @@ class ExerciseRepository {
 
   /// Atomically stores scheduling, sentence progress, and pending history.
   Future<void> save(Exercise exercise) async {
-    return database.writeTransaction((txn) async {
+    await database.writeTransaction((txn) async {
       ExercisePersistence persistence;
       switch (exercise) {
         case WordExercise word:
@@ -106,9 +106,8 @@ class ExerciseRepository {
             .map((entry) => ExerciseHistoryMapper.toPersistence(entry))
             .toList(),
       );
-      // TODO(review): Clear or otherwise acknowledge pending history after a
-      // successful commit; saving the same object again duplicates its events.
     });
+    exercise.newHistoryEntry.clear();
   }
 
   Future<void> delete(int exerciseId) async {
@@ -136,8 +135,6 @@ class ExerciseRepository {
             sentence.trainingCountMax,
             id: exerciseId,
           );
-          // TODO(review): Avoid opening a separate read transaction from inside
-          // this write transaction if sqlite_async does not support nesting.
           final group = await _sentencesDao.getById(sentence.sentenceGroupId);
           if (group == null) {
             throw StateError("Missing SentenceGroup for sentenceExercise");

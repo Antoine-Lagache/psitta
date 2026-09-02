@@ -18,7 +18,10 @@ class Session {
 
   final SessionScheduler _scheduler;
 
-  int getCurrentContentId() => _scheduler.currentExercise!.getContentId();
+  Exercise get currentExercise =>
+      _scheduler.currentExercise ?? (throw StateError('No current exercise'));
+
+  int getCurrentContentId() => currentExercise.getContentId();
 
   List<ExerciseResume> getResumeList() => _scheduler.getResumeList();
 
@@ -59,9 +62,9 @@ class Session {
 
   /// Starts the session and selects its first exercise.
   void beginSession(DateTime now) {
-    // TODO(review): Enforce lifecycle rules with runtime validation; assertions
-    // are disabled in release builds and currently guard repeated starts.
-    assert(_intermediateResult.startedAt == null);
+    if (_intermediateResult.startedAt != null) {
+      throw StateError('Cannot start a session more than once');
+    }
     _intermediateResult.startedAt = now;
     _scheduler.selectNextExercise(now);
   }
@@ -72,14 +75,18 @@ class Session {
   }
 
   List<Grade> getCurrentExerciseAllowedGrade() {
-    assert(_scheduler.currentExercise != null);
+    if (_scheduler.currentExercise == null) {
+      throw StateError('No current exercise');
+    }
 
     return Grade.values.where(_scheduler.currentExercise!.isGradeAllowed).toList();
   }
 
   /// Applies [answer], updates aggregates, and selects the next exercise.
   void submitAnswer(SubmittedExerciseAnswer answer) {
-    assert(_scheduler.currentExercise != null);
+    if (_scheduler.currentExercise == null) {
+      throw StateError('No current exercise');
+    }
 
     if (isSessionFinished()) {
       throw Exception("Cannot submit answer for a finished session");
@@ -101,7 +108,9 @@ class Session {
 
   /// Previews an answer interval without modifying the current exercise.
   Duration getPreviewInterval(PreviewExerciseAnswer answer) {
-    assert(_scheduler.currentExercise != null);
+    if (_scheduler.currentExercise == null) {
+      throw StateError('No current exercise');
+    }
 
     if (isSessionFinished()) {
       throw Exception("Cannot preview interval for a finished session");
@@ -116,7 +125,9 @@ class Session {
 
   /// Marks the session complete and returns its final aggregate result.
   SessionResult endSession(DateTime now) {
-    assert(_intermediateResult.endAt == null);
+    if (_intermediateResult.endAt != null) {
+      throw StateError('Session already ended');
+    }
     _intermediateResult.endAt = now;
     return _intermediateResult;
   }

@@ -14,15 +14,13 @@ class MediaDao {
     }
 
     return database.writeTransaction((txn) async {
-      // TODO(review): Remove the trailing comma after `sha256`; this INSERT is
-      // likely rejected by SQLite before any media row can be created.
       final mediaResult = await txn.execute(
         '''
         INSERT INTO media (
           path,
           mime_type,
           size,
-          sha256,
+          sha256
         )
         VALUES (?, ?, ?, ?)
         RETURNING id
