@@ -39,13 +39,13 @@ dependencies:
   sqlite3: ^3.5.0
   sqlite3_flutter_libs: ^0.6.0+eol
   sqlite_async: ^0.14.4
-  test: ^1.31.0
 
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  test: ^1.31.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

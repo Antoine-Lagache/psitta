@@ -1,12 +1,15 @@
 import 'dart:io';
 
-import 'package:psitta/domain/exercise/sentence_exercise.dart';
+import 'package:psitta/domain/answer/exercise_answer.dart';
+import 'package:psitta/domain/srs/grade.dart';
+import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 import 'package:test/test.dart';
 
+import 'package:psitta/domain/exercise/sentence_exercise.dart';
 import 'package:psitta/domain/exercise/word_exercise.dart';
-import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
 import 'package:psitta/infrastructure/persistence/database/migration_registry.dart';
+import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
 
 void main() {
   late Directory temporaryDirectory;
@@ -110,6 +113,30 @@ void main() {
       expect(savedExercise!.id, exerciseId);
     });
 
+    test('save persists the full SRS state and history once', () async {
+      await database.execute('INSERT INTO content (id) VALUES (1)');
+      final exerciseId = await repository.createWordExercise(1);
+      final exercise = await repository.getById(exerciseId);
+      final answeredAt = DateTime.utc(2026, 9, 2, 12);
+
+      exercise!.applyAnswer(
+        SubmittedExerciseAnswer(grade: Grade.easy, answeredAt: answeredAt),
+        SRSConfig(),
+      );
+      await repository.save(exercise);
+      await repository.save(exercise);
+
+      final reloaded = await repository.getById(exerciseId);
+      final history = await database.getAll(
+        'SELECT id FROM exercise_history WHERE exercise_id = ?',
+        [exerciseId],
+      );
+
+      expect(reloaded!.srsState.learningStepIndex, -1);
+      expect(reloaded.srsState.lastReview, answeredAt);
+      expect(history, hasLength(1));
+    });
+
     test('delete removes an exercise', () async {
       await database.execute('INSERT INTO content (id) VALUES (1)');
 
@@ -136,6 +163,30 @@ void main() {
 
       expect(resetExercise, isNotNull);
       expect(resetExercise!.id, exerciseId);
+    });
+
+    test('foreign keys reject orphan active-session exercises', () async {
+      final pragma = await database.get('PRAGMA foreign_keys;');
+      expect(pragma['foreign_keys'], 1);
+
+      await database.execute('''
+        INSERT INTO session_result (
+          id,
+          session_type_index,
+          number_unique_exercises_completed
+        ) VALUES (1, 0, 0)
+      ''');
+
+      await expectLater(
+        database.execute('''
+          INSERT INTO active_session_exercise (
+            session_result_id,
+            exercise_id,
+            status_index
+          ) VALUES (1, 999, 0)
+        '''),
+        throwsA(anything),
+      );
     });
   });
 }
