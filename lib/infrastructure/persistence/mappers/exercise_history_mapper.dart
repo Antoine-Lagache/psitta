@@ -4,6 +4,7 @@ import 'package:psitta/domain/srs/grade.dart';
 import 'package:psitta/infrastructure/persistence/models/exercise_history/exercise_history_persistence.dart';
 import 'package:psitta/utils/conversion/time_conversion.dart';
 
+/// Translates answer-history entries to and from database-safe values.
 class ExerciseHistoryMapper {
   const ExerciseHistoryMapper();
 

@@ -1,6 +1,6 @@
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
-/// All futur migrations must implement this interface
+/// Defines one ordered, atomic change to the persisted database schema.
 abstract interface class DatabaseMigration {
   int get version;
 

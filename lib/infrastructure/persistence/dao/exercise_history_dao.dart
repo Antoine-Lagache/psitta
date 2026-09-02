@@ -2,12 +2,13 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/models/exercise_history/exercise_history_persistence.dart';
 
+/// Stores immutable answer-history rows and supports filtered history queries.
 class ExerciseHistoryDao {
   final sqlite.SqliteDatabase database;
 
   ExerciseHistoryDao(this.database);
 
-  /// Return the id of the new inserted exercise history
+  /// Inserts one history entry and returns its generated identifier.
   Future<int> insert(ExerciseHistoryPersistence history) {
     if (history.id != null) {
       throw ArgumentError('Cannot insert an entity that already has an id');
@@ -39,6 +40,7 @@ class ExerciseHistoryDao {
     });
   }
 
+  /// Inserts pending entries within the caller's aggregate transaction.
   Future<void> insertAll(
     sqlite.SqliteWriteContext txn,
     List<ExerciseHistoryPersistence> history,

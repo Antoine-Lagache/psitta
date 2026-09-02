@@ -2,11 +2,13 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/models/session_result/session_exercise_persistence.dart';
 
+/// Stores transient exercise snapshots used to resume active sessions.
 class SessionExerciseDao {
   final sqlite.SqliteDatabase database;
 
   SessionExerciseDao(this.database);
 
+  /// Inserts a complete snapshot within the caller's session transaction.
   Future<void> insertAll(
     int sessionResultId,
     List<SessionExercisePersistence> exercises,
@@ -51,6 +53,7 @@ class SessionExerciseDao {
     });
   }
 
+  /// Returns identifiers of sessions that still own resumable exercises.
   Future<List<int>> getAllSessionId() {
     return database.readTransaction((txn) async {
       final rows = await txn.getAll('''

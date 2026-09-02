@@ -2,6 +2,7 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/models/sentence/sentence_group_persistence.dart';
 
+/// Stores sentence groups together with their instances and learning state.
 class SentenceGroupDao {
   final sqlite.SqliteDatabase database;
 
@@ -143,6 +144,7 @@ class SentenceGroupDao {
     });
   }
 
+  /// Reconciles group membership and state within the caller's transaction.
   Future<void> update(
     sqlite.SqliteWriteContext txn,
     SentenceGroupPersistence sentenceGroup,
@@ -255,6 +257,7 @@ class SentenceGroupDao {
     }
   }
 
+  /// Updates only sentence learning state within the caller's transaction.
   Future<void> updateSentencesState(
     sqlite.SqliteWriteContext txn,
     SentenceGroupPersistence sentenceGroup,

@@ -2,7 +2,7 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/models/content/media_persistence.dart';
 
-// TODO : add a getBy Sha256 method
+/// Provides CRUD access to media metadata and hash-based lookup.
 class MediaDao {
   final sqlite.SqliteDatabase database;
 
@@ -14,6 +14,8 @@ class MediaDao {
     }
 
     return database.writeTransaction((txn) async {
+      // TODO(review): Remove the trailing comma after `sha256`; this INSERT is
+      // likely rejected by SQLite before any media row can be created.
       final mediaResult = await txn.execute(
         '''
         INSERT INTO media (

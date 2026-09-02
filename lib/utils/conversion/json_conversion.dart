@@ -1,9 +1,6 @@
 import 'dart:convert';
 
-// This file contains utility functions
-// for safely converting JSON strings
-// to and from specific types (Map, and list) with error handling
-
+/// Decodes a JSON object, returning an empty map for null or invalid input.
 Map<String, dynamic> safeJsonDecodeMap(String? jsonText) {
   if (jsonText == null) return <String, dynamic>{};
   try {
@@ -14,6 +11,7 @@ Map<String, dynamic> safeJsonDecodeMap(String? jsonText) {
   }
 }
 
+/// Decodes a JSON array, returning an empty list for null or invalid input.
 List<dynamic> safeJsonDecodeList(String? jsonText) {
   if (jsonText == null) return <dynamic>[];
   try {
@@ -24,6 +22,7 @@ List<dynamic> safeJsonDecodeList(String? jsonText) {
   }
 }
 
+/// Encodes [value], returning null when it is not JSON-serializable.
 String? safeJsonEncode(Object? value) {
   try {
     return jsonEncode(value);
@@ -32,6 +31,7 @@ String? safeJsonEncode(Object? value) {
   }
 }
 
+/// Decodes a JSON array and converts each element to a string.
 List<String> safeJsonDecodeStringList(String? jsonText) {
   final list = safeJsonDecodeList(jsonText);
   return list.map((e) => e.toString()).toList();

@@ -1,3 +1,4 @@
+/// Database-safe representation of an exercise's scheduling state.
 class SrsStatePersistence {
   final double easeFactor;
   final int interval;
@@ -6,8 +7,7 @@ class SrsStatePersistence {
   final double rBar;
   final String? lastReview;
 
-  // not present in the domain, but used to determine if the exercise is due for review
-  // use int (in microsecond) for calculation and comparison.
+  /// Denormalized due time used for indexed numeric comparison in SQLite.
   final int? nextReview;
 
   SrsStatePersistence({

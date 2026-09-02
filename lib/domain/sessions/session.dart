@@ -7,14 +7,12 @@ import 'package:psitta/domain/sessions/session_type.dart';
 export 'package:psitta/domain/sessions/session_result.dart';
 export 'package:psitta/domain/sessions/session_type.dart';
 
-/// Class representing a session of exercises with SRS.
+/// Owns the lifecycle, scheduling, and aggregate result of an SRS session.
 class Session {
-  /// Config for the SRS algorithm used in this session
+  /// SRS configuration shared by every exercise in this session.
   final SRSConfig config;
 
-  /// Intermediate result of the session
-  /// modified on each answer submission
-  /// returned by endSession or endSessionEarly
+  /// Mutable aggregate updated after each submitted answer.
   late SessionResult _intermediateResult;
   SessionResult get intermediateResult => _intermediateResult;
 
@@ -59,15 +57,16 @@ class Session {
     }
   }
 
-  /// Starts the session at the given date and time.
-  /// Does nothing if the session has already started
+  /// Starts the session and selects its first exercise.
   void beginSession(DateTime now) {
+    // TODO(review): Enforce lifecycle rules with runtime validation; assertions
+    // are disabled in release builds and currently guard repeated starts.
     assert(_intermediateResult.startedAt == null);
     _intermediateResult.startedAt = now;
     _scheduler.selectNextExercise(now);
   }
 
-  /// returns the number of exercises to do or redo in the session
+  /// Returns the number of exercises currently in [status].
   int countExerciseByStatus(ExerciseStatus status) {
     return _scheduler.countExerciseByStatus(status);
   }
@@ -78,7 +77,7 @@ class Session {
     return Grade.values.where(_scheduler.currentExercise!.isGradeAllowed).toList();
   }
 
-  /// submits the answer for the current exercise with the given grade, then moves to the next exercise
+  /// Applies [answer], updates aggregates, and selects the next exercise.
   void submitAnswer(SubmittedExerciseAnswer answer) {
     assert(_scheduler.currentExercise != null);
 
@@ -98,10 +97,9 @@ class Session {
     }
 
     _scheduler.selectNextExercise(answer.answeredAt);
-    // update the intermediate result
   }
 
-  /// returns the preview interval for the current exercise and a given grade
+  /// Previews an answer interval without modifying the current exercise.
   Duration getPreviewInterval(PreviewExerciseAnswer answer) {
     assert(_scheduler.currentExercise != null);
 
@@ -116,8 +114,7 @@ class Session {
     return !_scheduler.hasNextExercise() || _intermediateResult.endAt != null;
   }
 
-  /// ends the session and returns the result
-  /// a finished session can no longer receive answers and must be deleted
+  /// Marks the session complete and returns its final aggregate result.
   SessionResult endSession(DateTime now) {
     assert(_intermediateResult.endAt == null);
     _intermediateResult.endAt = now;

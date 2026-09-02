@@ -2,11 +2,13 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/models/session_result/session_result_persistence.dart';
 
+/// Stores session aggregates and their normalized per-status counts.
 class SessionResultDao {
   final sqlite.SqliteDatabase database;
 
   SessionResultDao(this.database);
 
+  /// Inserts a result within the caller's session transaction.
   Future<int> insert(
     SessionResultPersistence sessionResult,
     sqlite.SqliteWriteContext txn,
@@ -142,6 +144,7 @@ class SessionResultDao {
     });
   }
 
+  /// Replaces a result and its status counts in the caller's transaction.
   Future<void> update(
     SessionResultPersistence sessionResult,
     sqlite.SqliteWriteContext txn,

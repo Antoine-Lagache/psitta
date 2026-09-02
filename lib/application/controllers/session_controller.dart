@@ -8,6 +8,7 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/infrastructure/persistence/repositories/session_repository.dart';
 
+/// Coordinates the application use cases for starting and running a session.
 class SessionController {
   Session? _activeSession;
   Session? get activeSession => _activeSession;
@@ -18,11 +19,14 @@ class SessionController {
 
   final SRSConfig config = SRSConfig();
 
+  // TODO(review): Consider injecting repository abstractions so the application
+  // layer does not construct persistence implementations from a SQLite handle.
   SessionController({required sqlite.SqliteDatabase database})
     : _sessionRepository = SessionRepository(database),
       _exerciseRepository = ExerciseRepository(database),
       _contentRepository = ContentRepository(database);
 
+  /// Creates, starts, and persists a session from due and new exercises.
   Future<void> startNewSession(SessionType sessionType) async {
     if (_activeSession != null) {
       throw StateError("A session is already active");
@@ -47,6 +51,8 @@ class SessionController {
       exerciseType,
     );
 
+    // TODO(review): Define the expected behavior when both queries return no
+    // exercises; the resulting session has no current exercise.
     _activeSession = Session(
       exercises: dueExercise + newExercise,
       sessionType: sessionType,
@@ -58,7 +64,7 @@ class SessionController {
     _activeSession!.intermediateResult.id = id;
   }
 
-  // return true if success, false if no active session was found
+  /// Restores the first persisted session of [sessionType], if one exists.
   Future<bool> resumeActiveSession(SessionType sessionType) async {
     if (_activeSession != null) {
       throw StateError("A session is already active");
@@ -76,7 +82,7 @@ class SessionController {
     return false;
   }
 
-  // Returns the number of active sessions for the given session type.
+  /// Returns the number of unfinished sessions matching [sessionType].
   Future<int> numberActiveSession(SessionType sessionType) async {
     final sessionResultList = await _sessionRepository.getAllActiveSessionResult();
 
@@ -90,6 +96,7 @@ class SessionController {
     return res;
   }
 
+  /// Loads the content selected by the active session.
   Future<Content> getCurrentExerciseContent() async {
     if (activeSession == null) {
       throw StateError("A session must be active first");
@@ -97,6 +104,8 @@ class SessionController {
     final contentId = activeSession!.getCurrentContentId();
 
     final content = await _contentRepository.getById(contentId);
+    // TODO(review): Replace the forced unwrap with an explicit invariant or a
+    // domain error when an exercise references missing content.
     return content!;
   }
 
@@ -108,6 +117,7 @@ class SessionController {
     return activeSession!.getCurrentExerciseAllowedGrade();
   }
 
+  /// Applies [grade] and persists the resulting session-level progress.
   Future<void> submitAnswer(Grade grade) async {
     if (activeSession == null) {
       throw StateError("A session must be active first");
@@ -120,6 +130,8 @@ class SessionController {
       SubmittedExerciseAnswer(grade: grade, answeredAt: DateTime.now()),
     );
 
+    // TODO(review): Persist the answered exercise as part of this use case;
+    // session persistence alone does not save SRS, sentence, or history state.
     if (isSessionFinished()) {
       await endSession();
     } else {

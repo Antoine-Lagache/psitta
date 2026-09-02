@@ -2,6 +2,7 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/models/field_definition/field_definition_persistence.dart';
 
+/// Provides CRUD access to reusable content-field definitions.
 class FieldDefinitionDao {
   final sqlite.SqliteDatabase database;
 

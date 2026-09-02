@@ -1,3 +1,4 @@
+/// One normalized exercise-status count belonging to a session result.
 class StatusCountPersistence {
   final int statusCode;
   final int exercisesCompleted;

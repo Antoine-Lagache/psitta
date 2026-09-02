@@ -1,9 +1,10 @@
 /// Configuration parameters for the Spaced Repetition System (SRS).
 class SRSConfig {
+  /// Recall target and model coefficients used by the scheduling formula.
   final double rstar;
   final double wMaxFactor;
   final List<double> lambdas;
-  final int easyInterval; // days
+  final int easyInterval; // Days assigned when leaving learning with Easy.
   final double efMin;
   final int iMax;
   final double defaultEF;
@@ -14,13 +15,15 @@ class SRSConfig {
   final int longPause;
   final double minTolFactor;
 
+  /// Intra-session delays applied while an exercise is in learning mode.
   final List<Duration> learningSteps;
   final double hardReviewFactor;
   final double hardLearningFactor;
   final double easyBonus;
-  final Duration
-  dayBoundary; // 0..23, Anki-like day boundary (also used for time zone offset)
+  /// Offset from midnight used to decide whether an interval crosses a day.
+  final Duration dayBoundary;
 
+  /// Maximum numbers of new and due exercises loaded into a session.
   final int newCount;
   final int reviewCount;
 
@@ -50,6 +53,8 @@ class SRSConfig {
     this.dayBoundary = Duration.zero,
     this.newCount = 10,
     this.reviewCount = 9999,
+  // TODO(review): Decide whether an empty [learningSteps] configuration is
+  // supported; the learning-state `good` path indexes its last element.
   }) : lambdas = List.unmodifiable(
          List.generate(6, (i) {
            if (lambdas != null && i < lambdas.length) return lambdas[i].clamp(0.0, 1.0);

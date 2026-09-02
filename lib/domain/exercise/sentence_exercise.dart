@@ -4,15 +4,16 @@ import 'package:psitta/domain/sentences/sentence_instance.dart';
 
 export 'package:psitta/domain/sentences/sentence_group.dart';
 
-/// class representing a sentence exercise. (contains several sentences)
+/// Selects and trains sentences from one group before completing the exercise.
 class SentenceExercise extends Exercise {
   final SentenceGroup _sentences;
   int get groupId => _sentences.id;
   SentenceGroup get sentences => _sentences;
 
-  // The number of times the user will train after the exercise is completed.
-  // (the user will be asked to answer this number of sentences)
+  /// Remaining consolidation answers after the SRS phase completes.
   int trainingCount;
+
+  /// Initial consolidation-answer target for each session.
   final int trainingCountMax;
 
   SentenceExercise({
@@ -24,6 +25,8 @@ class SentenceExercise extends Exercise {
     required super.srsState,
   }) : _sentences = sentences,
        trainingCount = trainingCount ?? trainingCountMax {
+    // TODO(review): Enforce a non-empty group and valid training count outside
+    // debug-only assertions; content selection indexes the first sentence.
     assert(this.trainingCount <= _sentences.sentences.length);
   }
 
@@ -35,8 +38,7 @@ class SentenceExercise extends Exercise {
     return ExerciseResume(exerciseId: id, status: status, trainingCount: trainingCount);
   }
 
-  /// Returns the sentence with the lowest score (the one that is less known)
-  /// No randomness is used here
+  /// Deterministically selects the least-known sentence in the group.
   SentenceInstance _getSentence() {
     double minScore = _sentences.sentences[0].state.getscore();
     SentenceInstance sentence = _sentences.sentences[0];

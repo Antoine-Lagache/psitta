@@ -4,15 +4,15 @@ import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/utils/conversion/time_conversion.dart';
 
-/// Represents the SRS state of an exercise.
-/// Contains the necessary information for the SRS algorithm.
-/// See the documentation for more details on the algorithm and the meaning of the parameters.
-/// all the mathematical formulas are in the documentation
+/// Holds and evolves the scheduling parameters for one exercise.
+///
+/// The mathematical meaning of each parameter is documented with the SRS
+/// algorithm; this class owns the transitions between learning and review.
 class SRSState {
   double _easeFactor;
   double get easeFactor => _easeFactor;
 
-  Duration _interval; // duration for review intervals
+  Duration _interval;
   Duration get interval => _interval;
 
   double _kFactor;
@@ -29,7 +29,8 @@ class SRSState {
 
   DateTime? get nextReview => _lastReview?.add(_interval);
 
-  int _learningStepIndex; // index in learning steps (-1 = not in learning)
+  /// Index in the configured learning steps; `-1` means review mode.
+  int _learningStepIndex;
   bool get isInLearning => _learningStepIndex >= 0;
 
   SRSState({
@@ -74,13 +75,11 @@ class SRSState {
     final q = answer.grade.toInt();
     final bool isSuccess = q >= 3;
 
-    // the idea is to modify the fields of results,
-    // and at the end only, we use copyFrom to update the current state if updateSelf is true
+    // Calculate against a copy so previews and real updates share one formula.
     final SRSState result = SRSState.clone(this);
     final double intervalDays = durationToDays(result._interval);
 
-    // Step 1
-    // If there is a delay on the expected interval
+    // Apply the model's late-review correction.
     final double deltaDays = durationToDays(now.difference(result._lastReview ?? now));
     final double lateness = max(0.0, deltaDays - intervalDays);
     final double tolerance = min(
@@ -97,8 +96,7 @@ class SRSState {
       }
     }
 
-    // Step 2
-    // SM-2 alg
+    // Apply the SM-2-derived interval calculation.
     final double arg = ((config.rstar - result._w) / (1.0 - result._w)).clamp(
       1e-9,
       1.0 - 1e-9,
@@ -131,7 +129,7 @@ class SRSState {
       }
     }
 
-    // apply multipliers
+    // Apply grade-specific interval multipliers.
     if (q == 5) {
       result._interval = daysToduration(
         durationToDays(result._interval) * config.easyBonus,
@@ -141,11 +139,11 @@ class SRSState {
       min(durationToDays(result._interval), config.iMax.toDouble()),
     );
 
-    // EF update
+    // Update the ease factor.
     final double deltaEF = 0.1 - (5 - q) * (0.08 + (5 - q) * 0.02); // SM-2 formula
     result._easeFactor = max(result._easeFactor + deltaEF, config.efMin);
 
-    // rbar and w update
+    // Update recall and weight estimates.
     final double lambda = config.getLambda(q);
     result._rbar = (lambda * result._rbar) + ((1.0 - lambda) * (isSuccess ? 1.0 : 0.0));
     result._rbar = result._rbar.clamp(0.0, 1.0);
@@ -160,7 +158,7 @@ class SRSState {
   }
 
   Duration _learningState(ExerciseAnswer answer, SRSConfig config, bool updateSelf) {
-    // _learningStepIndex >= config.config.learningSteps.length is OK (config can change)
+    // A changed configuration may temporarily leave the index past its steps.
     assert(_learningStepIndex >= 0);
 
     final DateTime now = answer.at;
@@ -203,7 +201,7 @@ class SRSState {
           result._learningStepIndex = nextIdx;
           result._interval = s[nextIdx];
         } else {
-          // we are at the last step of the learning steps, we will switch to review mode
+          // Completing the final learning step switches the state to review mode.
           result._learningStepIndex = -1;
           final double arg = ((config.rstar - result._w) / (1.0 - result._w));
           final double logArg = log(arg.clamp(1e-9, 1.0 - 1e-9));
@@ -214,7 +212,7 @@ class SRSState {
 
       case Grade.easy: // q=5
         result._learningStepIndex = -1;
-        // set a provisional interval as easyInterval days -> review branch will use it next review
+        // Easy exits learning directly with the configured review interval.
         final double arg = ((config.rstar - result._w) / (1.0 - result._w)).clamp(
           1e-9,
           1.0 - 1e-9,
@@ -233,12 +231,10 @@ class SRSState {
     return result._interval;
   }
 
-  /// apply the answer to the SRS state
-  /// updating the internal state according to the given answer and configuration.
+  /// Applies [answer] and mutates the scheduling state.
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
     if (_learningStepIndex == -1) {
-      // Note : we use the same function for updateState
-      // and getPreviewInterval to avoid code repetition
+      // The update and preview paths intentionally share the same calculation.
       _reviewState(answer, config, true);
     } else {
       _learningState(answer, config, true);
@@ -247,7 +243,7 @@ class SRSState {
     _checkInvariants(config);
   }
 
-  /// returns the expected interval for a given answer, without modifying the internal state.
+  /// Returns the expected interval without modifying this state.
   Duration previewInterval(PreviewExerciseAnswer answer, SRSConfig config) {
     final Duration? res;
     if (_learningStepIndex == -1) {
@@ -258,12 +254,11 @@ class SRSState {
     return res;
   }
 
-  /// verify that the state is consistent with the configuration, and correct it if necessary.
+  /// Repairs numeric and logical state that falls outside configured bounds.
   void _checkInvariants(SRSConfig config) {
     const double eps = 1e-9;
 
-    //temporal invariants
-    //intervals
+    // Temporal interval bounds.
     if (!durationToDays(_interval).isFinite) {
       _interval = Duration(minutes: 1);
     } else if (durationToDays(_interval) <= eps) {
@@ -273,14 +268,13 @@ class SRSState {
       _interval = Duration(days: config.iMax);
     }
 
-    //mathematical invariants
-    //kFactor
+    // Mathematical bounds: k-factor.
     if (!_kFactor.isFinite) {
       _kFactor = config.defaultKFactor;
     } else if (_kFactor <= eps) {
       _kFactor = config.defaultKFactor;
     }
-    // rbar
+    // Recall estimate.
     if (!_rbar.isFinite) {
       _rbar = 0.0;
     } else if (_rbar < 0.0) {
@@ -288,7 +282,7 @@ class SRSState {
     } else if (_rbar > 1.0) {
       _rbar = 1.0;
     }
-    // w
+    // Weight estimate.
     if (!_w.isFinite) {
       _w = config.defaultW;
     } else if (_w < 0.0) {
@@ -296,15 +290,14 @@ class SRSState {
     } else if (_w > config.wMax) {
       _w = config.wMax;
     }
-    //ease factor
+    // Ease factor.
     if (!_easeFactor.isFinite) {
       _easeFactor = config.defaultEF;
     } else if (_easeFactor < config.efMin - eps) {
       _easeFactor = config.efMin;
     }
 
-    // Logical state invariants
-    //learning step index
+    // Logical bounds: learning-step index.
     if (_learningStepIndex < -1) {
       _learningStepIndex = -1;
     } else if (_learningStepIndex >= config.learningSteps.length) {

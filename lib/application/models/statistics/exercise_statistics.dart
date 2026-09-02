@@ -1,6 +1,7 @@
 import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/srs/grade.dart';
 
+/// Aggregated answer-history metrics for a requested period.
 class ExerciseStatistics {
   final int totalNumberAnswers;
 

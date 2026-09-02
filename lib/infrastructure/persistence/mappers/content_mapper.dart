@@ -6,6 +6,7 @@ import 'package:psitta/application/models/content/media.dart';
 import 'package:psitta/infrastructure/persistence/models/content/content_persistence.dart';
 import 'package:psitta/infrastructure/persistence/models/field_definition/field_definition_persistence.dart';
 
+/// Translates content aggregates between application and persistence models.
 class ContentMapper {
   const ContentMapper();
 

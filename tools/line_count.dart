@@ -3,8 +3,7 @@
 import 'dart:io';
 import 'dart:math';
 
-/// Script pour afficher l'arborescence du dossier lib,
-/// avec le nombre de lignes Dart pour chaque fichier et dossier.
+/// Prints the `lib` tree with Dart line counts for each file and directory.
 ///
 /// Exclusions:
 /// - lib/playground/
@@ -23,6 +22,7 @@ void main() {
   print('\nTotal Dart lines: $yellow${root.lines}$reset');
 }
 
+/// Aggregates a file-system entry and the Dart lines below it.
 class TreeNode {
   final String name;
   final bool isDirectory;
@@ -37,7 +37,7 @@ class TreeNode {
   });
 }
 
-/// Construit récursivement l'arbre.
+/// Recursively builds a line-count tree rooted at [dir].
 TreeNode buildTree(Directory dir) {
   final children = <TreeNode>[];
   var totalLines = 0;
@@ -63,7 +63,7 @@ TreeNode buildTree(Directory dir) {
     }
   }
 
-  // Dossiers avant fichiers, puis ordre alphabétique.
+  // Keep directories before files, then sort both groups alphabetically.
   children.sort((a, b) {
     if (a.isDirectory != b.isDirectory) {
       return a.isDirectory ? -1 : 1;
@@ -84,12 +84,12 @@ bool _shouldIgnore(String path) {
   return path.contains('lib/playground') || path.contains('lib/archive');
 }
 
-/// Récupère les nombres de lignes de tous les nœuds.
+/// Flattens the line counts used to align the rendered tree.
 List<int> getAllLineCounts(TreeNode node) {
   return [node.lines, ...node.children.expand(getAllLineCounts)];
 }
 
-/// Affichage façon tree.
+/// Prints [node] using tree branches and aligned line counts.
 void printTree(TreeNode node, String prefix, int width) {
   for (var i = 0; i < node.children.length; i++) {
     final child = node.children[i];

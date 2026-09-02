@@ -1,5 +1,6 @@
 import 'package:psitta/domain/exercise/exercise_status.dart';
 
+/// Minimal transient exercise state stored while a session is unfinished.
 class ExerciseResume {
   final int exerciseId;
   final ExerciseStatus status;

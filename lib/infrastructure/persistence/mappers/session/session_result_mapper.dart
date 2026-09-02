@@ -3,6 +3,7 @@ import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/infrastructure/persistence/models/session_result/session_result_persistence.dart';
 import 'package:psitta/utils/conversion/time_conversion.dart';
 
+/// Translates session aggregates and stable enum codes for persistence.
 class SessionResultMapper {
   const SessionResultMapper();
 

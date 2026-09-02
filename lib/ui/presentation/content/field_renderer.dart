@@ -5,11 +5,13 @@ import 'package:psitta/application/models/content/field_definition.dart';
 import 'package:psitta/application/models/content/field_value.dart';
 import 'package:psitta/ui/presentation/content/media_resolver.dart';
 
+/// Converts a typed content field into an HTML fragment.
 class FieldRenderer {
   final MediaResolver _mediaResolver;
 
   FieldRenderer(this._mediaResolver);
 
+  /// Renders [field] according to its declared value type.
   Future<String> render(Field field) {
     return switch (field.definition.valueType) {
       FieldValueType.text => Future.value(_renderText(field)),

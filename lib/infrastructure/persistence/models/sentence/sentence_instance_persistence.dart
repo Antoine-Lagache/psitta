@@ -2,6 +2,7 @@ import 'package:psitta/infrastructure/persistence/models/sentence/sentence_state
 
 export 'package:psitta/infrastructure/persistence/models/sentence/sentence_state_persistence.dart';
 
+/// Persistence representation of one sentence and its learning state.
 class SentenceInstancePersistence {
   final int? id;
   final int contentId;

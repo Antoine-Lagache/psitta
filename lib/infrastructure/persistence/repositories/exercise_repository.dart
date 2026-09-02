@@ -13,6 +13,7 @@ import 'package:psitta/infrastructure/persistence/mappers/sentence_mapper.dart';
 
 import 'package:psitta/infrastructure/persistence/models/sentence/sentence_group_persistence.dart';
 
+/// Reconstructs and persists complete exercise aggregates across their tables.
 class ExerciseRepository {
   final sqlite.SqliteDatabase database;
 
@@ -74,6 +75,7 @@ class ExerciseRepository {
     return exercises;
   }
 
+  /// Atomically stores scheduling, sentence progress, and pending history.
   Future<void> save(Exercise exercise) async {
     return database.writeTransaction((txn) async {
       ExercisePersistence persistence;
@@ -104,6 +106,8 @@ class ExerciseRepository {
             .map((entry) => ExerciseHistoryMapper.toPersistence(entry))
             .toList(),
       );
+      // TODO(review): Clear or otherwise acknowledge pending history after a
+      // successful commit; saving the same object again duplicates its events.
     });
   }
 
@@ -111,6 +115,7 @@ class ExerciseRepository {
     await _exerciseDao.delete(exerciseId);
   }
 
+  /// Restores an exercise and its sentences to their initial learning state.
   Future<void> resetProgress(int exerciseId) async {
     final exercise = await _exerciseDao.getById(exerciseId);
     if (exercise == null) {
@@ -131,6 +136,8 @@ class ExerciseRepository {
             sentence.trainingCountMax,
             id: exerciseId,
           );
+          // TODO(review): Avoid opening a separate read transaction from inside
+          // this write transaction if sqlite_async does not support nesting.
           final group = await _sentencesDao.getById(sentence.sentenceGroupId);
           if (group == null) {
             throw StateError("Missing SentenceGroup for sentenceExercise");

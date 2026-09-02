@@ -3,9 +3,7 @@ import 'package:psitta/domain/sessions/session_type.dart';
 
 export 'package:psitta/domain/exercise/exercise_status.dart';
 
-/// Class representing the result of an exercise session.
-/// This result is modified each time an exercise is answered.
-/// It is modified only by the Session class.
+/// Mutable aggregate owned by [Session] and persisted as the session result.
 class SessionResult {
   int? id;
 

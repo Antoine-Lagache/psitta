@@ -2,7 +2,7 @@ import 'package:psitta/domain/exercise/exercise.dart';
 
 export 'package:psitta/domain/exercise/exercise.dart';
 
-/// Class responsible for scheduling exercises based on their SRS state.
+/// Selects the next session exercise from transient status and SRS due time.
 class SessionScheduler {
   final List<Exercise> exercises;
 
@@ -23,17 +23,16 @@ class SessionScheduler {
     return exercises.map((e) => e.getResume()).toList();
   }
 
-  // Selects a new exercise to present in the session.
-  // The selected exercise can be accessed through nextExercise.
+  /// Selects the next exercise and exposes it through [currentExercise].
   void selectNextExercise(DateTime now) {
-    Exercise? learning; // was at least already saw once in the session
-    Exercise? candidate; // exercise not seen in this session or in training/consolidating
+    Exercise? learning; // Already seen and waiting for an intra-session review.
+    Exercise? candidate; // New, due, or consolidating exercise ready immediately.
     final shuffled = List.of(exercises)..shuffle();
     for (Exercise a in shuffled) {
       switch (a.status) {
         case ExerciseStatus.learning || ExerciseStatus.relearning:
           assert(a.srsState.nextReview != null);
-          // for learning exercise, the time of the next review give the priority
+          // Earliest due time takes priority among learning exercises.
           learning ??= a;
           if (learning.srsState.nextReview!.isAfter(a.srsState.nextReview!)) {
             learning = a;
@@ -41,27 +40,29 @@ class SessionScheduler {
         case ExerciseStatus.consolidating ||
             ExerciseStatus.newExercise ||
             ExerciseStatus.toReview:
-          candidate ??= a; // new exercise picked at random
+          candidate ??= a; // Shuffling makes the first ready candidate random.
         case ExerciseStatus.completed:
           continue;
       }
     }
 
-    // if one is null, we return the other
+    // If one category is empty, use the available exercise.
     if (learning == null) {
       _currentExercise = candidate;
       return;
     }
     if (candidate == null) {
+      // TODO(review): Decide whether a sole learning exercise should be
+      // selected before its next-review time or leave the session waiting.
       _currentExercise = learning;
       return;
     }
 
     if (learning.srsState.nextReview!.isBefore((now))) {
-      // if the next exercise inlearning should be review now we pick it
+      // Prefer learning work once its intra-session review is due.
       _currentExercise = learning;
     } else {
-      // else : we pick a new Exercise
+      // Otherwise use immediately available work.
       _currentExercise = candidate;
     }
   }

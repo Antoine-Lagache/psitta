@@ -2,13 +2,13 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/models/content/content_persistence.dart';
 
+/// Reads and writes content together with its ordered field values.
 class ContentDao {
   final sqlite.SqliteDatabase database;
 
   ContentDao(this.database);
 
-  /// Return the id of the new inserted content
-  /// Does NOT return the IDs of inserted FieldValue
+  /// Inserts a content aggregate and returns only the new content identifier.
   Future<int> insert(ContentPersistence content) {
     if (content.id != null) {
       throw ArgumentError('Cannot insert an entity that already has an id');

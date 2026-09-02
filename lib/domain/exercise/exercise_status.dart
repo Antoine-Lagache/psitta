@@ -1,12 +1,11 @@
-/// Status of an exercise in a learning session.
-/// The status is not persisted, exists only during the session.
+/// Transient state of an exercise within a learning session.
 enum ExerciseStatus {
-  newExercise(0), // new exercise
-  toReview(1), // exercise to review
-  learning(2), // new exercise being learned
-  relearning(3), // exercise to relearn
-  completed(4), // exercise completed for the session
-  consolidating(5); // exercise being trained (SRS is not updated in that status)
+  newExercise(0), // Not answered before this session.
+  toReview(1), // Due from an earlier session.
+  learning(2), // New exercise repeating within this session.
+  relearning(3), // Review exercise repeating after a failed answer.
+  completed(4), // Finished for this session.
+  consolidating(5); // Training without further SRS updates.
 
   const ExerciseStatus(this.code);
 

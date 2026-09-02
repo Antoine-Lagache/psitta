@@ -1,7 +1,4 @@
-// This file contains utility functions
-// for safely converting dynamic values to specific numeric types
-// (double, int, bool) with fallback options and error handling.
-
+/// Converts [value] to a double or returns [fallback] on failure.
 double safeToDouble(dynamic value, {double fallback = 0.0}) {
   if (value == null) return fallback;
   if (value is num) return value.toDouble();
@@ -12,6 +9,7 @@ double safeToDouble(dynamic value, {double fallback = 0.0}) {
   }
 }
 
+/// Converts [value] to an integer or returns [fallback] on failure.
 int safeToInt(dynamic value, {int fallback = 0}) {
   if (value == null) return fallback;
   if (value is int) return value;
@@ -22,6 +20,7 @@ int safeToInt(dynamic value, {int fallback = 0}) {
   }
 }
 
+/// Converts common boolean representations or returns [fallback].
 bool safeToBool(dynamic value, {bool fallback = false}) {
   if (value == null) return fallback;
   if (value is bool) return value;

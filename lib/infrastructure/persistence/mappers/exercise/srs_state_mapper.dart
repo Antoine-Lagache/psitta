@@ -5,6 +5,7 @@ import 'package:psitta/utils/conversion/time_conversion.dart';
 export 'package:psitta/domain/srs/srs_state.dart';
 export 'package:psitta/infrastructure/persistence/models/exercise/srs_state_persistence.dart';
 
+/// Converts SRS state between domain types and database representations.
 class SRSStateMapper {
   const SRSStateMapper();
 

@@ -5,6 +5,7 @@ export 'package:psitta/infrastructure/persistence/models/exercise/srs_state_pers
 part 'sentence_exercise_persistence.dart';
 part 'word_exercise_persistence.dart';
 
+/// Shared persistence shape for exercise subtypes and their SRS state.
 sealed class ExercisePersistence {
   final int? id;
   final SrsStatePersistence srsState;

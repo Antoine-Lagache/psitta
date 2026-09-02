@@ -1,6 +1,6 @@
 part of 'exercise_answer.dart';
 
-/// is used to get the preview of the interval
+/// Represents a hypothetical answer used to preview its scheduling interval.
 final class PreviewExerciseAnswer extends ExerciseAnswer {
   @override
   final Grade grade;
