@@ -30,6 +30,7 @@ class SRSState {
   DateTime? get nextReview => _lastReview?.add(_interval);
 
   int _learningStepIndex; // index in learning steps (-1 = not in learning)
+  int get learningStepIndex => _learningStepIndex;
   bool get isInLearning => _learningStepIndex >= 0;
 
   SRSState({

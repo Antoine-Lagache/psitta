@@ -20,7 +20,13 @@ class Session {
 
   final SessionScheduler _scheduler;
 
-  int getCurrentContentId() => _scheduler.currentExercise!.getContentId();
+  Exercise get currentExercise {
+    final exercise = _scheduler.currentExercise;
+    if (exercise == null) throw StateError("The session has no current exercise");
+    return exercise;
+  }
+
+  int getCurrentContentId() => currentExercise.getContentId();
 
   List<ExerciseResume> getResumeList() => _scheduler.getResumeList();
 
@@ -62,8 +68,17 @@ class Session {
   /// Starts the session at the given date and time.
   /// Does nothing if the session has already started
   void beginSession(DateTime now) {
-    assert(_intermediateResult.startedAt == null);
+    if (_intermediateResult.startedAt != null) {
+      throw StateError("The session has already started");
+    }
     _intermediateResult.startedAt = now;
+    _scheduler.selectNextExercise(now);
+  }
+
+  void resumeSession(DateTime now) {
+    if (_intermediateResult.startedAt == null || _intermediateResult.endAt != null) {
+      throw StateError("Only an active session can be resumed");
+    }
     _scheduler.selectNextExercise(now);
   }
 
@@ -73,27 +88,20 @@ class Session {
   }
 
   List<Grade> getCurrentExerciseAllowedGrade() {
-    assert(_scheduler.currentExercise != null);
-
-    return Grade.values.where(_scheduler.currentExercise!.isGradeAllowed).toList();
+    return Grade.values.where(currentExercise.isGradeAllowed).toList();
   }
 
   /// submits the answer for the current exercise with the given grade, then moves to the next exercise
   void submitAnswer(SubmittedExerciseAnswer answer) {
-    assert(_scheduler.currentExercise != null);
-
     if (isSessionFinished()) {
       throw Exception("Cannot submit answer for a finished session");
     }
 
-    _intermediateResult.numberOfExercicesByStatus[_scheduler
-        .currentExercise!
-        .status
-        .code]++;
+    _intermediateResult.numberOfExercicesByStatus[currentExercise.status.code]++;
 
-    _scheduler.currentExercise!.applyAnswer(answer, config);
+    currentExercise.applyAnswer(answer, config);
 
-    if (_scheduler.currentExercise!.status == ExerciseStatus.completed) {
+    if (currentExercise.status == ExerciseStatus.completed) {
       _intermediateResult.numberOfUniqueExercisesCompleted++;
     }
 
@@ -103,13 +111,11 @@ class Session {
 
   /// returns the preview interval for the current exercise and a given grade
   Duration getPreviewInterval(PreviewExerciseAnswer answer) {
-    assert(_scheduler.currentExercise != null);
-
     if (isSessionFinished()) {
       throw Exception("Cannot preview interval for a finished session");
     }
 
-    return _scheduler.currentExercise!.previewInterval(answer, config);
+    return currentExercise.previewInterval(answer, config);
   }
 
   bool isSessionFinished() {
@@ -119,7 +125,9 @@ class Session {
   /// ends the session and returns the result
   /// a finished session can no longer receive answers and must be deleted
   SessionResult endSession(DateTime now) {
-    assert(_intermediateResult.endAt == null);
+    if (_intermediateResult.endAt != null) {
+      throw StateError("The session has already ended");
+    }
     _intermediateResult.endAt = now;
     return _intermediateResult;
   }

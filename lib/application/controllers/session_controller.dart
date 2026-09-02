@@ -15,11 +15,13 @@ class SessionController {
   final SessionRepository _sessionRepository;
   final ExerciseRepository _exerciseRepository;
   final ContentRepository _contentRepository;
+  final sqlite.SqliteDatabase _database;
 
   final SRSConfig config = SRSConfig();
 
   SessionController({required sqlite.SqliteDatabase database})
-    : _sessionRepository = SessionRepository(database),
+    : _database = database,
+      _sessionRepository = SessionRepository(database),
       _exerciseRepository = ExerciseRepository(database),
       _contentRepository = ContentRepository(database);
 
@@ -46,6 +48,10 @@ class SessionController {
       config.newCount,
       exerciseType,
     );
+
+    if (dueExercise.isEmpty && newExercise.isEmpty) {
+      throw StateError("No exercise is available for this session");
+    }
 
     _activeSession = Session(
       exercises: dueExercise + newExercise,
@@ -116,15 +122,27 @@ class SessionController {
       throw StateError("This Grade is not allowed by the exercise");
     }
 
-    activeSession!.submitAnswer(
+    final session = activeSession!;
+    final exercise = session.currentExercise;
+
+    session.submitAnswer(
       SubmittedExerciseAnswer(grade: grade, answeredAt: DateTime.now()),
     );
 
-    if (isSessionFinished()) {
-      await endSession();
-    } else {
-      await _sessionRepository.update(activeSession!);
-    }
+    final finished = session.isSessionFinished();
+    if (finished) session.endSession(DateTime.now());
+
+    await _database.writeTransaction((txn) async {
+      await _exerciseRepository.saveInTransaction(txn, exercise);
+      if (finished) {
+        await _sessionRepository.completeSessionInTransaction(txn, session);
+      } else {
+        await _sessionRepository.updateInTransaction(txn, session);
+      }
+    });
+
+    exercise.clearNewHistoryEntries();
+    if (finished) _activeSession = null;
   }
 
   Duration getPreviewInterval(Grade grade) {

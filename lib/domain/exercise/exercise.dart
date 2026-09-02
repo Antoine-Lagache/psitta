@@ -26,6 +26,8 @@ abstract class Exercise {
   Exercise({required this.id, required this.status, required this.srsState})
     : newHistoryEntry = [];
 
+  void clearNewHistoryEntries() => newHistoryEntry.clear();
+
   /// Returns the id of the content
   /// The domain doesn't need to know the content itself,
   /// only its id is needed to retrieve it from the database
@@ -36,7 +38,9 @@ abstract class Exercise {
 
   /// Submits the user's answer with a Grade and updates the SRS state
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
-    assert(status != ExerciseStatus.completed);
+    if (status == ExerciseStatus.completed) {
+      throw StateError("Cannot answer a completed exercise");
+    }
     if (!isGradeAllowed(answer.grade)) {
       throw StateError("The grade is not allowed by this exercise");
     }

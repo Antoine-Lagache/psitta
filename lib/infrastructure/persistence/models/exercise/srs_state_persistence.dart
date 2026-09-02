@@ -4,6 +4,7 @@ class SrsStatePersistence {
   final double kFactor;
   final double w;
   final double rBar;
+  final int learningStepIndex;
   final String? lastReview;
 
   // not present in the domain, but used to determine if the exercise is due for review
@@ -16,6 +17,7 @@ class SrsStatePersistence {
     required this.kFactor,
     required this.w,
     required this.rBar,
+    required this.learningStepIndex,
     this.lastReview,
     this.nextReview,
   });
@@ -27,6 +29,7 @@ class SrsStatePersistence {
       kFactor: row['kfactor'] as double,
       w: row['w'] as double,
       rBar: row['rbar'] as double,
+      learningStepIndex: row['learning_step_index'] as int,
       lastReview: row['last_review'] as String?,
       nextReview: row['next_review'] as int?,
     );
@@ -40,6 +43,7 @@ class SrsStatePersistence {
       'kfactor': kFactor,
       'w': w,
       'rbar': rBar,
+      'learning_step_index': learningStepIndex,
       'last_review': lastReview,
       'next_review': nextReview,
     };

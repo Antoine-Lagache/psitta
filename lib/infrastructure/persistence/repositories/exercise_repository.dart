@@ -75,36 +75,42 @@ class ExerciseRepository {
   }
 
   Future<void> save(Exercise exercise) async {
-    return database.writeTransaction((txn) async {
-      ExercisePersistence persistence;
-      switch (exercise) {
-        case WordExercise word:
-          persistence = WordExerciseMapper.wordToPersistence(word);
-          break;
-        case SentenceExercise sentence:
-          persistence = SentenceExerciseMapper.sentenceToPersistence(sentence);
-          SentenceGroupPersistence group = SentenceMapper.toPersistence(
-            sentence.sentences,
-          );
-          await _sentencesDao.updateSentencesState(txn, group);
-          break;
-        default:
-          throw StateError("Unknown Exercise type");
-      }
+    await database.writeTransaction((txn) => saveInTransaction(txn, exercise));
+    exercise.clearNewHistoryEntries();
+  }
 
-      if (persistence.id == null) {
-        throw ArgumentError("Cannot update an entity that doesn't have an id");
-      }
+  Future<void> saveInTransaction(
+    sqlite.SqliteWriteContext txn,
+    Exercise exercise,
+  ) async {
+    ExercisePersistence persistence;
+    switch (exercise) {
+      case WordExercise word:
+        persistence = WordExerciseMapper.wordToPersistence(word);
+        break;
+      case SentenceExercise sentence:
+        persistence = SentenceExerciseMapper.sentenceToPersistence(sentence);
+        SentenceGroupPersistence group = SentenceMapper.toPersistence(
+          sentence.sentences,
+        );
+        await _sentencesDao.updateSentencesState(txn, group);
+        break;
+      default:
+        throw StateError("Unknown Exercise type");
+    }
 
-      await _exerciseDao.updateSrsState(txn, persistence.id!, persistence.srsState);
+    if (persistence.id == null) {
+      throw ArgumentError("Cannot update an entity that doesn't have an id");
+    }
 
-      await _historyDao.insertAll(
-        txn,
-        exercise.newHistoryEntry
-            .map((entry) => ExerciseHistoryMapper.toPersistence(entry))
-            .toList(),
-      );
-    });
+    await _exerciseDao.updateSrsState(txn, persistence.id!, persistence.srsState);
+
+    await _historyDao.insertAll(
+      txn,
+      exercise.newHistoryEntry
+          .map((entry) => ExerciseHistoryMapper.toPersistence(entry))
+          .toList(),
+    );
   }
 
   Future<void> delete(int exerciseId) async {

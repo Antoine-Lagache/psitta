@@ -32,7 +32,9 @@ class SessionScheduler {
     for (Exercise a in shuffled) {
       switch (a.status) {
         case ExerciseStatus.learning || ExerciseStatus.relearning:
-          assert(a.srsState.nextReview != null);
+          if (a.srsState.nextReview == null) {
+            throw StateError("A learning exercise must have a next review date");
+          }
           // for learning exercise, the time of the next review give the priority
           learning ??= a;
           if (learning.srsState.nextReview!.isAfter(a.srsState.nextReview!)) {

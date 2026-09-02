@@ -82,7 +82,9 @@ class StatisticController {
       averageTimePerSession: numberOfTimedSessions == 0
           ? Duration.zero
           : totalTimeSpent ~/ numberOfTimedSessions,
-      averageNumberOfExercisesPerSession: numberOfExercisesAnswered / sessions.length,
+      averageNumberOfExercisesPerSession: sessions.isEmpty
+          ? 0.0
+          : numberOfExercisesAnswered / sessions.length,
     );
   }
 

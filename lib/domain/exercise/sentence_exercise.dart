@@ -24,7 +24,13 @@ class SentenceExercise extends Exercise {
     required super.srsState,
   }) : _sentences = sentences,
        trainingCount = trainingCount ?? trainingCountMax {
-    assert(this.trainingCount <= _sentences.sentences.length);
+    if (_sentences.sentences.isEmpty) {
+      throw ArgumentError.value(sentences, 'sentences', 'Must not be empty');
+    }
+    if (this.trainingCount < 0 ||
+        this.trainingCount > _sentences.sentences.length) {
+      throw ArgumentError.value(trainingCount, 'trainingCount', 'Out of range');
+    }
   }
 
   @override

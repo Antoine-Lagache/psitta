@@ -58,7 +58,21 @@ class SRSConfig {
        ),
        learningSteps = List.unmodifiable(learningSteps),
        assert(rstar > 0 && rstar < 1),
-       assert(wMaxFactor > 0 && wMaxFactor < 1);
+       assert(wMaxFactor > 0 && wMaxFactor < 1) {
+    if (rstar <= 0 || rstar >= 1) {
+      throw ArgumentError.value(rstar, 'rstar', 'Must be strictly between 0 and 1');
+    }
+    if (wMaxFactor <= 0 || wMaxFactor >= 1) {
+      throw ArgumentError.value(
+        wMaxFactor,
+        'wMaxFactor',
+        'Must be strictly between 0 and 1',
+      );
+    }
+    if (learningSteps.isEmpty) {
+      throw ArgumentError.value(learningSteps, 'learningSteps', 'Must not be empty');
+    }
+  }
 
   double get wMax => wMaxFactor * rstar;
 

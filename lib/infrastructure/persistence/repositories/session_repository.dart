@@ -84,7 +84,7 @@ class SessionRepository {
       sessionType: sessionResult.sessionType,
       config: config,
       existingSessionResult: sessionResult,
-    );
+    )..resumeSession(DateTime.now());
   }
 
   Future<Exercise> _toDomain(
@@ -134,20 +134,30 @@ class SessionRepository {
 
     final sessionResultId = sessionResult.id!;
 
-    await database.writeTransaction((txn) async {
-      final sessionResultPersistence = SessionResultMapper.toPersistence(sessionResult);
+    await database.writeTransaction((txn) => updateInTransaction(txn, session));
+  }
 
-      await _sessionResultDao.update(sessionResultPersistence, txn);
+  Future<void> updateInTransaction(
+    sqlite.SqliteWriteContext txn,
+    Session session,
+  ) async {
+    final sessionResult = session.intermediateResult;
+    if (sessionResult.id == null) {
+      throw ArgumentError('Cannot update a Session whose SessionResult has no id');
+    }
+    final sessionResultId = sessionResult.id!;
+    final sessionResultPersistence = SessionResultMapper.toPersistence(sessionResult);
 
-      final exerciseResumes = session
-          .getResumeList()
-          .map(SessionExerciseMapper.toPersistence)
-          .toList();
+    await _sessionResultDao.update(sessionResultPersistence, txn);
 
-      await _sessionExerciseDao.deleteAll(sessionResultId, txn);
+    final exerciseResumes = session
+        .getResumeList()
+        .map(SessionExerciseMapper.toPersistence)
+        .toList();
 
-      await _sessionExerciseDao.insertAll(sessionResultId, exerciseResumes, txn);
-    });
+    await _sessionExerciseDao.deleteAll(sessionResultId, txn);
+
+    await _sessionExerciseDao.insertAll(sessionResultId, exerciseResumes, txn);
   }
 
   Future<void> deleteSessionResult(int sessionResultId) {
@@ -169,6 +179,18 @@ class SessionRepository {
 
       return _sessionExerciseDao.deleteAll(sessionResultId, txn);
     });
+  }
+
+  Future<void> completeSessionInTransaction(
+    sqlite.SqliteWriteContext txn,
+    Session session,
+  ) async {
+    final sessionResult = session.intermediateResult;
+    if (sessionResult.id == null) {
+      throw ArgumentError('Cannot update a Session whose SessionResult has no id');
+    }
+    await _sessionResultDao.update(SessionResultMapper.toPersistence(sessionResult), txn);
+    await _sessionExerciseDao.deleteAll(sessionResult.id!, txn);
   }
 
   Future<List<SessionResult>> getList({DateTime? startedDate, DateTime? endDate}) async {

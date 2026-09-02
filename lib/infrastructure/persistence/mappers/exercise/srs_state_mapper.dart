@@ -15,6 +15,7 @@ class SRSStateMapper {
       kFactor: persistence.kFactor,
       w: persistence.w,
       rbar: persistence.rBar,
+      learningStepIndex: persistence.learningStepIndex,
       lastReview: safeParseDate(persistence.lastReview),
     );
   }
@@ -26,6 +27,7 @@ class SRSStateMapper {
       kFactor: domain.kFactor,
       w: domain.w,
       rBar: domain.rbar,
+      learningStepIndex: domain.learningStepIndex,
       lastReview: toIsoUtc(domain.lastReview),
       nextReview: domain.nextReview?.microsecondsSinceEpoch,
     );

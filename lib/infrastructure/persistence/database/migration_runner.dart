@@ -9,6 +9,8 @@ class MigrationRunner {
 
   /// migrate de DB to the last version
   Future<void> migrate(sqlite.SqliteDatabase database) async {
+    // SQLite ignores changes to foreign_keys while a transaction is active.
+    await database.execute('PRAGMA foreign_keys = ON;');
     final currentVersion = await _getCurrentVersion(database);
 
     final sortedMigrations = [...migrations]..sort((a, b) => a.version.compareTo(b.version));

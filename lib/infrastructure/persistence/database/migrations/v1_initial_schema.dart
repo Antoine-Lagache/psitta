@@ -8,8 +8,6 @@ class V1InitialSchema implements DatabaseMigration {
 
   @override
   Future<void> migrate(sqlite.SqliteWriteContext database) async {
-    await database.execute('PRAGMA foreign_keys = ON;');
-
     await database.execute('''
       CREATE TABLE exercise (
         id INTEGER PRIMARY KEY,
