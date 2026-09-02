@@ -83,10 +83,12 @@ The project is under active development. Here is a transparent breakdown of prog
 | Domain layer — class & method design | ✅ Complete |
 | Domain layer — implementation | ✅ Complete |
 | Persistence layer | ✅ Complete |
-| Application / Controllers | 🔄 40% complete |
-| UI | ⏳ Not started |
+| Application / Controllers | ✅ Complete for the current MVP scope |
+| Persistence regression tests | 🔄 Basic coverage |
+| UI | ⏳ Application shell not implemented |
 
-The current focus is completing the Domain layer implementation and ensuring full conformance with the formal SRS specification. The codebase is being incrementally refactored to strictly conform to the defined architecture.
+The current focus is integrating the existing Domain, Persistence, and Application layers
+into the first usable UI flow.
 
 
 ---
@@ -104,7 +106,7 @@ flutter pub get
 flutter run
 ```
 
-Domain logic and SRS unit tests can be run independently once the domain layer implementation is complete:
+The current persistence regression tests can be run with:
 
 ```bash
 flutter test

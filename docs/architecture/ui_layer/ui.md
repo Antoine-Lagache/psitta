@@ -1,116 +1,23 @@
 [Documentation Index](/docs/index.md)
 
-# `docs/architecture/ui.md`
+# UI Layer
 
-## Purpose
+## Current State
 
-Describe:
+The application shell and screens are not implemented yet. The existing UI code is
+limited to generic content presentation:
 
-* the main screens of the application,
-* their functional role,
-* which **Controller** each screen uses.
+* `ContentRenderer` selects and renders content fields;
+* `FieldRenderer` renders supported field values;
+* `MediaResolver` resolves persisted media references.
 
-This diagram establishes the **UI ↔ Application contract**.
+The first UI flow will use `SessionController` to start, resume, answer, pause, and
+complete word or sentence sessions. Statistics will be obtained from
+`StatisticController`.
 
----
+## Dependency Rules
 
-## Diagram
-
-```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace UI {
-  class HomeScreen
-  class WordSessionScreen
-  class SentenceSessionScreen
-  class StatsScreen
-  class SettingsScreen
-}
-
-namespace Application {
-  class HomeController
-  class SessionController
-  class StatsController
-  class SettingsController
-}
-
-%% UI -> Controllers
-HomeScreen --> HomeController
-WordSessionScreen --> SessionController
-SentenceSessionScreen --> SessionController
-StatsScreen --> StatsController
-SettingsScreen --> SettingsController
-```
-
----
-
-## Reading the Diagram
-
-### HomeScreen
-
-* Application entry screen.
-* Displays the overall progression state.
-* Allows the user to:
-
-  * start a session (words / sentences),
-  * navigate to statistics,
-  * navigate to settings.
-
-Uses: `HomeController`
-
-### WordSessionScreen
-
-* Displays a word exercise session.
-* Renders exercises provided by the session as projections, one at a time.
-* Forwards user responses to the controller.
-
-Uses: `SessionController`
-
-### SentenceSessionScreen
-
-* Displays a sentence exercise session.
-* Same logic as `WordSessionScreen`, but with grammatical targets.
-
-Uses: `SessionController`
-
-### StatsScreen
-
-* Displays learning statistics.
-* Does not trigger any session.
-* Does not manipulate any exercise.
-
-Uses: `StatsController`
-
-### SettingsScreen
-
-* Displays and modifies application settings.
-* Includes SRS parameters in particular.
-
-Uses: `SettingsController`
-
----
-
-## UI Architecture Rules
-
-* Screens:
-
-  * know **only their Controller**,
-  * know neither the Domain nor Persistence.
-* Every user action is forwarded to the Controller.
-* No business logic is computed in the UI.
-* The UI never persists data directly.
-
----
-
-## Implementation Notes ⚠️
-
-* Each Screen may be implemented as:
-
-  * a Flutter `Widget`,
-  * or a `Widget + ViewModel` pair.
-* The Controller may be injected:
-
-  * via constructor,
-  * via Provider / Riverpod / other (free choice).
-* This diagram remains valid regardless of the chosen state management framework.
+* UI code calls Application controllers rather than repositories or DAOs.
+* Business rules remain in the Domain layer.
+* SQL and persistence models never enter the UI layer.
+* The state-management mechanism will be selected when the application shell is built.

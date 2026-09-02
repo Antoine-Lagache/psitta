@@ -21,10 +21,8 @@ This diagram does not describe the UI or SQL details — only the **structural d
 classDiagram
 
 namespace Application {
-  class HomeController
   class SessionController
-  class StatsController
-  class SettingsController
+  class StatisticController
 }
 
 namespace Domain {
@@ -40,7 +38,6 @@ Exercise <|-- WordExercise
 Exercise <|-- SentenceExercise
 
 %% Application -> Domain
-HomeController --> SessionController : starts sessions
 SessionController --> Session : manages
 SessionController --> Exercise : produces/consumes
 
@@ -48,9 +45,7 @@ SessionController --> Exercise : produces/consumes
 SessionController --> Repositories : **load**<br/> words, groups
 SessionController --> Repositories : **load/save** SRS
 
-StatsController --> Repositories: read
-
-SettingsController --> Repositories : read/write config
+StatisticController --> Repositories: read
 ```
 
 ---
@@ -59,10 +54,8 @@ SettingsController --> Repositories : read/write config
 
 ### Controllers (Application)
 
-* `HomeController`: entry-point logic (starting a session, application-side navigation).
 * `SessionController`: orchestrates the flow of a session (exercise and session creation; sending `Content` objects to the UI and collecting user input; session teardown).
-* `StatsController`: computes and exposes statistics from persisted data, without depending on sessions or the exercise runtime.
-* `SettingsController`: exposes and modifies configuration (e.g. SRS parameters).
+* `StatisticController`: computes and exposes statistics from persisted data, without depending on sessions or the exercise runtime.
 
 ### Domain
 
@@ -80,8 +73,9 @@ SQL, DB mapping, and table definitions are confined to the Persistence diagram.
 ## Architecture Rules
 
 * The UI calls controllers; it never calls the Domain or Persistence directly.
-* `StatsController` does not depend on the runtime (sessions/exercises) — only on repositories.
+* `StatisticController` does not depend on the runtime (sessions/exercises) — only on repositories.
 * `SessionController` orchestrates sessions and delegates persistence to repositories (no SQL here).
+* Answer submission persists exercise progression and session state in one transaction.
 * The Domain remains independent of the Flutter UI layer.
 
 ---

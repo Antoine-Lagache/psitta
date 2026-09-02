@@ -59,13 +59,16 @@ flowchart LR
     subgraph Sessions
         RESULT["session_result"]
         COUNTS["session_result_status_count"]
+        ACTIVE["active_session_exercise"]
 
         RESULT --> COUNTS
+        RESULT --> ACTIVE
     end
 
     WORD --> CONTENT
     SENTENCE_EX --> GROUP
     INSTANCE --> CONTENT
+    ACTIVE --> EXERCISE
 ```
 
 The schema is organised around four main areas:
@@ -137,14 +140,17 @@ Each instance has its own `sentence_state`, which tracks sentence-level exposure
 
 Sessions are runtime objects and are not persisted.
 
-Only their results are stored:
+Sessions are reconstructed from their result and active-exercise rows:
 
 ```mermaid
 flowchart LR
-    RESULT --> COUNTS["session_result_status_count"]
+    RESULT["session_result"] --> COUNTS["session_result_status_count"]
+    RESULT --> ACTIVE["active_session_exercise"]
+    ACTIVE --> EXERCISE["exercise"]
 ```
 
-`session_result` stores the global result of a session, while `session_result_status_count` stores the number of exercises associated with each resulting status.
+`session_result` stores aggregate progress, `session_result_status_count` stores answer
+counts, and `active_session_exercise` stores the per-session state required for resume.
 
 ---
 
@@ -159,6 +165,7 @@ Foreign keys are enabled in SQLite.
 * a sentence group and its instances,
 * a sentence instance and its state,
 * a session result and its status counts.
+* a session result and its active exercises.
 
 References to shared `content` do not cascade. Deleting content therefore does not automatically delete the exercises that reference it.
 
@@ -180,7 +187,7 @@ The database stores the information required to reconstruct and continue the app
 
 In particular:
 
-* `Session` is not persisted.
+* `Session` is reconstructed rather than stored as a serialized object.
 * `Exercise` runtime state is not persisted directly.
 * `SRSState` is persisted.
 * Exercise history is persisted.

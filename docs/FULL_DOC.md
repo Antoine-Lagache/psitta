@@ -7,12 +7,11 @@
 
 ---
 
-
 ---
 
 ## 📄 architecture/application_layer/application.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
 # `docs/architecture/application.md`
@@ -36,10 +35,8 @@ This diagram does not describe the UI or SQL details — only the **structural d
 classDiagram
 
 namespace Application {
-  class HomeController
   class SessionController
-  class StatsController
-  class SettingsController
+  class StatisticController
 }
 
 namespace Domain {
@@ -55,7 +52,6 @@ Exercise <|-- WordExercise
 Exercise <|-- SentenceExercise
 
 %% Application -> Domain
-HomeController --> SessionController : starts sessions
 SessionController --> Session : manages
 SessionController --> Exercise : produces/consumes
 
@@ -63,9 +59,7 @@ SessionController --> Exercise : produces/consumes
 SessionController --> Repositories : **load**<br/> words, groups
 SessionController --> Repositories : **load/save** SRS
 
-StatsController --> Repositories: read
-
-SettingsController --> Repositories : read/write config
+StatisticController --> Repositories: read
 ```
 
 ---
@@ -74,10 +68,8 @@ SettingsController --> Repositories : read/write config
 
 ### Controllers (Application)
 
-* `HomeController`: entry-point logic (starting a session, application-side navigation).
 * `SessionController`: orchestrates the flow of a session (exercise and session creation; sending `Content` objects to the UI and collecting user input; session teardown).
-* `StatsController`: computes and exposes statistics from persisted data, without depending on sessions or the exercise runtime.
-* `SettingsController`: exposes and modifies configuration (e.g. SRS parameters).
+* `StatisticController`: computes and exposes statistics from persisted data, without depending on sessions or the exercise runtime.
 
 ### Domain
 
@@ -95,8 +87,9 @@ SQL, DB mapping, and table definitions are confined to the Persistence diagram.
 ## Architecture Rules
 
 * The UI calls controllers; it never calls the Domain or Persistence directly.
-* `StatsController` does not depend on the runtime (sessions/exercises) — only on repositories.
+* `StatisticController` does not depend on the runtime (sessions/exercises) — only on repositories.
 * `SessionController` orchestrates sessions and delegates persistence to repositories (no SQL here).
+* Answer submission persists exercise progression and session state in one transaction.
 * The Domain remains independent of the Flutter UI layer.
 
 ---
@@ -114,13 +107,14 @@ SQL, DB mapping, and table definitions are confined to the Persistence diagram.
 This decoupling allows multiple sessions to be run sequentially without recreating controllers, and ensures a clear lifecycle management.
 
 * The Application layer knows neither `Widget`, nor Flutter, nor `BuildContext`.
-````
+
+
 
 ---
 
 ## 📄 architecture/domain_layer/domain.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
 # `docs/architecture/domain.md`
@@ -221,13 +215,13 @@ SentenceExercise "1" --> "1..*" SentenceState : updates
 * `Session` details (start/end, current, ordering, call constraints) → `sessions.md`
 * `Exercise` details (statuses, transition rules, allowed grades) → `exercises.md`
 * Progression details (`SRSState`, `SentenceState`, `Grade`, preview/apply) → `srs.md`
-````
+
 
 ---
 
 ## 📄 architecture/domain_layer/exercises.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
 # `docs/architecture/exercises.md`
@@ -423,13 +417,13 @@ An exercise ignores:
 * user parameters,
 * the origin of data (DB, API),
 
-````
+
 
 ---
 
 ## 📄 architecture/domain_layer/sessions.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
 # `docs/architecture/sessions.md`
@@ -649,13 +643,13 @@ The session ignores:
 * persistence,
 * user parameters,
 * organisation of content into chapters.
-````
+
 
 ---
 
 ## 📄 architecture/domain_layer/srs.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
 # `docs/architecture/srs.md`
@@ -860,13 +854,13 @@ The session can expose an **interval preview**:
 * The SRS has no concept of a session.
 * Every SRS update goes through an exercise.
 * Persistence is immediate after each response.
-````
+
 
 ---
 
 ## 📄 architecture/overview.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
 # `docs/architecture/overview.md`
@@ -939,8 +933,6 @@ It is intentionally represented as a **single block**, but structured into conce
   Represents the concrete exercises presented to the user.
   Exercises are stateful runtime objects, created before the session starts and destroyed at its end.
 
-  The UI only knows exercises through a `Content`. An sentence exercise can have multiple content.
-
 * **Sessions**
   Manages the organisation of exercises into learning sessions. It's the starting point of the domain.
 
@@ -985,438 +977,691 @@ It is transversal and does not belong to the main dependency hierarchy.
 
 * Words and sentences are organised by chapter. This chapter concept only exists in `StatsScreen` and `HomeScreen`.
 * Chapters structure content for the user, but play no role in the learning logic and are therefore ignored by sessions and the domain.
-````
+
 
 ---
 
 ## 📄 architecture/persistence_layer/database.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
-# `docs/architecture/database.md`
+# SQLite Database
 
 ## Purpose
 
-Physical counterpart of [`persistence.md`](persistence.md): how the concepts described in the Domain docs actually map onto SQLite tables (schema v1). This doc doesn't restate the schema column-by-column — it focuses on the relationships and the parts that aren't obvious just from reading the SQL or the diagram.
+Describe the structure and main relationships of the SQLite database used by the Persistence layer.
+
+The database stores persistent application data such as:
+
+* exercises and their progression,
+* learning content,
+* sentence groups,
+* exercise history,
+* session results.
+
+Runtime objects such as `Session` and `Exercise` are not stored directly.
 
 ---
 
-## Diagram
+## Schema Overview
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
+flowchart LR
 
-namespace ExerciseAndSRS {
-  class exercise
-  class word_exercise
-  class sentence_exercise
-  class srs_state
-  class exercise_history
-}
+    subgraph Exercises
+        EXERCISE["exercise"]
+        SRS["srs_state"]
+        WORD["word_exercise"]
+        SENTENCE_EX["sentence_exercise"]
+        HISTORY["exercise_history"]
 
-namespace ContentAndFields {
-  class content
-  class field_definition
-  class field_value
-  class media
-  class tag
-}
+        EXERCISE --> SRS
+        EXERCISE --> WORD
+        EXERCISE --> SENTENCE_EX
+        EXERCISE --> HISTORY
+    end
 
-namespace Sentences {
-  class sentence_group
-  class sentence_instance
-  class sentence_state
-}
+    subgraph Content
+        CONTENT["content"]
+        VALUES["field_value"]
+        DEFINITION["field_definition"]
+        MEDIA["media"]
 
-namespace SessionsAndStats {
-  class session_result
-  class session_result_status_count
-}
+        CONTENT --> VALUES
+        DEFINITION --> VALUES
+        VALUES --> MEDIA
+    end
 
-exercise <|-- word_exercise
-exercise <|-- sentence_exercise
-exercise "1" --> "1" srs_state
-exercise "1" --> "0..*" exercise_history
+    subgraph Sentences
+        GROUP["sentence_group"]
+        INSTANCE["sentence_instance"]
+        STATE["sentence_state"]
 
-word_exercise "0..*" --> "1" content
-sentence_exercise "1" --> "1" sentence_group
-sentence_group "1" --> "1..*" sentence_instance
-sentence_instance "0..*" --> "1" content
-sentence_instance "1" --> "1" sentence_state
+        GROUP --> INSTANCE
+        INSTANCE --> STATE
+    end
 
-content "1" --> "1..*" field_value
-field_definition "1" --> "1..*" field_value
-field_value "0..1" --> "0..1" media
-field_definition "0..*" --> "0..*" tag
+    subgraph Sessions
+        RESULT["session_result"]
+        COUNTS["session_result_status_count"]
+        ACTIVE["active_session_exercise"]
 
-session_result "1" --> "0..*" session_result_status_count
+        RESULT --> COUNTS
+        RESULT --> ACTIVE
+    end
+
+    WORD --> CONTENT
+    SENTENCE_EX --> GROUP
+    INSTANCE --> CONTENT
+    ACTIVE --> EXERCISE
 ```
 
----
+The schema is organised around four main areas:
 
-## Reading the Diagram
-
-### Exercise identity vs. Exercise runtime
-
-`exercise`, `word_exercise`, `sentence_exercise`, `srs_state`, and `exercise_history` all describe the **persisted identity and progression** of an exercise — not the ephemeral runtime `Exercise` object from `exercises.md`, which is created on demand and never persisted.
-
-The pattern: `exercise` holds what's common (id, type, creation date); `word_exercise` / `sentence_exercise` hold what's specific to each kind, sharing `exercise`'s id as their own PK. `srs_state` and `exercise_history` do the same — one row of *current* state, plus an append-only log of every past grade. That's precisely why `history` got pulled out of `srs_state` into its own table: it's a growing log, not a piece of state, so it needed its own PK rather than living inside a 1:1 row.
-
-### Content is deliberately generic
-
-`content` + `field_definition` + `field_value` form a generic key/value model instead of one column per language or media type. This is what lets the same `content` table represent both a word and a sentence, and lets new field kinds (a new language, an audio field) be added without a schema migration.
-
-The one invariant to keep in mind: in `field_value`, exactly one of `text_value` / `media_id` is ever set — which one is dictated by the field's `type` on `field_definition`. Nothing in the DB enforces this; it's on the mapping layer to guarantee it. `media` rows are pointers to files on disk, not the files themselves.
-
-### Sentences: two different "progression" mechanisms at two different levels
-
-This is the trickiest part of the schema. There are **two SRS-like mechanisms, at two different granularities**:
-
-* `srs_state` operates at the **group** level, via `sentence_exercise` — this is the *real* SRS: it's what schedules the next review of the exercise as a whole.
-* `sentence_state` operates at the **instance** level (one row per sentence in the group) — but it does **not** schedule anything. It only tracks how often / how successfully each individual sentence has been shown, so that when the group's exercise comes up for review, it can pick *which* sentence to actually display (least shown / least successful).
-
-So a `SentenceExercise` has exactly one real progression state (its `srs_state`), and as many `sentence_state` rows as it has sentences, purely to drive a "which one do I show" heuristic.
-
-### Sessions are summarised, never stored
-
-`session_result` / `session_result_status_count` only capture the *outcome* of a session (counts, timing) — never the session or its exercises. This matches `sessions.md`: sessions and exercises are never persisted; only what they produce (`srs_state`, `exercise_history`, `session_result`) survives beyond the session's lifetime.
+* **Exercises** — persistent exercise identity and SRS state.
+* **Content** — generic content and its fields.
+* **Sentences** — groups, sentence instances and sentence-level progression.
+* **Sessions** — persistent results produced by completed sessions.
 
 ---
 
-## Repository Ownership
+## Exercises
 
-| Table(s) | Owner |
-|---|---|
-| `content`, `field_definition`, `field_value`, `tag`, `field_tag`, `media`, `word_exercise`, `exercise` (type `word`) | `WordRepository` |
-| `sentence_group`, `sentence_instance`, `sentence_state`, `sentence_exercise`, `exercise` (type `sentence`) | `SentenceRepository` |
-| `srs_state`, `exercise_history` | `SrsRepository` |
-| `session_result`, `session_result_status_count` | *(not yet listed in `persistence.md` — candidate `StatsRepository`)* |
+An exercise is represented by a base `exercise` row and a type-specific row:
 
-*(Chapters aren't modelled yet — out of scope for this schema version.)*
+* `word_exercise`
+* `sentence_exercise`
+
+The common identity is stored in `exercise`, while type-specific data is stored in the corresponding table.
+
+Each exercise has exactly one `srs_state`.
+
+Exercise responses are recorded separately in `exercise_history`, allowing multiple history entries for the same exercise.
 
 ---
 
-## Structural Notes
+## Content
 
-* `PRAGMA foreign_keys = ON` — every FK below is actually enforced, not just documentation.
-* Shared-PK tables (`word_exercise`, `sentence_exercise`, `srs_state`, `exercise_history` share... well, `exercise_history` has its own surrogate `id` since it's 1:many, but the 1:1 ones — `word_exercise`, `sentence_exercise`, `srs_state`, `sentence_state` — reuse their parent's PK) keep joins cheap and keep subtype-specific data physically separate.
-* `ON DELETE CASCADE` is used for **ownership** (deleting an `exercise` takes its `srs_state`/`exercise_history` with it; deleting a `sentence_group` takes its `sentence_instance`s with it) but not for plain **references** to shared data (`word_exercise.content_id`, `sentence_instance.content_id`) — deleting a `Content` doesn't ripple into the exercises that merely display it.
-````
+Content is stored independently from exercises.
+
+```mermaid
+flowchart LR
+    CONTENT["content"] --> VALUES["field_value"]
+    VALUES --> DEFINITION["field_definition"]
+    VALUES --> MEDIA["media"]
+```
+
+A `content` item is composed of one or more field values.
+
+`field_definition` describes what a field represents, while `field_value` stores the value associated with a particular content item.
+
+Media are stored as references to files rather than as binary data inside the database.
+
+---
+
+## Sentences
+
+Sentence exercises operate on groups of sentence instances.
+
+```mermaid
+flowchart LR
+    EXERCISE["sentence_exercise"]
+    GROUP["sentence_group"]
+    INSTANCE["sentence_instance"]
+    STATE["sentence_state"]
+
+    EXERCISE --> GROUP
+    GROUP --> INSTANCE
+    INSTANCE --> STATE
+```
+
+A `sentence_group` contains several `sentence_instance` objects.
+
+Each instance has its own `sentence_state`, which tracks sentence-level exposure independently from the exercise's `srs_state`.
+
+---
+
+## Session Results
+
+Sessions are runtime objects and are not persisted.
+
+Sessions are reconstructed from their result and active-exercise rows:
+
+```mermaid
+flowchart LR
+    RESULT["session_result"] --> COUNTS["session_result_status_count"]
+    RESULT --> ACTIVE["active_session_exercise"]
+    ACTIVE --> EXERCISE["exercise"]
+```
+
+`session_result` stores aggregate progress, `session_result_status_count` stores answer
+counts, and `active_session_exercise` stores the per-session state required for resume.
+
+---
+
+## Referential Integrity
+
+Foreign keys are enabled in SQLite.
+
+`ON DELETE CASCADE` is used for data that is owned by another entity, such as:
+
+* an exercise and its SRS state,
+* an exercise and its history,
+* a sentence group and its instances,
+* a sentence instance and its state,
+* a session result and its status counts.
+* a session result and its active exercises.
+
+References to shared `content` do not cascade. Deleting content therefore does not automatically delete the exercises that reference it.
+
+---
+
+## Runtime vs Persistent Data
+
+The database does not reproduce the Domain object graph exactly.
+
+```mermaid
+flowchart LR
+    DOMAIN["Domain runtime"]
+    DB["SQLite"]
+
+    DOMAIN -->|"persistent state"| DB
+```
+
+The database stores the information required to reconstruct and continue the application, rather than temporary runtime objects.
+
+In particular:
+
+* `Session` is reconstructed rather than stored as a serialized object.
+* `Exercise` runtime state is not persisted directly.
+* `SRSState` is persisted.
+* Exercise history is persisted.
+* Session results are persisted.
+
+
 
 ---
 
 ## 📄 architecture/persistence_layer/persistence.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
 # `docs/architecture/persistence.md`
 
 ## Purpose
 
-Describe the **Persistence** layer, responsible for storing and retrieving application data.
+Describe the general architecture of the **Persistence** layer and its role in the application.
 
-This layer:
+The Persistence layer is responsible for:
 
-* encapsulates **SQLite**,
-* implements the **repositories**,
-* handles **DB ↔ Domain mapping**,
-* isolates all technical decisions related to performance.
+* storing application data,
+* loading persisted data,
+* translating between Persistence models and Domain objects,
+* isolating the Domain from SQLite and other storage-specific details.
 
-No business logic should reside here.
-
-⚠️ Persistence only records states computed by the Domain.
+The Persistence layer does **not** contain business logic.
 
 ---
 
-## Diagram
+## Architecture
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
+flowchart TD
 
-namespace Persistence {
-  class WordRepository
-  class SentenceRepository
-  class ExerciseRepository
-  class ChapterRepository
-  class SrsRepository
-  class SettingsRepository
-}
+    APP["Application"]
 
-class SQLiteDatabase
+    subgraph PERSISTENCE["Persistence"]
+        REPO["Repositories"]
 
-WordRepository --> SQLiteDatabase
-SentenceRepository --> SQLiteDatabase
-ExerciseRepository --> SQLiteDatabase
-ChapterRepository --> SQLiteDatabase
-SrsRepository --> SQLiteDatabase
-SettingsRepository --> SQLiteDatabase
+        subgraph DATA["Data access"]
+            DAO["DAOs"]
+            DB["SQLite Database"]
+        end
+
+        MODELS["Persistence Models"]
+        MAPPERS["Mappers"]
+    end
+
+    DOMAIN["Domain"]
+
+    APP --> REPO
+
+    REPO --> DAO
+    DAO --> DB
+
+    REPO --> MAPPERS
+    MAPPERS <--> MODELS
+    MAPPERS <--> DOMAIN
 ```
 
 ---
 
-## Repository Responsibilities
+## General Flow
 
-### General Principle
+Persistence acts as a boundary between the **Domain** and the physical database.
 
-A **repository** represents a **business concept used by the application**,
-not necessarily a single SQL table.
+When data is loaded:
 
-Each repository:
+```mermaid
+sequenceDiagram
 
-* exposes business-oriented methods,
-* hides SQL,
-* returns only **Domain** objects.
+    participant A as Application
+    participant R as Repository
+    participant D as DAO
+    participant DB as SQLite
+    participant M as Mapper
+    participant DOM as Domain
 
----
+    A->>R: request data
+    R->>D: query
+    D->>DB: SQL
+    DB-->>D: database rows
+    D-->>R: Persistence models
+    R->>M: map to Domain
+    M-->>R: Domain objects
+    R-->>A: Domain objects
+```
 
-### Main Repositories
+When Domain state must be persisted, the flow is reversed:
 
-#### `WordRepository`
+```mermaid
+sequenceDiagram
 
-* loads words by chapter,
-* loads due words (via SRS),
-* saves the SRS state of words.
+    participant A as Application
+    participant R as Repository
+    participant M as Mapper
+    participant D as DAO
+    participant DB as SQLite
 
-#### `SentenceRepository`
+    A->>R: save Domain state
+    R->>M: map to Persistence model
+    M-->>R: Persistence model
+    R->>D: persist model
+    D->>DB: SQL
+    DB-->>D: result
+    D-->>R: success
+    R-->>A: success
+```
 
-* loads sentences by group or by chapter,
-* used primarily for exercise generation.
-
-#### `ExerciseRepository`
-
-* creates exercises using `WordRepository`, `SentenceRepository`, and `SrsRepository`,
-* exercises are not persisted, but created on demand by the application layer through the other repositories, which are themselves persisted.
-
-#### `ChapterRepository`
-
-* loads the pedagogical structure,
-* chapter order and content, metadata.
-
-#### `SrsRepository`
-
-* manages **SRSState**, **SRSConfig**, and **SentenceState**,
-* persists:
-
-  * progression states computed by the Domain,
-  * next review date,
-  * level / interval.
-
-👉 For the MVP, `SRSState`, `SRSConfig`, and `SentenceState` are intentionally grouped here (may be split later).
-
-#### `SettingsRepository`
-
-* global application parameters, e.g.:
-
-  * languages A / B,
-  * session size,
-  * user preferences,
-  * SRS parameters.
+The important boundary is that **SQL and Persistence models never leave the Persistence layer**.
 
 ---
 
-## DB ↔ Domain Mapping
+## Main Components
 
-Mapping between SQLite and the Domain is **confined to Persistence**.
+### Repositories
 
-Two possible implementations:
+Repositories expose a **Domain-oriented interface** to the Application layer.
 
-* private mapping inside the repository (recommended for MVP),
-* dedicated `Row` classes if complexity grows.
+They:
 
-In all cases:
+* coordinate data access,
+* combine several DAOs when necessary,
+* convert Persistence models into Domain objects,
+* hide the database implementation.
 
-* no `Map<String, dynamic>` leaves the Persistence layer,
-* the Domain does not know the SQL schema.
+A repository therefore represents an application concept rather than necessarily a single database table.
 
----
+### DAOs
 
-## Optimisations and Performance
+DAOs are responsible for **database access**.
 
-All technical optimisations are **exclusively managed within this layer**, including:
+They:
 
-* SQL indexes,
-* complex joins,
-* in-memory cache,
-* multi-table transactions.
+* execute SQL queries,
+* insert, update and delete database data,
+* reconstruct Persistence models from database rows.
 
-These optimisations can evolve **without impacting**:
+DAOs do not contain Domain logic.
 
-* the Domain,
-* Controllers,
-* the UI.
+### Persistence Models
 
----
+Persistence models represent the data as it is stored and manipulated inside the Persistence layer.
 
-## Key Implementation Boundaries ⚠️
+They are intentionally separate from Domain objects.
 
-### 1. Boundaries never to cross
+This allows the database schema to evolve without forcing the Domain model to follow the same structure.
 
-* ❌ SQL in Controllers
-* ❌ SQL in the Domain
-* ❌ `Map<String, dynamic>` outside Persistence
+### Mappers
 
----
+Mappers translate between:
 
-### 2. Repository methods
+* Persistence models ↔ Domain objects.
 
-Methods must be:
+They contain structural conversion logic, but no business rules.
 
-* oriented towards **use cases**,
-* not oriented towards **tables**.
+### Database
 
-❌ `getAllWordsFromTable()`
+The database component manages SQLite itself:
 
-✔ `getDueWords(chapterId)`
+* database connection,
+* schema creation,
+* migrations,
+* transactions,
+* database-level configuration.
 
----
+Foreign-key enforcement is enabled before migrations run. Schema changes are applied
+through the ordered migration registry.
 
-### 3. Future evolution
-
-* If statistics become complex → add a `StatsRepository`.
-* If the SRS evolves → modify only `SrsRepository`.
-* If the DB changes → Persistence absorbs the change.
-* If repositories become too large → add DAOs for CRUD operations.
+SQLite-specific details remain confined to Persistence.
 
 ---
 
-## Golden Rule
+## Dependency Rules
 
-> **Everything related to "how it is stored" or "how it is fast"
-> belongs to Persistence, and to Persistence alone.**
-````
+```mermaid
+flowchart LR
+
+    APPLICATION["Application"]
+    REPOSITORIES["Repositories"]
+    MAPPERS["Mappers"]
+    MODELS["Persistence Models"]
+    DAOS["DAOs"]
+    DATABASE["SQLite"]
+    DOMAIN["Domain"]
+
+    APPLICATION --> REPOSITORIES
+
+    REPOSITORIES --> DOMAIN
+    REPOSITORIES --> MAPPERS
+    REPOSITORIES --> DAOS
+
+    MAPPERS --> DOMAIN
+    MAPPERS --> MODELS
+
+    DAOS --> MODELS
+    DAOS --> DATABASE
+```
+
+The following rules must hold:
+
+* The Application accesses persisted data through repositories.
+* The Domain never accesses Persistence.
+* DAOs never expose SQL rows or `Map<String, dynamic>` outside Persistence.
+* Persistence models never leave Persistence.
+* Mappers are the boundary between Domain objects and Persistence models.
+* SQL is confined to DAOs and database infrastructure.
+* Persistence does not implement business rules.
+
+---
+
+## Persistence vs Domain
+
+The distinction is intentional:
+
+**Domain**
+
+* defines what the application means,
+* owns business rules,
+* computes progression,
+* manages runtime state.
+
+**Persistence**
+
+* defines how data is stored,
+* reconstructs Domain state,
+* executes queries,
+* handles database-specific concerns.
+
+Persistence records the state produced by the Domain; it does not decide what that state should be.
+
+---
+
+## Current Structure
+
+The Persistence layer is currently organised around four main technical components:
+
+```text
+persistence/
+├── database/
+├── models/
+├── mappers/
+├── dao/
+└── repositories/
+```
+
+Each component has a distinct responsibility:
+
+| Component | Responsibility |
+|---|---|
+| `database/` | SQLite database and migrations |
+| `models/` | Persistence representation of stored data |
+| `mappers/` | Domain ↔ Persistence conversion |
+| `dao/` | SQL and low-level database access |
+| `repositories/` | Domain-oriented data access API |
+
+The detailed design of each component is documented separately.
+
+
+
+---
+
+## 📄 architecture/persistence_layer/repositories.md
+
+markdown
+[Documentation Index](/docs/index.md)
+
+# Persistence Repositories
+
+## Purpose
+
+Repositories provide the **application-facing API** of the Persistence layer.
+
+They:
+
+* expose operations oriented toward application use cases,
+* hide DAOs and SQL queries,
+* convert Persistence models into Domain objects,
+* persist Domain state produced by the application and Domain layers.
+
+The Application layer should interact with repositories rather than with DAOs directly.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+
+    subgraph Application
+        Controller
+    end
+
+    subgraph Persistence
+        Repo["Repositories"]
+        DAO["DAOs"]
+        DB[("SQLite")]
+    end
+
+    Controller --> Repo
+    Repo --> DAO
+    DAO --> DB
+```
+
+Repositories are therefore the **boundary between the Application layer and the database implementation**.
+
+---
+
+## Repository API
+
+```mermaid
+classDiagram
+
+    class ExerciseRepository {
+        createWordExercise()
+        createSentenceExercise()
+        getById()
+        getDueExercises()
+        getNewExercises()
+        save()
+        delete()
+        resetProgress()
+    }
+
+    class SentenceGroupRepository {
+        createGroup()
+        createInstance()
+        moveSentenceInstance()
+        deleteSentenceGroup()
+        deleteSentenceInstance()
+    }
+
+    class ExerciseHistoryRepository {
+        getList()
+    }
+
+    class SessionRepository {
+        save()
+        update()
+        completeSession()
+        getActiveSession()
+        getList()
+    }
+
+    class ContentRepository {
+        getById()
+    }
+```
+
+### `ExerciseRepository`
+
+Manages the persisted state associated with learning exercises.
+
+It is responsible for:
+
+* creating Word and Sentence exercises,
+* loading exercises by ID,
+* loading due or new exercises,
+* saving progression after a response,
+* deleting exercises,
+* resetting an exercise's progression.
+
+When saving a `SentenceExercise`, the repository also persists the associated sentence progression state and exercise history.
+
+---
+
+### `SentenceGroupRepository`
+
+Manages sentence groups and their sentence instances.
+
+It provides operations to:
+
+* create a group,
+* add a sentence instance,
+* move an instance between groups,
+* delete a group,
+* delete an instance.
+
+It does not create or manage `SentenceExercise` objects.
+
+---
+
+### `ExerciseHistoryRepository`
+
+Provides read access to the history of exercise responses.
+
+History can be filtered by:
+
+* exercise,
+* start date,
+* end date.
+
+History entries are returned as Domain `ExerciseHistoryEntry` objects.
+
+---
+
+### `SessionRepository`
+
+Persists active and completed sessions and provides historical results. Active sessions
+store the exercise status needed to resume the runtime session.
+
+It provides:
+
+* saving and updating an active `Session`,
+* restoring an active session,
+* completing a session,
+* retrieving results within an optional date range.
+
+---
+
+## Content
+
+`ContentRepository` and `MediaRepository` expose the persisted data used to assemble
+Application-level content. Exercises retain only the `contentId` required to load it.
+
+---
+
+## Repository Boundary
+
+The intended dependency flow is:
+
+```mermaid
+flowchart LR
+
+    subgraph Application
+        Controller
+    end
+
+    subgraph Persistence
+        Repo["Repository API"]
+        Mapper["Mappers"]
+        DAO["DAOs"]
+        DB[("SQLite")]
+    end
+
+    Controller --> Repo
+    Repo --> Mapper
+    Repo --> DAO
+    DAO --> DB
+    Mapper --> Repo
+```
+
+The important rule is:
+
+> **Controllers use repositories; repositories use DAOs and mappers.**
+
+DAOs and Persistence models remain implementation details of the Persistence layer.
+
+
 
 ---
 
 ## 📄 architecture/ui_layer/ui.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
-# `docs/architecture/ui.md`
+# UI Layer
 
-## Purpose
+## Current State
 
-Describe:
+The application shell and screens are not implemented yet. The existing UI code is
+limited to generic content presentation:
 
-* the main screens of the application,
-* their functional role,
-* which **Controller** each screen uses.
+* `ContentRenderer` selects and renders content fields;
+* `FieldRenderer` renders supported field values;
+* `MediaResolver` resolves persisted media references.
 
-This diagram establishes the **UI ↔ Application contract**.
+The first UI flow will use `SessionController` to start, resume, answer, pause, and
+complete word or sentence sessions. Statistics will be obtained from
+`StatisticController`.
 
----
+## Dependency Rules
 
-## Diagram
+* UI code calls Application controllers rather than repositories or DAOs.
+* Business rules remain in the Domain layer.
+* SQL and persistence models never enter the UI layer.
+* The state-management mechanism will be selected when the application shell is built.
 
-```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
 
-namespace UI {
-  class HomeScreen
-  class WordSessionScreen
-  class SentenceSessionScreen
-  class StatsScreen
-  class SettingsScreen
-}
-
-namespace Application {
-  class HomeController
-  class SessionController
-  class StatsController
-  class SettingsController
-}
-
-%% UI -> Controllers
-HomeScreen --> HomeController
-WordSessionScreen --> SessionController
-SentenceSessionScreen --> SessionController
-StatsScreen --> StatsController
-SettingsScreen --> SettingsController
-```
-
----
-
-## Reading the Diagram
-
-### HomeScreen
-
-* Application entry screen.
-* Displays the overall progression state.
-* Allows the user to:
-
-  * start a session (words / sentences),
-  * navigate to statistics,
-  * navigate to settings.
-
-Uses: `HomeController`
-
-### WordSessionScreen
-
-* Displays a word exercise session.
-* Renders exercises provided by the session as projections, one at a time.
-* Forwards user responses to the controller.
-
-Uses: `SessionController`
-
-### SentenceSessionScreen
-
-* Displays a sentence exercise session.
-* Same logic as `WordSessionScreen`, but with grammatical targets.
-
-Uses: `SessionController`
-
-### StatsScreen
-
-* Displays learning statistics.
-* Does not trigger any session.
-* Does not manipulate any exercise.
-
-Uses: `StatsController`
-
-### SettingsScreen
-
-* Displays and modifies application settings.
-* Includes SRS parameters in particular.
-
-Uses: `SettingsController`
-
----
-
-## UI Architecture Rules
-
-* Screens:
-
-  * know **only their Controller**,
-  * know neither the Domain nor Persistence.
-* Every user action is forwarded to the Controller.
-* No business logic is computed in the UI.
-* The UI never persists data directly.
-
----
-
-## Implementation Notes ⚠️
-
-* Each Screen may be implemented as:
-
-  * a Flutter `Widget`,
-  * or a `Widget + ViewModel` pair.
-* The Controller may be injected:
-
-  * via constructor,
-  * via Provider / Riverpod / other (free choice).
-* This diagram remains valid regardless of the chosen state management framework.
-````
 
 ---
 
 ## 📄 index.md
 
-````markdown
+markdown
 # 📚 Documentation
 
 This directory contains the complete technical documentation of the project.
@@ -1434,8 +1679,6 @@ The documentation is divided into two main parts:
 
 Provides a high-level view of the application's architecture and the dependency rules between the different layers.
 
-
-
 ## [UI](architecture/ui_layer/ui.md)
 
 Describes the application's screens, their responsibilities, and the controllers they interact with.
@@ -1446,8 +1689,15 @@ Explains the role of the controllers and how they coordinate the UI, Domain, and
 
 ## [Persistence](architecture/persistence_layer/persistence.md)
 
-Documents the Persistence layer, repositories, database mapping, and storage responsibilities.
+Describes the Persistence layer and its role as the boundary between the application and data storage.
 
+### [Database](architecture/persistence_layer/database.md)
+
+Describes the SQLite database schema and the relationships between persisted entities.
+
+### [Repositories](architecture/persistence_layer/repositories.md)
+
+Describes the API exposed by the Persistence layer to the Application layer.
 
 ## [Domain](architecture/domain_layer/domain.md)
 
@@ -1464,7 +1714,6 @@ Describes runtime exercises, their responsibilities, state transitions, and inte
 ### [SRS](architecture/domain_layer/srs.md)
 
 Explains how the spaced repetition system integrates into the Domain and how progression is managed.
-
 
 ---
 
@@ -1487,13 +1736,13 @@ Defines the formal invariants that every valid `SRSConfig` and `SRSState` must s
 Each document focuses on a single aspect of the project to minimise duplication and keep the documentation easy to maintain.
 
 Some parts of this documentation were written with the assistance of AI. All generated content has been reviewed and verified by the project author to ensure consistency and accuracy.
-````
+
 
 ---
 
 ## 📄 maths_and_srs/hypotheses_et_info_srs.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
 # Hypotheses and Scope of the SRS Model
@@ -1698,13 +1947,13 @@ Any major SRS modification must be evaluated against the hypotheses described he
 
 * Suggestion to stop or pause in case of repeated errors.
 * **Exercise prioritisation** in the application layer based on recall probability (rather than interval).
-````
+
 
 ---
 
 ## 📄 maths_and_srs/invariant.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
 # SRS Model Invariants
@@ -2021,13 +2270,13 @@ For the same reason, there is no invariant between: `interval`, `easeFactor`, `k
 
 This document is the reference for any future SRS evolution.
 Any modification to the model must preserve these invariants or explicitly justify their evolution.
-````
+
 
 ---
 
 ## 📄 maths_and_srs/maths_srs.md
 
-````markdown
+markdown
 [Documentation Index](/docs/index.md)
 
 # 🧮 SRS Model Mathematics
@@ -2176,4 +2425,3 @@ Multiplying `wMax` by `Rbar` ensures that `w <= wMax` while avoiding an abrupt d
 ---
 
 _File: `docs/maths_and_srs/maths_srs.md` — key formulas and variables of the SRS._
-````

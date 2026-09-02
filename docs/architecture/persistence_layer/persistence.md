@@ -154,6 +154,9 @@ The database component manages SQLite itself:
 * transactions,
 * database-level configuration.
 
+Foreign-key enforcement is enabled before migrations run. Schema changes are applied
+through the ordered migration registry.
+
 SQLite-specific details remain confined to Persistence.
 
 ---

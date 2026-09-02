@@ -69,9 +69,16 @@ classDiagram
         getList()
     }
 
-    class SessionResultRepository {
+    class SessionRepository {
         save()
+        update()
+        completeSession()
+        getActiveSession()
         getList()
+    }
+
+    class ContentRepository {
+        getById()
     }
 ```
 
@@ -122,24 +129,24 @@ History entries are returned as Domain `ExerciseHistoryEntry` objects.
 
 ---
 
-### `SessionResultRepository`
+### `SessionRepository`
 
-Persists completed session results and provides historical results.
+Persists active and completed sessions and provides historical results. Active sessions
+store the exercise status needed to resume the runtime session.
 
 It provides:
 
-* saving a `SessionResult`,
+* saving and updating an active `Session`,
+* restoring an active session,
+* completing a session,
 * retrieving results within an optional date range.
 
 ---
 
 ## Content
 
-Content repositories are **not implemented yet**.
-
-This is intentional: the current architecture does not define `Content` as a Domain object. Content is assembled by the **Application layer** from the `contentId` exposed by exercises.
-
-The Persistence layer currently stores the underlying content data, but its application-facing API will be defined when the Application-level content model is implemented.
+`ContentRepository` and `MediaRepository` expose the persisted data used to assemble
+Application-level content. Exercises retain only the `contentId` required to load it.
 
 ---
 
