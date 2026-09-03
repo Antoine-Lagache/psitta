@@ -167,6 +167,7 @@ class ExerciseDao {
       kfactor = ?,
       w = ?,
       rbar = ?,
+      learning_step_index = ?,
       last_review = ?,
       next_review = ?
     WHERE exercise_id = ?
@@ -177,6 +178,7 @@ class ExerciseDao {
         srsState.kFactor,
         srsState.w,
         srsState.rBar,
+        srsState.learningStepIndex,
         srsState.lastReview,
         srsState.nextReview,
         exerciseId,
@@ -218,10 +220,11 @@ class ExerciseDao {
       kfactor,
       w,
       rbar,
+      learning_step_index,
       last_review,
       next_review
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''',
       [
         exerciseId,
@@ -230,6 +233,7 @@ class ExerciseDao {
         srsState.kFactor,
         srsState.w,
         srsState.rBar,
+        srsState.learningStepIndex,
         srsState.lastReview,
         srsState.nextReview,
       ],
@@ -335,6 +339,7 @@ class ExerciseDao {
       kfactor,
       w,
       rbar,
+      learning_step_index,
       last_review,
       next_review
     FROM srs_state

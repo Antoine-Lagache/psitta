@@ -1,9 +1,8 @@
 import 'package:psitta/application/models/content/content.dart';
+import 'package:psitta/application/controllers/content_controller.dart';
 import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
-import 'package:psitta/infrastructure/persistence/repositories/content_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
-import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/infrastructure/persistence/repositories/session_repository.dart';
@@ -15,16 +14,17 @@ class SessionController {
 
   final SessionRepository _sessionRepository;
   final ExerciseRepository _exerciseRepository;
-  final ContentRepository _contentRepository;
+  final ContentController _contentController;
 
   final SRSConfig config = SRSConfig();
 
-  // TODO(review): Consider injecting repository abstractions so the application
-  // layer does not construct persistence implementations from a SQLite handle.
-  SessionController({required sqlite.SqliteDatabase database})
-    : _sessionRepository = SessionRepository(database),
-      _exerciseRepository = ExerciseRepository(database),
-      _contentRepository = ContentRepository(database);
+  SessionController({
+    required SessionRepository sessionRepository,
+    required ExerciseRepository exerciseRepository,
+    required ContentController contentController,
+  }) : _sessionRepository = sessionRepository,
+       _exerciseRepository = exerciseRepository,
+       _contentController = contentController;
 
   /// Creates, starts, and persists a session from due and new exercises.
   Future<void> startNewSession(SessionType sessionType) async {
@@ -51,8 +51,6 @@ class SessionController {
       exerciseType,
     );
 
-    // TODO(review): Define the expected behavior when both queries return no
-    // exercises; the resulting session has no current exercise.
     _activeSession = Session(
       exercises: dueExercise + newExercise,
       sessionType: sessionType,
@@ -62,6 +60,10 @@ class SessionController {
     _activeSession!.beginSession(DateTime.now());
     final id = await _sessionRepository.save(_activeSession!);
     _activeSession!.intermediateResult.id = id;
+
+    if (isSessionFinished()) {
+      await endSession();
+    }
   }
 
   /// Restores the first persisted session of [sessionType], if one exists.
@@ -74,7 +76,9 @@ class SessionController {
 
     for (final sessionResult in sessionResultList) {
       if (sessionResult.sessionType == sessionType) {
-        _activeSession = await _sessionRepository.getActiveSession(sessionResult, config);
+        final session = await _sessionRepository.getActiveSession(sessionResult, config);
+        session.resumeSession(DateTime.now());
+        _activeSession = session;
         return true;
       }
     }
@@ -103,7 +107,7 @@ class SessionController {
     }
     final contentId = activeSession!.getCurrentContentId();
 
-    final content = await _contentRepository.getById(contentId);
+    final content = await _contentController.getContentById(contentId);
     if (content == null) {
       throw StateError('Missing content with id $contentId');
     }

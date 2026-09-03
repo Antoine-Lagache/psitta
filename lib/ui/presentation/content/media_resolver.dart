@@ -1,14 +1,12 @@
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html_parser;
-import 'package:psitta/infrastructure/persistence/repositories/media_repository.dart';
+import 'package:psitta/application/controllers/content_controller.dart';
 
 /// Rewrites internal `media://` references to local file URIs in HTML.
 class MediaResolver {
-  final MediaRepository _mediaRepository;
+  final ContentController _contentController;
 
-  // TODO(review): Depend on an application-layer media service so the UI does
-  // not import a persistence repository directly.
-  MediaResolver(this._mediaRepository);
+  MediaResolver(this._contentController);
 
   /// Resolves supported media-bearing attributes in [html].
   Future<String> resolve(String html) async {
@@ -35,7 +33,7 @@ class MediaResolver {
 
     final sha256 = value.substring('media://'.length);
 
-    final media = await _mediaRepository.getBySHA256(sha256);
+    final media = await _contentController.getMediaBySHA256(sha256);
 
     if (media == null) {
       throw StateError('Media not found: $sha256');

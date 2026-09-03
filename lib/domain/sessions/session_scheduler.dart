@@ -52,8 +52,7 @@ class SessionScheduler {
       return;
     }
     if (candidate == null) {
-      // TODO(review): Decide whether a sole learning exercise should be
-      // selected before its next-review time or leave the session waiting.
+      // Finish the short learning queue even if its next review is not due yet.
       _currentExercise = learning;
       return;
     }

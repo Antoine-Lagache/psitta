@@ -42,15 +42,16 @@ abstract class Exercise {
 
     srsState.applyAnswer(answer, config);
 
-    // TODO(review): Clarify whether this should always be the next boundary;
-    // with a zero boundary it is already in the past for most answers.
-    final DateTime nextDay = DateTime(
+    DateTime nextDay = DateTime(
       answer.at.year,
       answer.at.month,
       answer.at.day,
-    ).add(config.dayBoundary).toUtc();
+    ).add(config.dayBoundary);
+    if (!nextDay.isAfter(answer.at)) {
+      nextDay = nextDay.add(const Duration(days: 1));
+    }
 
-    if (answer.at.toUtc().add(srsState.interval).isAfter(nextDay) &&
+    if (answer.at.add(srsState.interval).isAfter(nextDay) &&
         !srsState.isInLearning) {
       status = ExerciseStatus.completed;
     } else {

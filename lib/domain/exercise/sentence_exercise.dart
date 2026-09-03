@@ -25,8 +25,9 @@ class SentenceExercise extends Exercise {
     required super.srsState,
   }) : _sentences = sentences,
        trainingCount = trainingCount ?? trainingCountMax {
-    // TODO(review): Decide whether empty sentence groups should be rejected
-    // when exercises are created or only when content is requested.
+    if (_sentences.sentences.isEmpty) {
+      throw ArgumentError('A SentenceExercise requires at least one sentence');
+    }
     if (this.trainingCount < 0 || this.trainingCount > _sentences.sentences.length) {
       throw ArgumentError('Training count must match the sentence group size');
     }

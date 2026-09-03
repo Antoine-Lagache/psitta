@@ -31,6 +31,13 @@ class ExerciseRepository {
   }
 
   Future<int> createSentenceExercise(int sentenceGroupId, int trainingCount) async {
+    final sentenceGroup = await _sentencesDao.getById(sentenceGroupId);
+    if (sentenceGroup == null) {
+      throw StateError('Missing SentenceGroup with id $sentenceGroupId');
+    }
+    if (sentenceGroup.sentenceInstances.isEmpty) {
+      throw ArgumentError('A SentenceExercise requires at least one sentence');
+    }
     return await _exerciseDao.insert(
       SentenceExerciseMapper.newSentenceExercise(sentenceGroupId, trainingCount),
     );

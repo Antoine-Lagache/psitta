@@ -83,8 +83,6 @@ class SessionRepository {
       final exercisePersistence = await _exerciseDao.getById(sessionExercise.exerciseId);
       exercises.add(await _toDomain(exercisePersistence!, sessionExercise));
     }
-    // TODO(review): Select a current exercise when restoring the session;
-    // construction alone leaves the scheduler without a current exercise.
     return Session(
       exercises: exercises,
       sessionType: sessionResult.sessionType,

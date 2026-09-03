@@ -69,6 +69,14 @@ class Session {
     _scheduler.selectNextExercise(now);
   }
 
+  /// Recalculates the next exercise when an unfinished session is restored.
+  void resumeSession(DateTime now) {
+    if (_intermediateResult.startedAt == null || _intermediateResult.endAt != null) {
+      throw StateError('Only an unfinished session can be resumed');
+    }
+    _scheduler.selectNextExercise(now);
+  }
+
   /// Returns the number of exercises currently in [status].
   int countExerciseByStatus(ExerciseStatus status) {
     return _scheduler.countExerciseByStatus(status);

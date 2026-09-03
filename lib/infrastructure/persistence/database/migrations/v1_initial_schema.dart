@@ -56,8 +56,6 @@ class V1InitialSchema implements DatabaseMigration {
     ''');
 
     // Stores the scheduling state associated one-to-one with an exercise.
-    // TODO(review): Decide whether the current learning-step index belongs in
-    // the initial schema; loading an exercise currently restores its default.
     await database.execute('''
       CREATE TABLE srs_state (
         exercise_id INTEGER PRIMARY KEY,
@@ -67,6 +65,7 @@ class V1InitialSchema implements DatabaseMigration {
         kfactor REAL NOT NULL,
         w REAL NOT NULL,
         rbar REAL NOT NULL,
+        learning_step_index INTEGER NOT NULL,
         last_review TEXT,
         next_review INTEGER,
 
@@ -222,8 +221,6 @@ class V1InitialSchema implements DatabaseMigration {
     ''');
 
     // Snapshots exercise state needed to resume an unfinished session.
-    // TODO(review): Decide whether exercise_id should reference exercise(id)
-    // so a snapshot cannot outlive its exercise.
     await database.execute('''
       CREATE TABLE active_session_exercise (
         session_result_id INTEGER NOT NULL,
@@ -241,6 +238,10 @@ class V1InitialSchema implements DatabaseMigration {
 
         FOREIGN KEY (session_result_id)
             REFERENCES session_result(id)
+            ON DELETE CASCADE,
+
+        FOREIGN KEY (exercise_id)
+            REFERENCES exercise(id)
             ON DELETE CASCADE
     );
     ''');

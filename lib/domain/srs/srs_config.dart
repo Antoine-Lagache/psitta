@@ -53,8 +53,6 @@ class SRSConfig {
     this.dayBoundary = Duration.zero,
     this.newCount = 10,
     this.reviewCount = 9999,
-    // TODO(review): Decide whether an empty [learningSteps] configuration is
-    // supported; the learning-state `good` path indexes its last element.
   }) : lambdas = List.unmodifiable(
          List.generate(6, (i) {
            if (lambdas != null && i < lambdas.length) return lambdas[i].clamp(0.0, 1.0);

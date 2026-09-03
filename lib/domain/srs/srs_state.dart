@@ -31,6 +31,7 @@ class SRSState {
 
   /// Index in the configured learning steps; `-1` means review mode.
   int _learningStepIndex;
+  int get learningStepIndex => _learningStepIndex;
   bool get isInLearning => _learningStepIndex >= 0;
 
   SRSState({
@@ -205,8 +206,10 @@ class SRSState {
           result._learningStepIndex = -1;
           final double arg = ((config.rstar - result._w) / (1.0 - result._w));
           final double logArg = log(arg.clamp(1e-9, 1.0 - 1e-9));
+          // Reuse the default final step when no explicit learning step exists.
+          final graduationInterval = s.isNotEmpty ? s.last : const Duration(days: 1);
 
-          result._interval = s[s.length - 1];
+          result._interval = graduationInterval;
           result._kFactor = -logArg / durationToDays(result._interval);
         }
 

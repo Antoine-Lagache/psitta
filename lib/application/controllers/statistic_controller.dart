@@ -4,7 +4,6 @@ import 'package:psitta/domain/history/exercise_history_entry.dart';
 import 'package:psitta/domain/sessions/session_result.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/domain/srs/grade.dart';
-import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/repositories/exercise_history_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/session_repository.dart';
@@ -14,11 +13,11 @@ class StatisticController {
   final SessionRepository _sessionRepository;
   final ExerciseHistoryRepository _exerciseHistoryRepository;
 
-  // TODO(review): Consider injecting repository abstractions so the application
-  // layer does not construct persistence implementations from a SQLite handle.
-  StatisticController({required sqlite.SqliteDatabase database})
-    : _sessionRepository = SessionRepository(database),
-      _exerciseHistoryRepository = ExerciseHistoryRepository(database);
+  StatisticController({
+    required SessionRepository sessionRepository,
+    required ExerciseHistoryRepository exerciseHistoryRepository,
+  }) : _sessionRepository = sessionRepository,
+       _exerciseHistoryRepository = exerciseHistoryRepository;
 
   /// Aggregates session statistics over the half-open requested date range.
   Future<SessionStatistics> getSessionStatistics({
