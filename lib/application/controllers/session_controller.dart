@@ -132,16 +132,19 @@ class SessionController {
     }
 
     final answeredExercise = activeSession!.currentExercise;
-    activeSession!.submitAnswer(
+    final session = activeSession!;
+    session.submitAnswer(
       SubmittedExerciseAnswer(grade: grade, answeredAt: DateTime.now()),
     );
-    await _exerciseRepository.save(answeredExercise);
 
-    if (isSessionFinished()) {
-      await endSession();
-    } else {
-      await _sessionRepository.update(activeSession!);
+    final sessionFinished = session.isSessionFinished();
+    if (sessionFinished) {
+      session.endSession(DateTime.now());
     }
+
+    await _sessionRepository.saveAnswerProgress(session, answeredExercise);
+
+    if (sessionFinished) _activeSession = null;
   }
 
   Duration getPreviewInterval(Grade grade) {

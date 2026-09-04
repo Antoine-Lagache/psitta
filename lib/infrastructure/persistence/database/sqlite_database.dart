@@ -25,8 +25,13 @@ class SqliteDatabase {
       PsittaSqliteOpenFactory(path: path),
     );
 
-    await database.initialize();
-    await migrationRunner.migrate(database);
+    try {
+      await database.initialize();
+      await migrationRunner.migrate(database);
+    } on Object {
+      await database.close();
+      rethrow;
+    }
 
     _database = database;
 

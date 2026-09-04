@@ -98,8 +98,7 @@ class V1InitialSchema implements DatabaseMigration {
           ON DELETE CASCADE,
 
         FOREIGN KEY (sentence_group_id)
-          REFERENCES sentence_group(id)
-          ON DELETE CASCADE,
+          REFERENCES sentence_group(id),
         
         UNIQUE (sentence_group_id)  
     );

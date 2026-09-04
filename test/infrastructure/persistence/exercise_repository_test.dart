@@ -1,8 +1,12 @@
 import 'dart:io';
 
+import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/exercise/sentence_exercise.dart';
+import 'package:psitta/domain/sessions/session.dart';
+import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/domain/srs/srs_state.dart';
 import 'package:psitta/infrastructure/persistence/database/psitta_sqlite_open_factory.dart';
+import 'package:psitta/infrastructure/persistence/repositories/session_repository.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 import 'package:test/test.dart';
 
@@ -84,6 +88,21 @@ void main() {
       expect(exercise!.id, exerciseId);
     });
 
+    test('prevents deleting a sentence group used by an exercise', () async {
+      await database.execute('INSERT INTO content (id) VALUES (1)');
+      final sentenceGroupRepository = SentenceGroupRepository(database);
+      final sentenceGroupId = await sentenceGroupRepository.createGroup();
+      await sentenceGroupRepository.createInstance(sentenceGroupId, 1);
+      final exerciseId = await repository.createSentenceExercise(sentenceGroupId, 1);
+
+      await expectLater(
+        sentenceGroupRepository.deleteSentenceGroup(sentenceGroupId),
+        throwsA(anything),
+      );
+
+      expect(await repository.getById(exerciseId), isA<SentenceExercise>());
+    });
+
     test('getById returns null for an unknown exercise', () async {
       final exercise = await repository.getById(999);
 
@@ -139,6 +158,39 @@ void main() {
       expect(savedExercise, isNotNull);
       expect(savedExercise!.id, exerciseId);
       expect(savedExercise.srsState.learningStepIndex, -1);
+    });
+
+    test('answer persistence rolls back when the session update fails', () async {
+      await database.execute('INSERT INTO content (id) VALUES (1)');
+      final exerciseId = await repository.createWordExercise(1);
+      final exercise = (await repository.getById(exerciseId))!;
+      final sessionRepository = SessionRepository(
+        database,
+        exerciseRepository: repository,
+      );
+      final session = Session(
+        exercises: [exercise],
+        sessionType: SessionType.wordSession,
+        config: SRSConfig(),
+      );
+      final answeredAt = DateTime(2026, 9, 4, 12);
+
+      session.beginSession(answeredAt);
+      session.intermediateResult.id = await sessionRepository.save(session);
+      final answeredExercise = session.currentExercise;
+      session.submitAnswer(
+        SubmittedExerciseAnswer(grade: Grade.again, answeredAt: answeredAt),
+      );
+
+      session.intermediateResult.id = -1;
+      await expectLater(
+        sessionRepository.saveAnswerProgress(session, answeredExercise),
+        throwsA(anything),
+      );
+
+      final persistedExercise = await repository.getById(exerciseId);
+      expect(persistedExercise!.srsState.lastReview, isNull);
+      expect(answeredExercise.newHistoryEntry, hasLength(1));
     });
 
     test('delete removes an exercise', () async {

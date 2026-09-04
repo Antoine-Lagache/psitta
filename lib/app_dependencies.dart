@@ -23,7 +23,11 @@ class AppDependencies {
   AppDependencies._(this._database) {
     final connection = _database.database;
     final contentRepository = ContentRepository(connection);
-    final sessionRepository = SessionRepository(connection);
+    final exerciseRepository = ExerciseRepository(connection);
+    final sessionRepository = SessionRepository(
+      connection,
+      exerciseRepository: exerciseRepository,
+    );
 
     contentController = ContentController(
       contentRepository: contentRepository,
@@ -31,7 +35,7 @@ class AppDependencies {
     );
     sessionController = SessionController(
       sessionRepository: sessionRepository,
-      exerciseRepository: ExerciseRepository(connection),
+      exerciseRepository: exerciseRepository,
       contentController: contentController,
     );
     statisticController = StatisticController(

@@ -11,6 +11,10 @@ DateTime? safeParseDate(String? value) {
 }
 
 /// Serializes [date] as an ISO-8601 UTC timestamp.
+///
+/// SQLite compares these values lexicographically. Dart omits zero
+/// microseconds, so ordering can differ within one millisecond; this discrepancy
+/// is acceptable for the MVP.
 String? toIsoUtc(DateTime? date) {
   return date?.toUtc().toIso8601String();
 }
