@@ -1,6 +1,7 @@
 import 'package:path_provider/path_provider.dart';
 import 'package:psitta/infrastructure/persistence/database/migration_registry.dart';
 import 'package:psitta/infrastructure/persistence/database/migration_runner.dart';
+import 'package:psitta/infrastructure/persistence/database/psitta_sqlite_open_factory.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 /// Owns the application database lifecycle and runs migrations before use.
@@ -20,8 +21,11 @@ class SqliteDatabase {
     final directory = await getApplicationSupportDirectory();
     final path = '${directory.path}/psitta.db';
 
-    final database = sqlite.SqliteDatabase(path: path);
+    final database = sqlite.SqliteDatabase.withFactory(
+      PsittaSqliteOpenFactory(path: path),
+    );
 
+    await database.initialize();
     await migrationRunner.migrate(database);
 
     _database = database;

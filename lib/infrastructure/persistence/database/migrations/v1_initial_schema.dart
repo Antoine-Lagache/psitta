@@ -9,10 +9,6 @@ class V1InitialSchema implements DatabaseMigration {
 
   @override
   Future<void> migrate(sqlite.SqliteWriteContext database) async {
-    // TODO(review): Verify that enabling foreign keys inside the migration
-    // transaction is effective for every SQLite connection used by sqlite_async.
-    await database.execute('PRAGMA foreign_keys = ON;');
-
     // Stores the shared identity and subtype discriminator of every exercise.
     await database.execute('''
       CREATE TABLE exercise (

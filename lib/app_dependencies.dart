@@ -10,7 +10,6 @@ import 'package:psitta/infrastructure/persistence/repositories/session_repositor
 import 'package:psitta/ui/presentation/content/content_renderer.dart';
 import 'package:psitta/ui/presentation/content/field_renderer.dart';
 import 'package:psitta/ui/presentation/content/media_resolver.dart';
-import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 /// Creates and owns the long-lived dependencies shared by the application.
 class AppDependencies {
@@ -21,7 +20,8 @@ class AppDependencies {
   late final StatisticController statisticController;
   late final ContentRenderer contentRenderer;
 
-  AppDependencies._(this._database, sqlite.SqliteDatabase connection) {
+  AppDependencies._(this._database) {
+    final connection = _database.database;
     final contentRepository = ContentRepository(connection);
     final sessionRepository = SessionRepository(connection);
 
@@ -45,8 +45,8 @@ class AppDependencies {
 
   static Future<AppDependencies> initialize() async {
     final database = SqliteDatabase();
-    final connection = await database.open();
-    return AppDependencies._(database, connection);
+    await database.open();
+    return AppDependencies._(database);
   }
 
   Future<void> dispose() => _database.close();

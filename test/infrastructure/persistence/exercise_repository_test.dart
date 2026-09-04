@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:psitta/domain/exercise/sentence_exercise.dart';
 import 'package:psitta/domain/srs/srs_state.dart';
+import 'package:psitta/infrastructure/persistence/database/psitta_sqlite_open_factory.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 import 'package:test/test.dart';
 
@@ -18,8 +19,11 @@ void main() {
   setUp(() async {
     temporaryDirectory = await Directory.systemTemp.createTemp('psitta_test_');
 
-    database = sqlite.SqliteDatabase(path: '${temporaryDirectory.path}/test.db');
+    database = sqlite.SqliteDatabase.withFactory(
+      PsittaSqliteOpenFactory(path: '${temporaryDirectory.path}/test.db'),
+    );
 
+    await database.initialize();
     await createMigrationRunner().migrate(database);
 
     repository = ExerciseRepository(database);
@@ -31,6 +35,17 @@ void main() {
   });
 
   group('ExerciseRepository', () {
+    test('enables foreign-key enforcement', () async {
+      final foreignKeysEnabled = await database.writeTransaction(
+        (transaction) async {
+          final result = await transaction.getAll('PRAGMA foreign_keys');
+          return result.single['foreign_keys'];
+        },
+      );
+
+      expect(foreignKeysEnabled, 1);
+    });
+
     test('createWordExercise creates and returns an exercise id', () async {
       await database.execute('INSERT INTO content (id) VALUES (1)');
 

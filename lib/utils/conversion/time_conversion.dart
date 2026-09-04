@@ -1,11 +1,10 @@
 import 'package:psitta/utils/conversion/safe_numeric_conversion.dart';
 
-/// Parses [value] and normalizes it to UTC, or returns null on failure.
+/// Parses a persisted UTC timestamp and converts it to local time.
 DateTime? safeParseDate(String? value) {
   if (value == null || value.isEmpty) return null;
   try {
-    final dt = DateTime.parse(value);
-    return dt.isUtc ? dt : dt.toUtc();
+    return DateTime.parse(value).toLocal();
   } catch (_) {
     return null;
   }
