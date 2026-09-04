@@ -1,8 +1,10 @@
 import 'package:path_provider/path_provider.dart';
 import 'package:psitta/infrastructure/persistence/database/migration_registry.dart';
 import 'package:psitta/infrastructure/persistence/database/migration_runner.dart';
+import 'package:psitta/infrastructure/persistence/database/psitta_sqlite_open_factory.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
+/// Owns the application database lifecycle and runs migrations before use.
 class SqliteDatabase {
   final MigrationRunner migrationRunner = createMigrationRunner();
 
@@ -10,6 +12,7 @@ class SqliteDatabase {
 
   SqliteDatabase();
 
+  /// Opens and migrates the database, reusing the existing connection if open.
   Future<sqlite.SqliteDatabase> open() async {
     if (_database != null) {
       return _database!;
@@ -18,9 +21,17 @@ class SqliteDatabase {
     final directory = await getApplicationSupportDirectory();
     final path = '${directory.path}/psitta.db';
 
-    final database = sqlite.SqliteDatabase(path: path);
+    final database = sqlite.SqliteDatabase.withFactory(
+      PsittaSqliteOpenFactory(path: path),
+    );
 
-    await migrationRunner.migrate(database);
+    try {
+      await database.initialize();
+      await migrationRunner.migrate(database);
+    } on Object {
+      await database.close();
+      rethrow;
+    }
 
     _database = database;
 
@@ -32,6 +43,7 @@ class SqliteDatabase {
     _database = null;
   }
 
+  /// Returns the open connection or fails when [open] has not completed.
   sqlite.SqliteDatabase get database {
     final database = _database;
 

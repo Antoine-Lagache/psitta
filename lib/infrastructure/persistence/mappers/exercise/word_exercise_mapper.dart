@@ -6,6 +6,7 @@ import 'package:psitta/infrastructure/persistence/models/exercise/exercise_persi
 export 'package:psitta/domain/exercise/word_exercise.dart';
 export 'package:psitta/infrastructure/persistence/models/exercise/exercise_persistence.dart';
 
+/// Translates word exercises and supplies their initial SRS state.
 class WordExerciseMapper {
   const WordExerciseMapper();
 

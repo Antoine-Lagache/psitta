@@ -2,6 +2,7 @@ import 'package:psitta/infrastructure/persistence/models/sentence/sentence_insta
 
 export 'package:psitta/infrastructure/persistence/models/sentence/sentence_instance_persistence.dart';
 
+/// Persistence representation of a sentence group aggregate.
 class SentenceGroupPersistence {
   final int? id;
   final List<SentenceInstancePersistence> sentenceInstances;

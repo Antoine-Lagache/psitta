@@ -3,6 +3,7 @@ import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/infrastructure/persistence/models/session_result/session_result_persistence.dart';
 import 'package:psitta/utils/conversion/time_conversion.dart';
 
+/// Translates session aggregates and stable enum codes for persistence.
 class SessionResultMapper {
   const SessionResultMapper();
 
@@ -11,6 +12,8 @@ class SessionResultMapper {
       id: domain.id,
       sessionTypeIndex: domain.sessionType.code,
       uniqueExercisesCompleted: domain.numberOfUniqueExercisesCompleted,
+      // ExerciseStatus codes currently match their positions in this list.
+      // This mapping must become explicit if those values ever diverge.
       statusCounts: domain.numberOfExercicesByStatus.asMap().entries.map((entry) {
         return StatusCountPersistence(
           statusCode: entry.key,
@@ -25,6 +28,7 @@ class SessionResultMapper {
   static SessionResult toDomain(SessionResultPersistence persistence) {
     final numberOfExercicesByStatus = List<int>.filled(ExerciseStatus.values.length, 0);
     for (final statusCount in persistence.statusCounts) {
+      // Persisted status codes currently double as list indices.
       numberOfExercicesByStatus[statusCount.statusCode] = statusCount.exercisesCompleted;
     }
 

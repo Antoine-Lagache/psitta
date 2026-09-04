@@ -1,6 +1,7 @@
 import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 
+/// Aggregated session-result metrics for a requested period.
 class SessionStatistics {
   final int numberOfSessions;
 

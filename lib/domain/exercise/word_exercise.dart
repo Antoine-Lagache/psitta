@@ -1,6 +1,6 @@
 import 'package:psitta/domain/exercise/exercise.dart';
 
-/// Represents a word exercise, which is the basic exercise equivalent to an Anki flashcard.
+/// Represents a single-content flashcard governed directly by the SRS state.
 class WordExercise extends Exercise {
   final int contentId;
 

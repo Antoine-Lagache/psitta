@@ -3,6 +3,7 @@ import 'package:psitta/infrastructure/persistence/dao/media_dao.dart';
 import 'package:psitta/infrastructure/persistence/mappers/content_mapper.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
+/// Resolves application media metadata by its content hash.
 class MediaRepository {
   final sqlite.SqliteDatabase database;
   final MediaDao _mediaDao;

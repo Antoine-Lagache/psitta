@@ -1,3 +1,4 @@
+/// Database-safe representation of one immutable answer event.
 class ExerciseHistoryPersistence {
   final int? id;
   final int exerciseId;

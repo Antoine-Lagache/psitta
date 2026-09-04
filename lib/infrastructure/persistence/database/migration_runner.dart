@@ -2,12 +2,13 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/database/migrations/database_migration.dart';
 
+/// Applies pending migrations and advances SQLite's `user_version` atomically.
 class MigrationRunner {
   final List<DatabaseMigration> migrations;
 
   MigrationRunner({required this.migrations});
 
-  /// migrate de DB to the last version
+  /// Applies each migration newer than the database's current version.
   Future<void> migrate(sqlite.SqliteDatabase database) async {
     final currentVersion = await _getCurrentVersion(database);
 
@@ -18,7 +19,7 @@ class MigrationRunner {
         continue;
       }
 
-      // execute write transaction to ensure that all migrations and the version update are atomic
+      // Keep the schema change and its version update in the same transaction.
       await database.writeTransaction((tx) async {
         await migration.migrate(tx);
         await _setVersion(tx, migration.version);

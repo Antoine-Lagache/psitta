@@ -2,6 +2,7 @@ import 'package:psitta/infrastructure/persistence/models/content/media_persisten
 
 export 'package:psitta/infrastructure/persistence/models/content/media_persistence.dart';
 
+/// Persistence representation of one ordered text-or-media field value.
 class FieldValuePersistence {
   final int? id;
   final int fieldDefinitionId;

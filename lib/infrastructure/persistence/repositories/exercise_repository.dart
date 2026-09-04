@@ -13,6 +13,7 @@ import 'package:psitta/infrastructure/persistence/mappers/sentence_mapper.dart';
 
 import 'package:psitta/infrastructure/persistence/models/sentence/sentence_group_persistence.dart';
 
+/// Reconstructs and persists complete exercise aggregates across their tables.
 class ExerciseRepository {
   final sqlite.SqliteDatabase database;
 
@@ -30,6 +31,13 @@ class ExerciseRepository {
   }
 
   Future<int> createSentenceExercise(int sentenceGroupId, int trainingCount) async {
+    final sentenceGroup = await _sentencesDao.getById(sentenceGroupId);
+    if (sentenceGroup == null) {
+      throw StateError('Missing SentenceGroup with id $sentenceGroupId');
+    }
+    if (sentenceGroup.sentenceInstances.isEmpty) {
+      throw ArgumentError('A SentenceExercise requires at least one sentence');
+    }
     return await _exerciseDao.insert(
       SentenceExerciseMapper.newSentenceExercise(sentenceGroupId, trainingCount),
     );
@@ -74,43 +82,50 @@ class ExerciseRepository {
     return exercises;
   }
 
+  /// Atomically stores scheduling, sentence progress, and pending history.
   Future<void> save(Exercise exercise) async {
-    return database.writeTransaction((txn) async {
-      ExercisePersistence persistence;
-      switch (exercise) {
-        case WordExercise word:
-          persistence = WordExerciseMapper.wordToPersistence(word);
-          break;
-        case SentenceExercise sentence:
-          persistence = SentenceExerciseMapper.sentenceToPersistence(sentence);
-          SentenceGroupPersistence group = SentenceMapper.toPersistence(
-            sentence.sentences,
-          );
-          await _sentencesDao.updateSentencesState(txn, group);
-          break;
-        default:
-          throw StateError("Unknown Exercise type");
-      }
+    await database.writeTransaction((txn) => saveInTransaction(txn, exercise));
+    exercise.newHistoryEntry.clear();
+  }
 
-      if (persistence.id == null) {
-        throw ArgumentError("Cannot update an entity that doesn't have an id");
-      }
+  /// Stores an exercise inside a transaction coordinated by another repository.
+  Future<void> saveInTransaction(
+    sqlite.SqliteWriteContext txn,
+    Exercise exercise,
+  ) async {
+    ExercisePersistence persistence;
+    switch (exercise) {
+      case WordExercise word:
+        persistence = WordExerciseMapper.wordToPersistence(word);
+        break;
+      case SentenceExercise sentence:
+        persistence = SentenceExerciseMapper.sentenceToPersistence(sentence);
+        final group = SentenceMapper.toPersistence(sentence.sentences);
+        await _sentencesDao.updateSentencesState(txn, group);
+        break;
+      default:
+        throw StateError("Unknown Exercise type");
+    }
 
-      await _exerciseDao.updateSrsState(txn, persistence.id!, persistence.srsState);
+    if (persistence.id == null) {
+      throw ArgumentError("Cannot update an entity that doesn't have an id");
+    }
 
-      await _historyDao.insertAll(
-        txn,
-        exercise.newHistoryEntry
-            .map((entry) => ExerciseHistoryMapper.toPersistence(entry))
-            .toList(),
-      );
-    });
+    await _exerciseDao.updateSrsState(txn, persistence.id!, persistence.srsState);
+
+    await _historyDao.insertAll(
+      txn,
+      exercise.newHistoryEntry
+          .map((entry) => ExerciseHistoryMapper.toPersistence(entry))
+          .toList(),
+    );
   }
 
   Future<void> delete(int exerciseId) async {
     await _exerciseDao.delete(exerciseId);
   }
 
+  /// Restores an exercise and its sentences to their initial learning state.
   Future<void> resetProgress(int exerciseId) async {
     final exercise = await _exerciseDao.getById(exerciseId);
     if (exercise == null) {

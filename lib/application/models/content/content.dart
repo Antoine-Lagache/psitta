@@ -1,6 +1,6 @@
 import 'package:psitta/application/models/content/field.dart';
 
-/// Class representing the content of an exercise.
+/// Ordered, renderable fields referenced by one or more exercises.
 class Content {
   final int? id;
 

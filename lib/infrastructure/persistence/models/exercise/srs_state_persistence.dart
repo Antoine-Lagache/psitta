@@ -1,3 +1,4 @@
+/// Database-safe representation of an exercise's scheduling state.
 class SrsStatePersistence {
   final double easeFactor;
   final int interval;
@@ -5,9 +6,9 @@ class SrsStatePersistence {
   final double w;
   final double rBar;
   final String? lastReview;
+  final int learningStepIndex;
 
-  // not present in the domain, but used to determine if the exercise is due for review
-  // use int (in microsecond) for calculation and comparison.
+  /// Denormalized due time used for indexed numeric comparison in SQLite.
   final int? nextReview;
 
   SrsStatePersistence({
@@ -16,6 +17,7 @@ class SrsStatePersistence {
     required this.kFactor,
     required this.w,
     required this.rBar,
+    required this.learningStepIndex,
     this.lastReview,
     this.nextReview,
   });
@@ -27,6 +29,7 @@ class SrsStatePersistence {
       kFactor: row['kfactor'] as double,
       w: row['w'] as double,
       rBar: row['rbar'] as double,
+      learningStepIndex: row['learning_step_index'] as int,
       lastReview: row['last_review'] as String?,
       nextReview: row['next_review'] as int?,
     );
@@ -40,6 +43,7 @@ class SrsStatePersistence {
       'kfactor': kFactor,
       'w': w,
       'rbar': rBar,
+      'learning_step_index': learningStepIndex,
       'last_review': lastReview,
       'next_review': nextReview,
     };

@@ -4,19 +4,22 @@ import 'package:psitta/domain/history/exercise_history_entry.dart';
 import 'package:psitta/domain/sessions/session_result.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/domain/srs/grade.dart';
-import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/repositories/exercise_history_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/session_repository.dart';
 
+/// Builds application statistics from persisted sessions and answer history.
 class StatisticController {
   final SessionRepository _sessionRepository;
   final ExerciseHistoryRepository _exerciseHistoryRepository;
 
-  StatisticController({required sqlite.SqliteDatabase database})
-    : _sessionRepository = SessionRepository(database),
-      _exerciseHistoryRepository = ExerciseHistoryRepository(database);
+  StatisticController({
+    required SessionRepository sessionRepository,
+    required ExerciseHistoryRepository exerciseHistoryRepository,
+  }) : _sessionRepository = sessionRepository,
+       _exerciseHistoryRepository = exerciseHistoryRepository;
 
+  /// Aggregates session statistics over the half-open requested date range.
   Future<SessionStatistics> getSessionStatistics({
     DateTime? startDate,
     DateTime? endDate,
@@ -29,6 +32,7 @@ class StatisticController {
     return _calculateSessionStatistics(sessions);
   }
 
+  /// Aggregates answer statistics over the half-open requested date range.
   Future<ExerciseStatistics> getExerciseStatistics({
     DateTime? startDate,
     DateTime? endDate,
@@ -82,7 +86,9 @@ class StatisticController {
       averageTimePerSession: numberOfTimedSessions == 0
           ? Duration.zero
           : totalTimeSpent ~/ numberOfTimedSessions,
-      averageNumberOfExercisesPerSession: numberOfExercisesAnswered / sessions.length,
+      averageNumberOfExercisesPerSession: sessions.isEmpty
+          ? 0.0
+          : numberOfExercisesAnswered / sessions.length,
     );
   }
 

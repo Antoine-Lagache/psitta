@@ -2,6 +2,7 @@ import 'package:psitta/infrastructure/persistence/models/content/field_value_per
 
 export 'package:psitta/infrastructure/persistence/models/content/field_value_persistence.dart';
 
+/// Persistence representation of content and its separately stored fields.
 class ContentPersistence {
   final int? id;
 

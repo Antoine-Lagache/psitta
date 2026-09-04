@@ -1,7 +1,7 @@
 import 'package:psitta/application/models/content/field_definition.dart';
 import 'package:psitta/application/models/content/field_value.dart';
 
-/// A content field composed of a definition and a value.
+/// Binds a reusable field definition to one ordered content value.
 class Field {
   final int? id;
   final FieldDefinition definition;

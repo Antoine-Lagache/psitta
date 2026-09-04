@@ -1,10 +1,11 @@
 part of 'exercise_answer.dart';
 
-// is the submitted answer
+/// Represents an answer that must update exercise and scheduling state.
 final class SubmittedExerciseAnswer extends ExerciseAnswer {
   @override
   final Grade grade;
-  final DateTime answeredAt; // time when the Exercise was ended
+  /// Time at which the user completed the exercise.
+  final DateTime answeredAt;
   //final List<Duration> stepDurations; // TODO: Store step durations if needed.
 
   SubmittedExerciseAnswer({

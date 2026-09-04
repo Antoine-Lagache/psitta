@@ -1,28 +1,32 @@
 import 'package:psitta/application/models/content/content.dart';
+import 'package:psitta/application/controllers/content_controller.dart';
 import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
-import 'package:psitta/infrastructure/persistence/repositories/content_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
-import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/infrastructure/persistence/repositories/session_repository.dart';
 
+/// Coordinates the application use cases for starting and running a session.
 class SessionController {
   Session? _activeSession;
   Session? get activeSession => _activeSession;
 
   final SessionRepository _sessionRepository;
   final ExerciseRepository _exerciseRepository;
-  final ContentRepository _contentRepository;
+  final ContentController _contentController;
 
   final SRSConfig config = SRSConfig();
 
-  SessionController({required sqlite.SqliteDatabase database})
-    : _sessionRepository = SessionRepository(database),
-      _exerciseRepository = ExerciseRepository(database),
-      _contentRepository = ContentRepository(database);
+  SessionController({
+    required SessionRepository sessionRepository,
+    required ExerciseRepository exerciseRepository,
+    required ContentController contentController,
+  }) : _sessionRepository = sessionRepository,
+       _exerciseRepository = exerciseRepository,
+       _contentController = contentController;
 
+  /// Creates, starts, and persists a session from due and new exercises.
   Future<void> startNewSession(SessionType sessionType) async {
     if (_activeSession != null) {
       throw StateError("A session is already active");
@@ -56,9 +60,13 @@ class SessionController {
     _activeSession!.beginSession(DateTime.now());
     final id = await _sessionRepository.save(_activeSession!);
     _activeSession!.intermediateResult.id = id;
+
+    if (isSessionFinished()) {
+      await endSession();
+    }
   }
 
-  // return true if success, false if no active session was found
+  /// Restores the first persisted session of [sessionType], if one exists.
   Future<bool> resumeActiveSession(SessionType sessionType) async {
     if (_activeSession != null) {
       throw StateError("A session is already active");
@@ -68,7 +76,9 @@ class SessionController {
 
     for (final sessionResult in sessionResultList) {
       if (sessionResult.sessionType == sessionType) {
-        _activeSession = await _sessionRepository.getActiveSession(sessionResult, config);
+        final session = await _sessionRepository.getActiveSession(sessionResult, config);
+        session.resumeSession(DateTime.now());
+        _activeSession = session;
         return true;
       }
     }
@@ -76,7 +86,7 @@ class SessionController {
     return false;
   }
 
-  // Returns the number of active sessions for the given session type.
+  /// Returns the number of unfinished sessions matching [sessionType].
   Future<int> numberActiveSession(SessionType sessionType) async {
     final sessionResultList = await _sessionRepository.getAllActiveSessionResult();
 
@@ -90,14 +100,18 @@ class SessionController {
     return res;
   }
 
+  /// Loads the content selected by the active session.
   Future<Content> getCurrentExerciseContent() async {
     if (activeSession == null) {
       throw StateError("A session must be active first");
     }
     final contentId = activeSession!.getCurrentContentId();
 
-    final content = await _contentRepository.getById(contentId);
-    return content!;
+    final content = await _contentController.getContentById(contentId);
+    if (content == null) {
+      throw StateError('Missing content with id $contentId');
+    }
+    return content;
   }
 
   List<Grade> getCurrentExerciseAllowedGrade() {
@@ -108,6 +122,7 @@ class SessionController {
     return activeSession!.getCurrentExerciseAllowedGrade();
   }
 
+  /// Applies [grade] and persists the resulting session-level progress.
   Future<void> submitAnswer(Grade grade) async {
     if (activeSession == null) {
       throw StateError("A session must be active first");
@@ -116,15 +131,20 @@ class SessionController {
       throw StateError("This Grade is not allowed by the exercise");
     }
 
-    activeSession!.submitAnswer(
+    final answeredExercise = activeSession!.currentExercise;
+    final session = activeSession!;
+    session.submitAnswer(
       SubmittedExerciseAnswer(grade: grade, answeredAt: DateTime.now()),
     );
 
-    if (isSessionFinished()) {
-      await endSession();
-    } else {
-      await _sessionRepository.update(activeSession!);
+    final sessionFinished = session.isSessionFinished();
+    if (sessionFinished) {
+      session.endSession(DateTime.now());
     }
+
+    await _sessionRepository.saveAnswerProgress(session, answeredExercise);
+
+    if (sessionFinished) _activeSession = null;
   }
 
   Duration getPreviewInterval(Grade grade) {

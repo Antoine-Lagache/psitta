@@ -2,10 +2,7 @@
 
 import 'dart:io';
 
-/// Merge all Markdown docs into one big FULL_DOC.md
-/// Used mainly for ChatGPT / AI context loading.
-/// Keeps the original folder hierarchy visible as headers.
-
+/// Regenerates `FULL_DOC.md` from every source Markdown file under `docs`.
 void main() async {
   final docsDir = Directory('docs');
   final outputFile = File('${docsDir.path}/FULL_DOC.md');
@@ -17,14 +14,14 @@ void main() async {
 
   final buffer = StringBuffer();
 
-  // Add header metadata for ChatGPT
+  // Identify the generated snapshot and preserve its intended context.
   buffer.writeln('# 📘 Full Documentation Snapshot');
   buffer.writeln('> ⚙️ Auto-generated for ChatGPT context loading.\n');
   buffer.writeln('> Each section below corresponds to a file inside /docs.\n');
   buffer.writeln('> Source project: Psitta\n');
   buffer.writeln('---\n');
 
-  // Recursively collect all .md files except FULL_DOC.md
+  // Exclude the output itself to keep repeated generations stable.
   final mdFiles =
       docsDir
           .listSync(recursive: true)

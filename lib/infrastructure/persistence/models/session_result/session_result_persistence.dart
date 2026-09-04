@@ -2,6 +2,7 @@ import 'package:psitta/infrastructure/persistence/models/session_result/status_c
 
 export 'package:psitta/infrastructure/persistence/models/session_result/status_count_persistence.dart';
 
+/// Database representation of a session aggregate and its status counts.
 class SessionResultPersistence {
   final int? id;
   final int sessionTypeIndex;

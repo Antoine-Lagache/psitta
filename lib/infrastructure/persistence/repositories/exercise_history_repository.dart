@@ -7,6 +7,7 @@ import 'package:psitta/infrastructure/persistence/mappers/exercise_history_mappe
 
 import 'package:psitta/utils/conversion/time_conversion.dart';
 
+/// Exposes persisted answer history as domain entries.
 class ExerciseHistoryRepository {
   final sqlite.SqliteDatabase database;
 
@@ -14,6 +15,7 @@ class ExerciseHistoryRepository {
 
   ExerciseHistoryRepository(this.database) : _historyDao = ExerciseHistoryDao(database);
 
+  /// Returns entries in a half-open date range, optionally for one exercise.
   Future<List<ExerciseHistoryEntry>> getList({
     int? exerciseId,
     DateTime? startDate,

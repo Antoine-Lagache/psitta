@@ -1,3 +1,4 @@
+/// Database representation of reusable content-field metadata.
 class FieldDefinitionPersistence {
   final int? id;
   final String valueType;

@@ -2,7 +2,7 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/models/content/media_persistence.dart';
 
-// TODO : add a getBy Sha256 method
+/// Provides CRUD access to media metadata and hash-based lookup.
 class MediaDao {
   final sqlite.SqliteDatabase database;
 
@@ -20,7 +20,7 @@ class MediaDao {
           path,
           mime_type,
           size,
-          sha256,
+          sha256
         )
         VALUES (?, ?, ?, ?)
         RETURNING id

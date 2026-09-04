@@ -3,6 +3,7 @@ import 'package:psitta/domain/sentences/sentence_instance.dart';
 import 'package:psitta/domain/srs/sentence_state.dart';
 import 'package:psitta/infrastructure/persistence/models/sentence/sentence_group_persistence.dart';
 
+/// Translates sentence-group aggregates and their learning state.
 class SentenceMapper {
   const SentenceMapper();
 
@@ -20,6 +21,7 @@ class SentenceMapper {
     );
   }
 
+  /// Builds a persistence copy with every sentence state reset.
   static SentenceGroupPersistence resetGroupProgress(
     SentenceGroupPersistence sentenceGroup,
   ) {
@@ -37,6 +39,7 @@ class SentenceMapper {
     );
   }
 
+  /// Builds a new sentence instance with its initial state.
   static SentenceInstancePersistence newInstance(int contentId) {
     return SentenceInstancePersistence(
       contentId: contentId,

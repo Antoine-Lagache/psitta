@@ -12,44 +12,46 @@ export 'package:psitta/domain/exercise/exercise_status.dart';
 export 'package:psitta/domain/srs/srs_config.dart';
 export 'package:psitta/domain/srs/srs_state.dart';
 
-/// Abstract class representing an exercise.
-/// Manages the intra-session algorithm and SRS state of the exercise.
+/// Base runtime model that coordinates intra-session status and SRS state.
 abstract class Exercise {
   final int id;
   ExerciseStatus status;
 
   SRSState srsState;
 
-  // Contain only, new history entries that have not been saved yet.
+  /// Answer events created since this exercise was loaded or last persisted.
   List<ExerciseHistoryEntry> newHistoryEntry;
 
   Exercise({required this.id, required this.status, required this.srsState})
     : newHistoryEntry = [];
 
-  /// Returns the id of the content
-  /// The domain doesn't need to know the content itself,
-  /// only its id is needed to retrieve it from the database
+  /// Returns the identifier used by the application layer to load the content.
   int getContentId();
 
-  /// Return a short version of the Exercise
+  /// Captures the transient state required to pause and resume a session.
   ExerciseResume getResume();
 
-  /// Submits the user's answer with a Grade and updates the SRS state
+  /// Applies an answer to the SRS state and advances the session status.
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
-    assert(status != ExerciseStatus.completed);
+    if (status == ExerciseStatus.completed) {
+      throw StateError('Cannot answer a completed exercise');
+    }
     if (!isGradeAllowed(answer.grade)) {
       throw StateError("The grade is not allowed by this exercise");
     }
 
     srsState.applyAnswer(answer, config);
 
-    final DateTime nextDay = DateTime(
+    DateTime nextDay = DateTime(
       answer.at.year,
       answer.at.month,
       answer.at.day,
-    ).add(config.dayBoundary).toUtc();
+    ).add(config.dayBoundary);
+    if (!nextDay.isAfter(answer.at)) {
+      nextDay = nextDay.add(const Duration(days: 1));
+    }
 
-    if (answer.at.toUtc().add(srsState.interval).isAfter(nextDay) &&
+    if (answer.at.add(srsState.interval).isAfter(nextDay) &&
         !srsState.isInLearning) {
       status = ExerciseStatus.completed;
     } else {
@@ -61,12 +63,12 @@ abstract class Exercise {
     }
   }
 
-  /// Returns the preview interval for a given grade
+  /// Returns the interval produced by [answer] without mutating this exercise.
   Duration previewInterval(PreviewExerciseAnswer answer, SRSConfig config) {
     return srsState.previewInterval(answer, config);
   }
 
-  /// Checks if a Grade is allowed for this exercise
+  /// Returns whether this exercise type accepts [grade].
   bool isGradeAllowed(Grade grade) {
     // By default, all grades are allowed
     return true;

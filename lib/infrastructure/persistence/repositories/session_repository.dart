@@ -5,6 +5,7 @@ import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/infrastructure/persistence/dao/exercise_dao.dart';
 import 'package:psitta/infrastructure/persistence/dao/sentence_group_dao.dart';
 import 'package:psitta/infrastructure/persistence/dao/session_exercise_dao.dart';
+import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
 import 'package:psitta/infrastructure/persistence/mappers/exercise/srs_state_mapper.dart';
 import 'package:psitta/infrastructure/persistence/mappers/sentence_mapper.dart';
 import 'package:psitta/infrastructure/persistence/mappers/session/session_exercise_mapper.dart';
@@ -16,6 +17,7 @@ import 'package:psitta/infrastructure/persistence/mappers/session/session_result
 
 import 'package:psitta/utils/conversion/time_conversion.dart';
 
+/// Persists session results and resumable exercise snapshots as one aggregate.
 class SessionRepository {
   final sqlite.SqliteDatabase database;
 
@@ -23,13 +25,18 @@ class SessionRepository {
   final SessionExerciseDao _sessionExerciseDao;
   final ExerciseDao _exerciseDao;
   final SentenceGroupDao _sentencesDao;
+  final ExerciseRepository _exerciseRepository;
 
-  SessionRepository(this.database)
-    : _sessionResultDao = SessionResultDao(database),
-      _sessionExerciseDao = SessionExerciseDao(database),
-      _exerciseDao = ExerciseDao(database),
-      _sentencesDao = SentenceGroupDao(database);
+  SessionRepository(
+    this.database, {
+    required ExerciseRepository exerciseRepository,
+  }) : _exerciseRepository = exerciseRepository,
+       _sessionResultDao = SessionResultDao(database),
+       _sessionExerciseDao = SessionExerciseDao(database),
+       _exerciseDao = ExerciseDao(database),
+       _sentencesDao = SentenceGroupDao(database);
 
+  /// Inserts a new session result and its resumable exercise snapshot.
   Future<int> save(Session session) async {
     return database.writeTransaction((txn) async {
       final sessionResultPersistence = SessionResultMapper.toPersistence(
@@ -52,6 +59,7 @@ class SessionRepository {
     });
   }
 
+  /// Returns results that still have an active exercise snapshot.
   Future<List<SessionResult>> getAllActiveSessionResult() async {
     final activeSessionId = await _sessionExerciseDao.getAllSessionId();
 
@@ -66,6 +74,7 @@ class SessionRepository {
     return allSessionResult;
   }
 
+  /// Rebuilds an unfinished session from its result and exercise snapshots.
   Future<Session> getActiveSession(SessionResult sessionResult, SRSConfig config) async {
     final sessionResultId = sessionResult.id!;
 
@@ -125,6 +134,7 @@ class SessionRepository {
     }
   }
 
+  /// Replaces the persisted result and snapshot of an unfinished session.
   Future<void> update(Session session) async {
     final sessionResult = session.intermediateResult;
 
@@ -150,10 +160,40 @@ class SessionRepository {
     });
   }
 
+  /// Atomically stores an answered exercise and the resulting session state.
+  Future<void> saveAnswerProgress(Session session, Exercise answeredExercise) async {
+    final sessionResult = session.intermediateResult;
+
+    if (sessionResult.id == null) {
+      throw ArgumentError('Cannot update a Session whose SessionResult has no id');
+    }
+
+    final sessionResultId = sessionResult.id!;
+
+    await database.writeTransaction((txn) async {
+      await _exerciseRepository.saveInTransaction(txn, answeredExercise);
+
+      final sessionResultPersistence = SessionResultMapper.toPersistence(sessionResult);
+      await _sessionResultDao.update(sessionResultPersistence, txn);
+
+      await _sessionExerciseDao.deleteAll(sessionResultId, txn);
+      if (sessionResult.endAt == null) {
+        final exerciseResumes = session
+            .getResumeList()
+            .map(SessionExerciseMapper.toPersistence)
+            .toList();
+        await _sessionExerciseDao.insertAll(sessionResultId, exerciseResumes, txn);
+      }
+    });
+
+    answeredExercise.newHistoryEntry.clear();
+  }
+
   Future<void> deleteSessionResult(int sessionResultId) {
     return _sessionResultDao.delete(sessionResultId);
   }
 
+  /// Stores the final result and removes its resumable exercise snapshot.
   Future<void> completeSession(Session session) {
     final sessionResult = session.intermediateResult;
     if (sessionResult.id == null) {

@@ -2,14 +2,14 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'database_migration.dart';
 
+/// Creates every table required by the initial MVP data model.
 class V1InitialSchema implements DatabaseMigration {
   @override
   int get version => 1;
 
   @override
   Future<void> migrate(sqlite.SqliteWriteContext database) async {
-    await database.execute('PRAGMA foreign_keys = ON;');
-
+    // Stores the shared identity and subtype discriminator of every exercise.
     await database.execute('''
       CREATE TABLE exercise (
         id INTEGER PRIMARY KEY,
@@ -17,12 +17,14 @@ class V1InitialSchema implements DatabaseMigration {
       );
     ''');
 
+    // Owns the ordered field values rendered as an exercise side.
     await database.execute('''
       CREATE TABLE content (
         id INTEGER PRIMARY KEY
       );
     ''');
 
+    // Defines reusable field metadata: value type and visible side.
     await database.execute('''
       CREATE TABLE field_definition (
         id INTEGER PRIMARY KEY,
@@ -31,6 +33,7 @@ class V1InitialSchema implements DatabaseMigration {
       );
     ''');
 
+    // Stores metadata used to locate and deduplicate media files.
     await database.execute('''
       CREATE TABLE media (
         id INTEGER PRIMARY KEY,
@@ -41,12 +44,14 @@ class V1InitialSchema implements DatabaseMigration {
       );
     ''');
 
+    // Identifies a collection of interchangeable sentence instances.
     await database.execute('''
       CREATE TABLE sentence_group (
         id INTEGER PRIMARY KEY
       );
     ''');
 
+    // Stores the scheduling state associated one-to-one with an exercise.
     await database.execute('''
       CREATE TABLE srs_state (
         exercise_id INTEGER PRIMARY KEY,
@@ -56,6 +61,7 @@ class V1InitialSchema implements DatabaseMigration {
         kfactor REAL NOT NULL,
         w REAL NOT NULL,
         rbar REAL NOT NULL,
+        learning_step_index INTEGER NOT NULL,
         last_review TEXT,
         next_review INTEGER,
 
@@ -65,6 +71,7 @@ class V1InitialSchema implements DatabaseMigration {
     );
     ''');
 
+    // Stores the word-exercise subtype and its content reference.
     await database.execute('''
       CREATE TABLE word_exercise (
         exercise_id INTEGER PRIMARY KEY,
@@ -79,6 +86,7 @@ class V1InitialSchema implements DatabaseMigration {
     );
     ''');
 
+    // Stores the sentence-exercise subtype and its training configuration.
     await database.execute('''
       CREATE TABLE sentence_exercise (
         exercise_id INTEGER PRIMARY KEY,
@@ -90,13 +98,13 @@ class V1InitialSchema implements DatabaseMigration {
           ON DELETE CASCADE,
 
         FOREIGN KEY (sentence_group_id)
-          REFERENCES sentence_group(id)
-          ON DELETE CASCADE,
+          REFERENCES sentence_group(id),
         
         UNIQUE (sentence_group_id)  
     );
     ''');
 
+    // Associates one content item and its progress with a sentence group.
     await database.execute('''
       CREATE TABLE sentence_instance (
         id INTEGER PRIMARY KEY,
@@ -112,6 +120,7 @@ class V1InitialSchema implements DatabaseMigration {
       );
     ''');
 
+    // Stores selection and learning progress for one sentence instance.
     await database.execute('''
       CREATE TABLE sentence_state (
         sentence_instance_id INTEGER PRIMARY KEY,
@@ -126,6 +135,7 @@ class V1InitialSchema implements DatabaseMigration {
     );
     ''');
 
+    // Records immutable answer events for exercises and optional sentences.
     await database.execute('''
       CREATE TABLE exercise_history (
         id INTEGER PRIMARY KEY,
@@ -148,6 +158,7 @@ class V1InitialSchema implements DatabaseMigration {
       );
     ''');
 
+    // Stores one ordered, typed value belonging to a content item.
     await database.execute('''
       CREATE TABLE field_value (
         id INTEGER PRIMARY KEY,
@@ -173,6 +184,7 @@ class V1InitialSchema implements DatabaseMigration {
       );
     ''');
 
+    // Stores the lifecycle and aggregate outcome of a learning session.
     await database.execute('''
       CREATE TABLE session_result (
         id INTEGER PRIMARY KEY,
@@ -185,6 +197,7 @@ class V1InitialSchema implements DatabaseMigration {
       );
     ''');
 
+    // Normalizes per-status answer counts for a session result.
     await database.execute('''
       CREATE TABLE session_result_status_count (
         id_session_result INTEGER NOT NULL,
@@ -202,6 +215,7 @@ class V1InitialSchema implements DatabaseMigration {
       );
     ''');
 
+    // Snapshots exercise state needed to resume an unfinished session.
     await database.execute('''
       CREATE TABLE active_session_exercise (
         session_result_id INTEGER NOT NULL,
@@ -219,6 +233,10 @@ class V1InitialSchema implements DatabaseMigration {
 
         FOREIGN KEY (session_result_id)
             REFERENCES session_result(id)
+            ON DELETE CASCADE,
+
+        FOREIGN KEY (exercise_id)
+            REFERENCES exercise(id)
             ON DELETE CASCADE
     );
     ''');

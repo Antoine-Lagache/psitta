@@ -7,6 +7,7 @@ import 'package:psitta/infrastructure/persistence/dao/field_definition_dao.dart'
 import 'package:psitta/infrastructure/persistence/mappers/content_mapper.dart';
 import 'package:psitta/infrastructure/persistence/models/field_definition/field_definition_persistence.dart';
 
+/// Persists application content while hiding normalized field storage.
 class ContentRepository {
   final sqlite.SqliteDatabase database;
 
@@ -27,6 +28,7 @@ class ContentRepository {
     return await _contentDao.insert(persistence);
   }
 
+  /// Loads content and resolves the definitions required by all its fields.
   Future<Content?> getById(int id) async {
     final persistence = await _contentDao.getById(id);
 

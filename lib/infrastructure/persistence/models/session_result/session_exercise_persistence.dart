@@ -1,3 +1,4 @@
+/// Persistence snapshot of one exercise in an unfinished session.
 class SessionExercisePersistence {
   final int exerciseId;
   final int statusCode;

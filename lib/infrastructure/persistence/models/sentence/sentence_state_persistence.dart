@@ -1,5 +1,6 @@
 import 'package:psitta/utils/conversion/safe_numeric_conversion.dart';
 
+/// Database-safe representation of per-sentence learning progress.
 class SentenceStatePersistence {
   final int shownCount;
   final double accumulatedScore;

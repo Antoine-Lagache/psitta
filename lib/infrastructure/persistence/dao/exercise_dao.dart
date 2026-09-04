@@ -1,6 +1,7 @@
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 import "package:psitta/infrastructure/persistence/models/exercise/exercise_persistence.dart";
 
+/// Stores exercise base rows, subtype rows, and their SRS state.
 class ExerciseDao {
   final sqlite.SqliteDatabase database;
 
@@ -34,7 +35,7 @@ class ExerciseDao {
     return database.readTransaction((txn) => _getExercise(txn, id));
   }
 
-  /// If [type] is null, exercises of all types are included.
+  /// Returns due exercises ordered by review time, optionally filtered by type.
   Future<List<ExercisePersistence>> getDueExercises(
     int nowInMicroseconds,
     int count,
@@ -75,7 +76,7 @@ class ExerciseDao {
     });
   }
 
-  /// If [type] is null, exercises of all types are included.
+  /// Returns exercises with no history, optionally filtered by type.
   Future<List<ExercisePersistence>> getNewExercises(int count, String? type) {
     return database.readTransaction((txn) async {
       final typeCondition = type == null ? '' : 'AND e.type = ?';
@@ -102,7 +103,6 @@ class ExerciseDao {
         final exercise = await _getExercise(txn, id);
 
         if (exercise == null) {
-          // would be magical if that happened XD
           throw StateError('Exercise $id disappeared while retrieving new exercises');
         }
 
@@ -113,6 +113,7 @@ class ExerciseDao {
     });
   }
 
+  /// Updates an exercise aggregate within the caller's transaction.
   Future<void> update(sqlite.SqliteWriteContext txn, ExercisePersistence exercise) async {
     if (exercise.id == null) {
       throw ArgumentError('Cannot update an exercise without an id');
@@ -151,7 +152,7 @@ class ExerciseDao {
     });
   }
 
-  // Transactional operations
+  /// Updates scheduling fields within the caller's transaction.
   Future<void> updateSrsState(
     sqlite.SqliteWriteContext txn,
     int exerciseId,
@@ -166,6 +167,7 @@ class ExerciseDao {
       kfactor = ?,
       w = ?,
       rbar = ?,
+      learning_step_index = ?,
       last_review = ?,
       next_review = ?
     WHERE exercise_id = ?
@@ -176,6 +178,7 @@ class ExerciseDao {
         srsState.kFactor,
         srsState.w,
         srsState.rBar,
+        srsState.learningStepIndex,
         srsState.lastReview,
         srsState.nextReview,
         exerciseId,
@@ -217,10 +220,11 @@ class ExerciseDao {
       kfactor,
       w,
       rbar,
+      learning_step_index,
       last_review,
       next_review
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''',
       [
         exerciseId,
@@ -229,6 +233,7 @@ class ExerciseDao {
         srsState.kFactor,
         srsState.w,
         srsState.rBar,
+        srsState.learningStepIndex,
         srsState.lastReview,
         srsState.nextReview,
       ],
@@ -334,6 +339,7 @@ class ExerciseDao {
       kfactor,
       w,
       rbar,
+      learning_step_index,
       last_review,
       next_review
     FROM srs_state
@@ -403,7 +409,7 @@ class ExerciseDao {
     }
   }
 
-  /// this method is useless for now, but might be useful in the future
+  /// Reserved for mutable fields shared by all exercise subtypes.
   Future<void> _updateExercise(
     sqlite.SqliteWriteContext txn,
     ExercisePersistence exercise,

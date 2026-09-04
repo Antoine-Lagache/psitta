@@ -6,11 +6,13 @@ import 'package:psitta/application/models/content/field.dart';
 import 'package:psitta/application/models/content/field_definition.dart';
 import 'package:psitta/ui/presentation/content/field_renderer.dart';
 
+/// Builds one exercise side by ordering and rendering its visible fields.
 class ContentRenderer {
   final FieldRenderer _fieldRenderer;
 
   ContentRenderer(this._fieldRenderer);
 
+  /// Renders the fields visible on [side] into a single HTML widget.
   Future<Widget> render(Content content, FieldSide side) async {
     final fields = content.fields
         .where(

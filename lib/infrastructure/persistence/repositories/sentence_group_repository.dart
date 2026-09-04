@@ -4,6 +4,7 @@ import 'package:psitta/infrastructure/persistence/dao/sentence_group_dao.dart';
 import 'package:psitta/infrastructure/persistence/mappers/sentence_mapper.dart';
 import 'package:psitta/infrastructure/persistence/models/sentence/sentence_group_persistence.dart';
 
+/// Manages sentence-group structure without exposing persistence models.
 class SentenceGroupRepository {
   final sqlite.SqliteDatabase database;
 

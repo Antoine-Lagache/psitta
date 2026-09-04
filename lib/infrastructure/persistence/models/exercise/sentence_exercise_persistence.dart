@@ -1,5 +1,6 @@
 part of 'exercise_persistence.dart';
 
+/// Persistence shape of a sentence exercise subtype.
 final class SentenceExercisePersistence extends ExercisePersistence {
   final int sentenceGroupId;
 

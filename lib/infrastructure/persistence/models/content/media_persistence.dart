@@ -1,3 +1,4 @@
+/// Persistence representation of locally stored media metadata.
 class MediaPersistence {
   final int? id;
   final String path;

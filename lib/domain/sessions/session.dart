@@ -7,20 +7,21 @@ import 'package:psitta/domain/sessions/session_type.dart';
 export 'package:psitta/domain/sessions/session_result.dart';
 export 'package:psitta/domain/sessions/session_type.dart';
 
-/// Class representing a session of exercises with SRS.
+/// Owns the lifecycle, scheduling, and aggregate result of an SRS session.
 class Session {
-  /// Config for the SRS algorithm used in this session
+  /// SRS configuration shared by every exercise in this session.
   final SRSConfig config;
 
-  /// Intermediate result of the session
-  /// modified on each answer submission
-  /// returned by endSession or endSessionEarly
+  /// Mutable aggregate updated after each submitted answer.
   late SessionResult _intermediateResult;
   SessionResult get intermediateResult => _intermediateResult;
 
   final SessionScheduler _scheduler;
 
-  int getCurrentContentId() => _scheduler.currentExercise!.getContentId();
+  Exercise get currentExercise =>
+      _scheduler.currentExercise ?? (throw StateError('No current exercise'));
+
+  int getCurrentContentId() => currentExercise.getContentId();
 
   List<ExerciseResume> getResumeList() => _scheduler.getResumeList();
 
@@ -59,28 +60,41 @@ class Session {
     }
   }
 
-  /// Starts the session at the given date and time.
-  /// Does nothing if the session has already started
+  /// Starts the session and selects its first exercise.
   void beginSession(DateTime now) {
-    assert(_intermediateResult.startedAt == null);
+    if (_intermediateResult.startedAt != null) {
+      throw StateError('Cannot start a session more than once');
+    }
     _intermediateResult.startedAt = now;
     _scheduler.selectNextExercise(now);
   }
 
-  /// returns the number of exercises to do or redo in the session
+  /// Recalculates the next exercise when an unfinished session is restored.
+  void resumeSession(DateTime now) {
+    if (_intermediateResult.startedAt == null || _intermediateResult.endAt != null) {
+      throw StateError('Only an unfinished session can be resumed');
+    }
+    _scheduler.selectNextExercise(now);
+  }
+
+  /// Returns the number of exercises currently in [status].
   int countExerciseByStatus(ExerciseStatus status) {
     return _scheduler.countExerciseByStatus(status);
   }
 
   List<Grade> getCurrentExerciseAllowedGrade() {
-    assert(_scheduler.currentExercise != null);
+    if (_scheduler.currentExercise == null) {
+      throw StateError('No current exercise');
+    }
 
     return Grade.values.where(_scheduler.currentExercise!.isGradeAllowed).toList();
   }
 
-  /// submits the answer for the current exercise with the given grade, then moves to the next exercise
+  /// Applies [answer], updates aggregates, and selects the next exercise.
   void submitAnswer(SubmittedExerciseAnswer answer) {
-    assert(_scheduler.currentExercise != null);
+    if (_scheduler.currentExercise == null) {
+      throw StateError('No current exercise');
+    }
 
     if (isSessionFinished()) {
       throw Exception("Cannot submit answer for a finished session");
@@ -98,12 +112,13 @@ class Session {
     }
 
     _scheduler.selectNextExercise(answer.answeredAt);
-    // update the intermediate result
   }
 
-  /// returns the preview interval for the current exercise and a given grade
+  /// Previews an answer interval without modifying the current exercise.
   Duration getPreviewInterval(PreviewExerciseAnswer answer) {
-    assert(_scheduler.currentExercise != null);
+    if (_scheduler.currentExercise == null) {
+      throw StateError('No current exercise');
+    }
 
     if (isSessionFinished()) {
       throw Exception("Cannot preview interval for a finished session");
@@ -116,10 +131,11 @@ class Session {
     return !_scheduler.hasNextExercise() || _intermediateResult.endAt != null;
   }
 
-  /// ends the session and returns the result
-  /// a finished session can no longer receive answers and must be deleted
+  /// Marks the session complete and returns its final aggregate result.
   SessionResult endSession(DateTime now) {
-    assert(_intermediateResult.endAt == null);
+    if (_intermediateResult.endAt != null) {
+      throw StateError('Session already ended');
+    }
     _intermediateResult.endAt = now;
     return _intermediateResult;
   }

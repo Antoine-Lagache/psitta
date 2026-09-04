@@ -1,5 +1,6 @@
 part of 'exercise_persistence.dart';
 
+/// Persistence shape of a word exercise subtype.
 final class WordExercisePersistence extends ExercisePersistence {
   final int contentId;
 
