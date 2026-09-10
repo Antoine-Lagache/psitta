@@ -1,194 +1,108 @@
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/exercises.md`
+# Exercises
 
 ## Purpose
 
-Describe the **role of exercises** in the learning engine.
+This document describes the role of an `Exercise`, its state during a session,
+and the differences between word and sentence exercises.
 
-This document specifies:
-
-* what an `Exercise` is,
-* how it evolves during a session,
-* how it interacts with progression mechanisms,
-* the invariants to respect.
-
-Temporal aspects and orchestration are described in [`sessions.md`](sessions.md).
+Temporal orchestration is described in [Sessions](sessions.md), while interval
+updates are described in [SRS](srs.md).
 
 ---
 
-## Role of an Exercise
-
-An `Exercise` is a **stateful runtime object**.
-
-It represents:
-
-* a **user interaction** with learning content,
-* within the context of a **given session**.
-
-An exercise:
-
-* is **created before** the session starts,
-* is **temporary** (not persisted),
-* encapsulates logic that is **local** to that interaction.
-
----
-
-## Conceptual Diagram
+## Conceptual diagram
 
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
-  class Exercise
-  namespace Exercises {
-    class WordExercise
-    class SentenceExercise
-  }
-
-    class SentenceState
-
-  namespace Answer {
-    class ExerciseAnswer
-    class RealExerciseAnswer
-    class PreviewExerciseAnswer
-  }
-
-  namespace Other {
-    class SRSState
-    class ExerciseStatus
-  }
-
-  namespace Sentences {
-    class SentenceGroup
-    class SentenceInstance
-  }
-  
-
     Exercise <|-- WordExercise
     Exercise <|-- SentenceExercise
-
-    Exercise "1" --> "1" ExerciseStatus : status
-    Exercise "1" --> "1" SRSState : srsState
-
-
-    SentenceInstance "1" --> "1..*" SentenceState : updates
-    SentenceExercise "1" --> "1" SentenceGroup
-    SentenceGroup "1" --> "1..*" SentenceInstance
-
-    ExerciseAnswer <|-- RealExerciseAnswer
-    ExerciseAnswer <|-- PreviewExerciseAnswer
-
-    Exercise ..> ExerciseAnswer : submit / preview answer
-
+    Exercise --> SRSState
+    Exercise --> ExerciseStatus
+    Exercise ..> ExerciseAnswer
+    SentenceExercise --> SentenceGroup
+    SentenceGroup --> SentenceInstance
+    SentenceInstance --> SentenceState
 ```
 
 ---
 
-## General Structure of an Exercise
+## General role
 
-An `Exercise` encapsulates:
+An exercise represents one learning task inside a session. It contains:
 
-* a **local intra-session state** (`ExerciseStatus`),
-* a **progression state** (`SRSState`),
-* logic for reacting to user responses.
+- a stable persisted identifier;
+- an `ExerciseStatus` used by the session scheduler;
+- an `SRSState` shared across sessions;
+- answer-history entries waiting to be persisted.
 
-It knows nothing about:
-
-* the global session,
-* the UI,
-* persistence.
-
----
-
-## ExerciseStatus
-
-`ExerciseStatus` describes the **current state** of an exercise during the session.
-
-It is used by:
-
-* the exercise (to manage its transitions),
-* the Scheduler (to orchestrate the presentation order).
-
-Typical status examples: not yet attempted, new exercise, already answered, completed.
+The object itself never accesses the database or UI. Repositories reconstruct
+it from persistent state before a session and save its updated progression
+after an answer.
 
 ---
 
-## User Interaction: ExerciseAnswer
+## Answers and status
 
-User interactions are modelled by the `ExerciseAnswer` type.
+A submitted answer contains a grade and timestamp. The exercise applies it to
+its progression, records history, and updates its session status. A preview
+answer runs the interval calculation without changing state.
 
-An exercise can receive:
+The current statuses are:
 
-* the **submitted response** (`SubmittedExerciseAnswer`):
-  * resulting from an actual user interaction,
-  * applied to the exercise and SRS state.
+| Status | Meaning |
+|---|---|
+| `newExercise` | The exercise has no previous answer history |
+| `toReview` | A previously answered exercise is entering a review session |
+| `learning` | A new exercise is repeating within the session |
+| `relearning` | A reviewed exercise is repeating after a failure |
+| `consolidating` | A sentence exercise is completing additional training |
+| `completed` | No more presentation is required in this session |
 
-* a **hypothetical response** (`PreviewExerciseAnswer`):
-  * used to simulate interval evolution,
-  * with no side effects whatsoever.
-
-The exercise is responsible for:
-* validating that the response is permitted,
-* delegating the progression update,
-* updating its intra-session state.
-
----
-
-## Exercise Specialisations
-
-### WordExercise
-
-A `WordExercise`:
-
-* targets a `ContentId`,
-* uses its `SRSState`.
-
-It does not manipulate any `SentenceState`.
-
-### SentenceExercise
-
-A `SentenceExercise`:
-
-* has its own `SRSState` (at the group level),
-* targets a **group of sentences** (`SentenceGroup`),
-* The `SentenceGroup` is composed of a list of `SentenceInstance`
-* Each `SentenceInstance` Have:
-  * his own `ContentId`
-  * a `SentenceState` updated by the `SentenceExercise`
-
-
-Using a group of sentences allows:
-
-* a single **SRS** state to cover several grammatically related sentences,
-* the user to be exposed to many sentences without compromising **SRS** quality.
+The base exercise flow becomes complete when it has left the SRS learning phase
+and its next review is beyond the configured day boundary. A sentence exercise
+may replace this completion with a consolidation phase. The session stops
+scheduling an exercise only after its final completion.
 
 ---
 
-## Content 
+## `WordExercise`
 
-### Content
+A word exercise references one `contentId` and uses one SRS state. It accepts
+all grades defined by the current model.
 
-Each Words and Sentences have their own `ContentId`.
-
-- A `ContentId` is used by the application layer to create the content needed for the UI.
-- The domain, doen't need to know the content itself, because no logic have to be done on it.
-
----
-
-## Core Invariants
-
-* An exercise is always temporary.
-* An exercise never persists any state.
-* All progression updates go through an exercise.
-* The session never directly modifies an exercise.
-* An exercise knows neither the UI nor persistence.
+The Domain does not require the referenced content to be a literal word. The
+name identifies the product use of this exercise type, while rendering remains
+an Application and UI responsibility.
 
 ---
 
-## What the Exercise Intentionally Ignores
+## `SentenceExercise`
 
-An exercise ignores:
+A sentence exercise references one `SentenceGroup` and has one group-level SRS
+state. The group contains one or more `SentenceInstance` objects, each with its
+own `contentId` and `SentenceState`.
 
-* the global session sequencing,
-* user parameters,
-* the origin of data (DB, API),
+Before each answer, the exercise selects the sentence with the lowest state
+score. This prioritises unseen, failed, or less successful sentences while the
+group remains one scheduled exercise.
+
+Sentence exercises accept `again`, `medium`, and `good`; `hard` and `easy` are
+not available. Once the group-level SRS phase finishes, the exercise may enter
+`consolidating` until the configured number of successful training answers has
+been reached. Consolidation updates sentence state but not the group SRS.
+
+---
+
+## Persistence boundary
+
+An answer may change several related values: SRS state, sentence state, history,
+and session state. The exercise only produces those changes in memory.
+`SessionRepository` and `ExerciseRepository` are responsible for storing them
+within the surrounding transaction.
+
+The minimal transient state needed to resume an unfinished session is exposed
+through `ExerciseResume`: exercise identifier, status, and the remaining
+sentence training count when applicable.

@@ -1,100 +1,87 @@
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/domain.md`
+# Domain layer
 
 ## Purpose
 
-Describe the **core business model** and the **general flow** of the learning engine.
+The Domain contains the core learning model. It defines how sessions sequence
+exercises, how answers change progression, and which state is independent of
+the UI and database representation.
 
-This document establishes:
-
-* the project vocabulary,
-* the major responsibilities (`Session`, `Exercise`, content, progression),
-Implementation details are covered in:
-
-* `sessions.md` (lifecycle and orchestration),
-* `exercises.md` (exercise runtime and statuses),
-* `srs.md` (SRS progression + "exposure" progression via `SentenceState`).
+Details are distributed between [Sessions](sessions.md),
+[Exercises](exercises.md), and [SRS](srs.md).
 
 ---
 
-## Domain Diagram (useful view, not exhaustive)
+## Diagram
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace Runtime {
-  class Session
-  class ExerciseScheduler
-  class Exercise
-  class WordExercise
-  class SentenceExercise
-  class ExerciseStatus
-}
-
-namespace Progression {
-  class SRSConfig
-  class SRSState
-  class SentenceState
-}
-
-
-%% Inheritance
-Exercise <|-- WordExercise
-Exercise <|-- SentenceExercise
-
-%% Session
-Session "1" --> "1" ExerciseScheduler : orchestrates
-ExerciseScheduler "1" --> "0..*" Exercise : schedule
-Session "1" --> "1" SRSConfig : config
-
-%% Exercise core
-Exercise "1" --> "1" SRSState : srsState
-Exercise "1" --> "1" ExerciseStatus : status
-
-%% Sentence-specific progression
-SentenceExercise "1" --> "1..*" SentenceState : updates
+flowchart TD
+    SESSION["Session"] --> SCHEDULER["SessionScheduler"]
+    SCHEDULER --> EXERCISE["Exercise"]
+    EXERCISE --> SRS["SRSState"]
+    EXERCISE --> WORD["WordExercise"]
+    EXERCISE --> SENTENCE["SentenceExercise"]
+    SENTENCE --> GROUP["SentenceGroup and SentenceState"]
 ```
 
 ---
 
-## Quick Model Overview
+## Model overview
 
-### 1) Content
+### Runtime orchestration
 
-* In the domain, only the `contentId` is saved. The domain does not need to what the content is. 
-* `Exercise` have a getter to get the `contentId`. This id is used by the application layer to create the content for the UI.
-  * For `SentenceExercise`, the getter target the `contentId` of the current sentenceInstance in the group. (see: [exercise.md](/docs/architecture/domain_layer/exercises.md))
+`Session` owns one `SessionScheduler`, a shared `SRSConfig`, and the aggregate
+`SessionResult`. It delegates answer processing to the current exercise and
+does not load or persist data itself.
 
-### 2) Progression
+### Exercises
 
-* `SRSState` is **attached to `Exercise`** (not to `Word` or `SentenceExercise`). It manages inter-session progression logic.
-* `SentenceState` is **separate from the SRS** and exists **for each `Sentence`** within a `SentenceExercise`.
-* `SRSConfig` is provided by the `Session` and used for updates/previews through exercises.
+`Exercise` is the common runtime abstraction for `WordExercise` and
+`SentenceExercise`. It combines an intra-session status with the persistent SRS
+state of one learning task.
 
+Each submitted answer also produces an `ExerciseHistoryEntry`. New entries are
+buffered until Persistence stores them with the updated progression.
 
-### 3) Runtime
+### Progression
 
-* `Exercise` is a **stateful runtime object**: `status`, `srsState`, intra-session logic.
-* `WordExercise` and `SentenceExercise` only specialise the target and certain rules (allowed grades, `SentenceState` updates, etc.).
-* `Session` is an **orchestrator**: it sequences exercises using `ExerciseSchedule` and holds the `SRSConfig`.
+`SRSState` manages the interval and memory-model parameters associated with an
+exercise. `SentenceState` is separate: it tracks the exposure and performance
+of one sentence inside a sentence group.
 
-> Note: `SessionType` (see [sessions.md](sessions.md)) is an initialisation detail (validation/consistency) and is not a persistent state of `Session`.
+### Content
+
+The Domain does not know whether content contains text, HTML, images, audio, or
+video. Exercises expose an integer `contentId`, which the Application layer
+resolves into renderable content.
+
+For a sentence exercise, the content identifier belongs to the sentence
+instance currently selected from the group.
 
 ---
 
-## What the Domain Intentionally Ignores
+## Runtime and persistent state
 
-* Flutter UI (widgets, navigation, layout)
-* Persistence (SQL, schema, mapping)
-* "UX" application parameters (e.g. display preferences)
-* Organisation of content into "chapters" (this is an access/filtering structure on the Application/Stats side, not a runtime engine concern)
+Domain objects are not database models, but part of their state must survive
+between sessions:
+
+- exercise identity, subtype data, SRS state, and sentence state are stored;
+- answer history and session results are stored;
+- unfinished sessions store a minimal `ExerciseResume` for each exercise;
+- `Session` and `SessionScheduler` instances are reconstructed in memory.
+
+All conversions belong to Persistence. Domain code never imports DAOs, SQL, or
+persistence models.
 
 ---
 
-## Detail Distribution (to keep domain.md concise)
+## Domain boundaries
 
-* `Session` details (start/end, current, ordering, call constraints) → `sessions.md`
-* `Exercise` details (statuses, transition rules, allowed grades) → `exercises.md`
-* Progression details (`SRSState`, `SentenceState`, `Grade`, preview/apply) → `srs.md`
+The Domain intentionally ignores:
+
+- Flutter widgets, navigation, and presentation state;
+- SQL, transactions, and storage layout;
+- the structure and rendering of learning content;
+- repository queries and the selection limits used to build a session;
+- application-wide settings and synchronisation.

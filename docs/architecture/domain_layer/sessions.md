@@ -1,219 +1,113 @@
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/sessions.md`
+# Sessions
 
 ## Purpose
 
-Describe the **role of sessions** in the learning engine and their **lifecycle**.
+This document describes the lifecycle of a learning `Session`, how it selects
+exercises, and how unfinished sessions can be resumed.
 
-This document specifies:
-
-* what a `Session` is,
-* what it does and does not do,
-* how it interacts with exercises,
-* the invariants to respect when using it.
-
-Internal exercise details are described in [`exercises.md`](exercises.md).
+Exercise-specific behaviour is described in [Exercises](exercises.md).
 
 ---
 
-## Role of a Session
-
-A `Session` is a **runtime orchestrator**.
-
-It is responsible for:
-
-* the temporal sequencing of exercises,
-* managing the start and end of a session,
-* collecting a global result.
-
-It is **not responsible** for:
-
-* SRS logic,
-* response evaluation logic,
-* exercise creation,
-* display.
-
----
-
-## Conceptual Diagram
+## Lifecycle
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace Answer {
-  class ExerciseAnswer
-  class SubmittedExerciseAnswer
-  class PreviewExerciseAnswer
-}
-    class SessionType
-    class Session
-    class Exercise
-    class SessionResult
-    class SRSConfig
-
-    class ExerciseScheduler
-
-    
-
-    Session --> ExerciseScheduler : Orchestrate
-    Session <-- SessionType : Initialisation
-
-    ExerciseScheduler "1" --> "0..*" Exercise : Schedule
-    Session "1" --> "1" SRSConfig : config
-    Session "1" --> "1" SessionResult : result
-
-    ExerciseAnswer <|-- SubmittedExerciseAnswer
-    ExerciseAnswer <|-- PreviewExerciseAnswer
-
-    Session ..> ExerciseAnswer : submit / preview
+stateDiagram-v2
+    [*] --> Created
+    Created --> Active: beginSession
+    Active --> Snapshot: pause and persist
+    Snapshot --> Active: reconstruct and resumeSession
+    Active --> Ended: endSession
+    Ended --> [*]
 ```
 
----
-
-## Session Lifecycle
-
-A session follows a **strict lifecycle**:
-
-1. **Creation**
-
-   * A session is created with:
-
-     * a list of `Exercise` objects,
-     * a `SessionType`,
-     * a `SRSConfig`.
-   * No exercise is yet active.
-
-2. **Start**
-
-   * The session is explicitly started (`begin`).
-   * The first exercise becomes current.
-
-3. **Execution**
-
-   * The session:
-
-     * ask the `ExerciseShceduler` for the next exercise,
-     * is called with user responses (`ExerciseAnswer`) by the application layer,
-     * delegates processing to exercises,
-
-4. **End**
-
-* The session can terminated by the user at any moment
-* `Session.isSessionFinished()` tell you when there are no exercise left.
-* When a session is terminated no exercise can answered anymore.
-* A final `SessionResult` is produced when the session is terminated.
+`Snapshot` represents persisted resume data; it is not a state stored inside
+the Domain `Session` object.
 
 ---
 
-## Exercise Sequencing
+## Construction
 
-The `ExerciseScheduler`:
+A session receives:
 
-* holds a **pre-existing list of exercises** 
-* maintains a **current exercise**,
-* determines the presentation order based on:
+- a preloaded list of exercises;
+- a `SessionType` (`wordSession` or `sentenceSession`);
+- one `SRSConfig` shared by those exercises;
+- optionally, an existing `SessionResult` when resuming.
 
-  * exercise state (`ExerciseStatus`, `SRSState`),
-  * simple orchestration rules.
-
-The Scheduler:
-
-* **observes** exercise state,
-* **never directly modifies** their internal logic.
+Construction verifies that every exercise matches the requested session type.
+The session does not create exercises and does not decide which due or new
+exercises enter the list.
 
 ---
 
-## Interaction with Exercises
+## Execution
 
-When a user response is submitted:
+`beginSession` records the start time and selects the first exercise. For each
+submitted answer, the session:
 
-1. The session receives an `ExerciseAnswer`.
-2. It delegates the response to the current exercise.
-3. The exercise:
+1. counts the answer under the exercise's current status;
+2. delegates the state change to the exercise;
+3. updates the number of uniquely completed exercises;
+4. asks the scheduler for the next exercise.
 
-   * updates its state,
-   * updates the progression mechanisms.
-4. The session maintains exercise ordering, updates `SessionResult`, then selects the next exercise.
+Interval previews are delegated to the current exercise and leave both the
+exercise and session result unchanged.
 
-The session does not know:
-
-* the meaning of a response (`Grade`, durations),
-* evaluation or progression rules.
-
----
-
-## Preview vs Submitted Submission
-
-The session distinguishes two types of user interactions:
-
-* **Real submission** (`SubmittedExerciseAnswer`)
-  * modifies the exercise and SRS state,
-  * updates `SessionResult`,
-  * triggers persistence on the application side.
-
-* **Preview** (`PreviewExerciseAnswer`)
-  * simulates the theoretical interval,
-  * has no side effects,
-  * modifies neither the exercise nor the session.
-
-This distinction guarantees that:
-* calculation logic is unique,
-* the Domain state is never modified by an exploratory action.
+`endSession` records the end time and may be called before every exercise is
+complete. Once ended, the session cannot accept another answer. An empty
+exercise list produces a session that is immediately finished after starting.
 
 ---
 
-## SessionType
+## Exercise scheduling
 
-A `SessionType` represents the **pedagogical intent** of the session.
+`SessionScheduler` separates exercises into two groups:
 
-It is used:
+- `learning` and `relearning` exercises, ordered by their next review time;
+- immediately available `newExercise`, `toReview`, and `consolidating`
+  exercises, considered in shuffled order.
 
-* during initialisation only,
-* to validate the consistency of the provided exercises,
-* to qualify the session from a user and statistical perspective.
+A learning exercise takes priority once its short interval is due. Otherwise,
+an immediately available exercise is selected. If only learning work remains,
+the earliest exercise is selected even when its interval has not fully elapsed.
 
-It is **not a long-lived state** of the session
-and does not influence its internal behaviour after initialisation.
-
----
-
-## SessionResult
-
-A `SessionResult` is a **summary object**.
-It is created during initialisation and updated after each response.
-
-It aggregates:
-
-* counters (exercises processed, successes, failures),
-* timing information,
-* global progression data.
-
-It contains:
-
-* no business logic,
-* no evaluation rules.
+The scheduler reads exercise state but never applies answers itself.
 
 ---
 
-## Core Invariants
+## Pause and resume
 
-* A session orchestrates exercises — it does not create them.
-* A session contains no SRS logic and no response evaluation logic.
-* A session does not know the detailed pedagogical content.
-* All progression updates go through an exercise.
-* A session can only be started once.
-* A terminated session can no longer accept responses.
-* The application layer observes session state only through explicit getters (to ensure consistency and facilitate persistence).
+The Domain exposes one `ExerciseResume` per exercise. When the Application
+pauses a session, Persistence stores these snapshots with the intermediate
+`SessionResult` and releases the in-memory object.
+
+To resume, Persistence reloads each exercise's current progression, restores
+its saved status and optional sentence training count, and constructs a new
+`Session`. `resumeSession` then selects the next exercise without changing the
+original start time.
 
 ---
 
-## What the Session Intentionally Ignores
+## `SessionResult`
 
-The session ignores:
+`SessionResult` stores the session type, start and end times, the number of
+unique completed exercises, and answer counts grouped by exercise status. It is
+used both for statistics and as the persistent identity of an unfinished
+session.
 
-* UI and screens,
-* persistence,
-* user parameters,
-* organisation of content into chapters.
+The result is an aggregate only. It does not contain exercise evaluation or SRS
+logic.
+
+---
+
+## Boundaries
+
+- A session orchestrates exercises but does not load, create, or persist them.
+- Exercise and SRS rules remain inside the exercise objects.
+- The session knows content only through the identifier exposed by its current
+  exercise.
+- Repository access and transaction boundaries belong to the Application and
+  Persistence layers.

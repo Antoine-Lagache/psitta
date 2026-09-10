@@ -1,11 +1,12 @@
-[Documentation Index](/docs/index.md)
+[Documentation index](../index.md)
 
-# `docs/architecture/overview.md`
+# Architecture overview
 
 ## Purpose
 
-Describe the overall application architecture and the dependency rules between the main building blocks.
-This diagram provides a **macroscopic view** of the project; the internal details of each block are covered in the following diagrams.
+This document presents the main architectural blocks of Psitta and the
+dependency rules between them. Internal behaviour is described in the dedicated
+documents for each layer.
 
 ---
 
@@ -13,104 +14,70 @@ This diagram provides a **macroscopic view** of the project; the internal detail
 
 ```mermaid
 flowchart TD
-    %% UI
-    UI["UI<br/>Screens / Widgets"]
-
-    %% Application
-    APP["Application<br/>Controllers"]
-
-    %% Domain (with internal structure)
-    subgraph DOM["Domain"]
-        DOM_SESS["<u>Sessions</u>"]
-        DOM_EXO["<u>Exercises</u>"]
-        DOM_SRS["SRS"]
-    end
-
-    %% Persistence
-    subgraph PERS["Persistence"]
-        REPO["Repositories"]
-        DB[(SQLite DB)]
-        REPO --> DB
-    end
-
-    %% Utils (transversal, no explicit dependencies)
-    UTILS["Utils<br/>Pure helpers"]
-
-    %% Main dependencies
-    UI --> APP
-    APP --> DOM
-    APP --> PERS
-
+    UI["UI / Presentation"] --> APP["Application / Controllers"]
+    APP --> DOMAIN["Domain / Learning engine"]
+    APP --> PERSISTENCE["Persistence"]
+    PERSISTENCE --> DB[(SQLite)]
+    PERSISTENCE -. "reconstructs state" .-> DOMAIN
 ```
 
 ---
 
-## Reading the Diagram
+## Reading the diagram
 
-### [UI](ui.md)
+### [UI](ui_layer/ui.md)
 
-The **UI** block groups all Flutter screens and widgets.
-It is solely responsible for rendering and handling user interactions.
+The UI renders application content and will eventually expose the user
+interactions. The current implementation contains the content-rendering
+pipeline, but no screens or navigation.
 
-### [Application](application.md) / Controllers
+### [Application](application_layer/application.md)
 
-The **Application** block is the entry point for application logic.
-Controllers:
+The Application layer exposes the use cases required by the UI. Its controllers
+coordinate sessions, content loading, statistics, and persistence operations.
 
-* receive user actions from the UI,
-* orchestrate business operations,
-* coordinate the use of the Domain and Persistence layers.
+### [Domain](domain_layer/domain.md)
 
-### [Domain](domain.md)
+The Domain contains the learning rules: sessions, exercises, scheduling, SRS
+state, sentence progression, grades, and answer history. It depends on neither
+Flutter nor SQLite.
 
-The **Domain** groups all business logic of the application.
-It is intentionally represented as a **single block**, but structured into conceptual sub-components:
+Learning content is represented by identifiers in the Domain. Its field and
+media structure belongs to the Application layer.
 
-* **Exercises**
-  Represents the concrete exercises presented to the user.
-  Exercises are stateful runtime objects, created before the session starts and destroyed at its end.
+### [Persistence](persistence_layer/persistence.md)
 
-* **Sessions**
-  Manages the organisation of exercises into learning sessions. It's the starting point of the domain.
+Persistence stores content, exercises, progression, history, and session state.
+Repositories expose application-oriented operations while DAOs, mappers, and
+persistence models remain internal to the layer.
 
-* **SRS**
-  Implements spaced repetition logic and progression state.
+### Utilities
 
-The Domain is **independent of all technology** (UI, DB, Flutter, SQLite).
-
-### [Persistence](persistence.md)
-
-The **Persistence** block is responsible for storing and reconstructing Domain data.
-
-* **Repositories** expose a business-oriented data access interface.
-* The **SQLite database** handles physical storage.
-
-SQL, mapping (`toMap / fromMap`), and persistence details are confined to this block.
-
-### Utils
-
-The **Utils** block groups pure utility functions (dates, conversions, helpers).
-It is transversal and does not belong to the main dependency hierarchy.
+`lib/utils` contains pure conversion helpers shared by the Domain and
+Persistence layers, notably duration and timestamp conversions.
 
 ---
 
-## Dependency Rules
+## Dependency rules
 
-* The **UI** depends only on the **Application** layer.
-* The **Application** depends on the **Domain** and **Persistence** layers.
-* The **Domain** does not depend on any technical layer.
-* The **Persistence** contains no business logic.
-* **SQL and DB mapping** are confined to Persistence.
+- UI code uses Application controllers and models; it does not execute SQL.
+- Application controllers coordinate Domain objects and repositories.
+- The Domain imports neither Flutter nor persistence code.
+- SQL, database rows, and persistence-only models remain in Persistence.
+- Persistence may depend on Domain types to reconstruct learning state.
+
+The current controllers depend directly on concrete repository classes, and
+content persistence maps to models defined in the Application layer. These are
+current MVP boundaries; repository interfaces have not been introduced.
 
 ---
 
-## Architecture Notes
+## Application composition
 
-* The Domain is presented as a single block at the global level; its internal structure is detailed in the following diagrams.
-* The Application acts as an orchestrator between the UI, Domain, and Persistence layers.
-* Utility functions are intentionally excluded from the explicit dependency diagram to preserve readability.
+`AppDependencies` is the composition root. It opens and migrates the database,
+constructs the repositories, controllers, and content renderer, and owns the
+database lifetime.
 
-### Notes on the Chapter Concept
-
-* Words and sentences are organised by chapter. This chapter concept only exists in `StatsScreen` and `HomeScreen`.
-* Chapters structure content for the user, but play no role in the learning logic and are therefore ignored by sessions and the domain.
+The current `main.dart` only validates this initialisation and then disposes the
+dependencies. Once the Flutter interface is connected, the same dependency
+container must remain alive for the application lifetime.

@@ -1,187 +1,87 @@
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# SQLite Database
+# SQLite database
 
 ## Purpose
 
-Describe the structure and main relationships of the SQLite database used by the Persistence layer.
-
-The database stores persistent application data such as:
-
-* exercises and their progression,
-* learning content,
-* sentence groups,
-* exercise history,
-* session results.
-
-Runtime objects such as `Session` and `Exercise` are not stored directly.
-
----
-
-## Schema Overview
+The SQLite schema stores learning content, exercise progression, answer
+history, session statistics, and the snapshot required to resume an unfinished
+session.
 
 ```mermaid
-flowchart LR
-
-    subgraph Exercises
-        EXERCISE["exercise"]
-        SRS["srs_state"]
-        WORD["word_exercise"]
-        SENTENCE_EX["sentence_exercise"]
-        HISTORY["exercise_history"]
-
-        EXERCISE --> SRS
-        EXERCISE --> WORD
-        EXERCISE --> SENTENCE_EX
-        EXERCISE --> HISTORY
-    end
-
-    subgraph Content
-        CONTENT["content"]
-        VALUES["field_value"]
-        DEFINITION["field_definition"]
-        MEDIA["media"]
-
-        CONTENT --> VALUES
-        DEFINITION --> VALUES
-        VALUES --> MEDIA
-    end
-
-    subgraph Sentences
-        GROUP["sentence_group"]
-        INSTANCE["sentence_instance"]
-        STATE["sentence_state"]
-
-        GROUP --> INSTANCE
-        INSTANCE --> STATE
-    end
-
-    subgraph Sessions
-        RESULT["session_result"]
-        COUNTS["session_result_status_count"]
-
-        RESULT --> COUNTS
-    end
-
-    WORD --> CONTENT
-    SENTENCE_EX --> GROUP
-    INSTANCE --> CONTENT
+flowchart TD
+    CONTENT["Content and media"] --> EXERCISES["Word or sentence exercises"]
+    SENTENCES["Sentence groups and state"] --> EXERCISES
+    EXERCISES --> HISTORY["Answer history"]
+    EXERCISES --> SESSION["Session result and resume snapshot"]
 ```
 
-The schema is organised around four main areas:
+This is an aggregate view rather than a table-level entity diagram. The
+version 1 schema is normalized across the following tables.
 
-* **Exercises** — persistent exercise identity and SRS state.
-* **Content** — generic content and its fields.
-* **Sentences** — groups, sentence instances and sentence-level progression.
-* **Sessions** — persistent results produced by completed sessions.
+## Schema areas
 
----
+| Area | Tables | Role |
+|---|---|---|
+| Exercise | `exercise`, `srs_state`, `word_exercise`, `sentence_exercise` | Stable identity, subtype data, and one SRS state per exercise |
+| Sentence | `sentence_group`, `sentence_instance`, `sentence_state` | Group structure, content references, and per-sentence progress |
+| Content | `content`, `field_definition`, `field_value`, `media` | Ordered typed fields and local media metadata |
+| History | `exercise_history` | Immutable submitted-answer events, optionally tied to a sentence instance |
+| Session | `session_result`, `session_result_status_count`, `active_session_exercise` | Aggregate statistics and unfinished-session snapshots |
 
-## Exercises
+The repository model expects each `exercise` to have one `srs_state` row and
+exactly one subtype row. Primary keys prevent duplicate rows of either kind,
+but SQLite does not enforce their required existence or subtype exclusivity. A
+`word_exercise` points directly to content. A `sentence_exercise` points to one
+unique sentence group, whose instances each point to content and own one
+`sentence_state`.
 
-An exercise is represented by a base `exercise` row and a type-specific row:
+## Persistent and reconstructed state
 
-* `word_exercise`
-* `sentence_exercise`
+The database stores enough information to reconstruct domain aggregates, but it
+does not serialize an in-memory object graph.
 
-The common identity is stored in `exercise`, while type-specific data is stored in the corresponding table.
+- Exercise identity, subtype configuration, and SRS values are persistent.
+- `next_review` is stored so SQL can select due exercises, while the domain
+  reconstructs its value from `lastReview + interval` rather than reading that
+  column as independent state.
+- Normal exercise loading derives `newExercise` versus `toReview` from the
+  existence of answer history.
+- An unfinished session stores its exact per-exercise status and remaining
+  sentence `trainingCount` in `active_session_exercise`.
+- `Session` and `SessionScheduler` instances are reconstructed in memory and
+  are never stored directly.
+- Session results remain after completion; active-session rows are removed.
 
-Each exercise has exactly one `srs_state`.
+## Referential integrity
 
-Exercise responses are recorded separately in `exercise_history`, allowing multiple history entries for the same exercise.
+Foreign keys are enabled for every native connection by
+`PsittaSqliteOpenFactory`, because SQLite's foreign-key setting belongs to a
+connection rather than to the database file.
 
----
+Owned rows generally use `ON DELETE CASCADE`, including SRS state, subtype rows,
+exercise history, sentence instances and state, session status counts, and
+active-session snapshots. Content and media references are shared references
+and do not cascade from the referencing exercise or field.
 
-## Content
+The database also enforces that one sentence group is associated with at most
+one `sentence_exercise` through a unique constraint.
 
-Content is stored independently from exercises.
+## Opening and migration
 
-```mermaid
-flowchart LR
-    CONTENT["content"] --> VALUES["field_value"]
-    VALUES --> DEFINITION["field_definition"]
-    VALUES --> MEDIA["media"]
-```
+`SqliteDatabase.open()` is idempotent for an already open wrapper:
 
-A `content` item is composed of one or more field values.
+1. resolve the application-support directory;
+2. create `<application-support>/psitta.db` through the custom native factory;
+3. initialise `sqlite_async`;
+4. read `PRAGMA user_version`;
+5. apply each newer registered migration in version order;
+6. update `user_version` in the same transaction as its migration.
 
-`field_definition` describes what a field represents, while `field_value` stores the value associated with a particular content item.
+If initialisation or migration fails, the newly created database object is
+closed and the error is rethrown. `close()` releases it and resets the wrapper,
+allowing a later call to reopen the database.
 
-Media are stored as references to files rather than as binary data inside the database.
-
----
-
-## Sentences
-
-Sentence exercises operate on groups of sentence instances.
-
-```mermaid
-flowchart LR
-    EXERCISE["sentence_exercise"]
-    GROUP["sentence_group"]
-    INSTANCE["sentence_instance"]
-    STATE["sentence_state"]
-
-    EXERCISE --> GROUP
-    GROUP --> INSTANCE
-    INSTANCE --> STATE
-```
-
-A `sentence_group` contains several `sentence_instance` objects.
-
-Each instance has its own `sentence_state`, which tracks sentence-level exposure independently from the exercise's `srs_state`.
-
----
-
-## Session Results
-
-Sessions are runtime objects and are not persisted.
-
-Only their results are stored:
-
-```mermaid
-flowchart LR
-    RESULT --> COUNTS["session_result_status_count"]
-```
-
-`session_result` stores the global result of a session, while `session_result_status_count` stores the number of exercises associated with each resulting status.
-
----
-
-## Referential Integrity
-
-Foreign keys are enabled in SQLite.
-
-`ON DELETE CASCADE` is used for data that is owned by another entity, such as:
-
-* an exercise and its SRS state,
-* an exercise and its history,
-* a sentence group and its instances,
-* a sentence instance and its state,
-* a session result and its status counts.
-
-References to shared `content` do not cascade. Deleting content therefore does not automatically delete the exercises that reference it.
-
----
-
-## Runtime vs Persistent Data
-
-The database does not reproduce the Domain object graph exactly.
-
-```mermaid
-flowchart LR
-    DOMAIN["Domain runtime"]
-    DB["SQLite"]
-
-    DOMAIN -->|"persistent state"| DB
-```
-
-The database stores the information required to reconstruct and continue the application, rather than temporary runtime objects.
-
-In particular:
-
-* `Session` is not persisted.
-* `Exercise` runtime state is not persisted directly.
-* `SRSState` is persisted.
-* Exercise history is persisted.
-* Session results are persisted.
+The only registered migration is currently `V1InitialSchema` with version 1.
+Future schema changes must be added as new ordered migrations rather than by
+editing databases that may already exist.

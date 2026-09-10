@@ -13,107 +13,102 @@
 ## 📄 architecture/application_layer/application.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/application.md`
+# Application layer
 
 ## Purpose
 
-Describe the **Application / Controllers** layer, which coordinates:
-
-* actions coming from the UI,
-* business logic from the **Domain** (sessions, exercises),
-* **Persistence** (loading and saving via repositories).
-
-This diagram does not describe the UI or SQL details — only the **structural dependencies**.
+The Application layer coordinates actions coming from the UI, business logic
+from the Domain, and storage operations exposed by Persistence. It contains no
+Flutter widgets and no SQL.
 
 ---
 
 ## Diagram
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace Application {
-  class HomeController
-  class SessionController
-  class StatsController
-  class SettingsController
-}
-
-namespace Domain {
-  class Session
-  class Exercise
-  class WordExercise
-  class SentenceExercise
-}
-
-
-%% Domain inheritance
-Exercise <|-- WordExercise
-Exercise <|-- SentenceExercise
-
-%% Application -> Domain
-HomeController --> SessionController : starts sessions
-SessionController --> Session : manages
-SessionController --> Exercise : produces/consumes
-
-%% Application -> Persistence
-SessionController --> Repositories : **load**<br/> words, groups
-SessionController --> Repositories : **load/save** SRS
-
-StatsController --> Repositories: read
-
-SettingsController --> Repositories : read/write config
+flowchart TD
+    SESSION["SessionController"] --> DOMAIN["Session"]
+    SESSION --> REPOSITORIES["Session and Exercise repositories"]
+    SESSION --> CONTENT["ContentController"]
+    CONTENT --> CONTENT_REPOS["Content and Media repositories"]
+    STATS["StatisticController"] --> STAT_REPOS["Session and History repositories"]
 ```
 
 ---
 
-## Reading the Diagram
+## Controllers
 
-### Controllers (Application)
+### `SessionController`
 
-* `HomeController`: entry-point logic (starting a session, application-side navigation).
-* `SessionController`: orchestrates the flow of a session (exercise and session creation; sending `Content` objects to the UI and collecting user input; session teardown).
-* `StatsController`: computes and exposes statistics from persisted data, without depending on sessions or the exercise runtime.
-* `SettingsController`: exposes and modifies configuration (e.g. SRS parameters).
+`SessionController` owns at most one active `Session`. It implements the
+application workflow for:
 
-### Domain
+- loading due and new exercises of the requested session type;
+- starting or resuming a session;
+- loading the content selected by the current exercise;
+- previewing an interval and submitting a grade;
+- pausing or ending the session;
+- persisting progression after each accepted answer.
 
-* `Session` orchestrates the exercises of a session.
-* `Exercise` is an abstract **runtime** object used during a session. `WordExercise` and `SentenceExercise` are two specialisations.
+Exercise limits and SRS parameters currently come from the default `SRSConfig`
+owned by the controller.
 
-### Persistence
+### `ContentController`
 
-Controllers access data through **repositories**:
+`ContentController` loads renderable `Content` by identifier and resolves
+`Media` by SHA-256. It is used both by session workflows and by the UI media
+resolver.
 
-SQL, DB mapping, and table definitions are confined to the Persistence diagram.
+### `StatisticController`
+
+`StatisticController` builds statistics from persisted session results and
+answer history. It exposes session-level and exercise-level aggregates, with
+optional half-open date ranges.
 
 ---
 
-## Architecture Rules
+## Application models
 
-* The UI calls controllers; it never calls the Domain or Persistence directly.
-* `StatsController` does not depend on the runtime (sessions/exercises) — only on repositories.
-* `SessionController` orchestrates sessions and delegates persistence to repositories (no SQL here).
-* The Domain remains independent of the Flutter UI layer.
+The Application layer owns models intended for presentation:
+
+- `Content`, `Field`, `FieldDefinition`, and `FieldValue` describe ordered
+  renderable content;
+- `Media` identifies a local media resource;
+- `SessionStatistics` and `ExerciseStatistics` expose calculated aggregates.
+
+These models are not learning entities. The Domain only manipulates the content
+identifier selected by an exercise.
 
 ---
 
-## Note on Controller Lifecycle
+## Session workflow
 
-**Controllers** are **long-lived** objects, created at application startup and shared across screens.
+For a new session, the controller loads a limited set of due and new exercises,
+constructs and starts the Domain session, then persists its initial resumable
+state. After each answer, the Domain is updated first and `SessionRepository`
+stores the resulting exercise, history, and session result atomically. It also
+refreshes the resume snapshot, or removes it when the session has finished.
 
-* They hold dependencies (repositories, configuration).
-* They **do not represent** an ongoing session.
-* They create and destroy **Session** instances on demand, parameterised by `SessionType`.
+Pausing releases the in-memory session after updating its snapshot. Resuming
+reconstructs a new Domain `Session` from persisted progression and the snapshot.
 
-**Sessions** are **ephemeral** objects, scoped to the duration of a single learning session.
+---
 
-This decoupling allows multiple sessions to be run sequentially without recreating controllers, and ensures a clear lifecycle management.
+## Lifecycle and boundaries
 
-* The Application layer knows neither `Widget`, nor Flutter, nor `BuildContext`.
+Controllers are constructed once by `AppDependencies` and are intended to be
+shared by the future screens. A Domain `Session`, by contrast, exists only while
+a learning session is active.
+
+- The UI calls controllers rather than repositories.
+- Controllers decide when to load and persist data, but learning transitions
+  remain in the Domain.
+- Persistence models and SQLite rows never enter the Application layer.
+- Controllers currently depend on concrete repositories; no repository
+  interface abstraction exists yet.
+
 ````
 
 ---
@@ -121,106 +116,94 @@ This decoupling allows multiple sessions to be run sequentially without recreati
 ## 📄 architecture/domain_layer/domain.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/domain.md`
+# Domain layer
 
 ## Purpose
 
-Describe the **core business model** and the **general flow** of the learning engine.
+The Domain contains the core learning model. It defines how sessions sequence
+exercises, how answers change progression, and which state is independent of
+the UI and database representation.
 
-This document establishes:
-
-* the project vocabulary,
-* the major responsibilities (`Session`, `Exercise`, content, progression),
-Implementation details are covered in:
-
-* `sessions.md` (lifecycle and orchestration),
-* `exercises.md` (exercise runtime and statuses),
-* `srs.md` (SRS progression + "exposure" progression via `SentenceState`).
+Details are distributed between [Sessions](sessions.md),
+[Exercises](exercises.md), and [SRS](srs.md).
 
 ---
 
-## Domain Diagram (useful view, not exhaustive)
+## Diagram
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace Runtime {
-  class Session
-  class ExerciseScheduler
-  class Exercise
-  class WordExercise
-  class SentenceExercise
-  class ExerciseStatus
-}
-
-namespace Progression {
-  class SRSConfig
-  class SRSState
-  class SentenceState
-}
-
-
-%% Inheritance
-Exercise <|-- WordExercise
-Exercise <|-- SentenceExercise
-
-%% Session
-Session "1" --> "1" ExerciseScheduler : orchestrates
-ExerciseScheduler "1" --> "0..*" Exercise : schedule
-Session "1" --> "1" SRSConfig : config
-
-%% Exercise core
-Exercise "1" --> "1" SRSState : srsState
-Exercise "1" --> "1" ExerciseStatus : status
-
-%% Sentence-specific progression
-SentenceExercise "1" --> "1..*" SentenceState : updates
+flowchart TD
+    SESSION["Session"] --> SCHEDULER["SessionScheduler"]
+    SCHEDULER --> EXERCISE["Exercise"]
+    EXERCISE --> SRS["SRSState"]
+    EXERCISE --> WORD["WordExercise"]
+    EXERCISE --> SENTENCE["SentenceExercise"]
+    SENTENCE --> GROUP["SentenceGroup and SentenceState"]
 ```
 
 ---
 
-## Quick Model Overview
+## Model overview
 
-### 1) Content
+### Runtime orchestration
 
-* In the domain, only the `contentId` is saved. The domain does not need to what the content is. 
-* `Exercise` have a getter to get the `contentId`. This id is used by the application layer to create the content for the UI.
-  * For `SentenceExercise`, the getter target the `contentId` of the current sentenceInstance in the group. (see: [exercise.md](/docs/architecture/domain_layer/exercises.md))
+`Session` owns one `SessionScheduler`, a shared `SRSConfig`, and the aggregate
+`SessionResult`. It delegates answer processing to the current exercise and
+does not load or persist data itself.
 
-### 2) Progression
+### Exercises
 
-* `SRSState` is **attached to `Exercise`** (not to `Word` or `SentenceExercise`). It manages inter-session progression logic.
-* `SentenceState` is **separate from the SRS** and exists **for each `Sentence`** within a `SentenceExercise`.
-* `SRSConfig` is provided by the `Session` and used for updates/previews through exercises.
+`Exercise` is the common runtime abstraction for `WordExercise` and
+`SentenceExercise`. It combines an intra-session status with the persistent SRS
+state of one learning task.
 
+Each submitted answer also produces an `ExerciseHistoryEntry`. New entries are
+buffered until Persistence stores them with the updated progression.
 
-### 3) Runtime
+### Progression
 
-* `Exercise` is a **stateful runtime object**: `status`, `srsState`, intra-session logic.
-* `WordExercise` and `SentenceExercise` only specialise the target and certain rules (allowed grades, `SentenceState` updates, etc.).
-* `Session` is an **orchestrator**: it sequences exercises using `ExerciseSchedule` and holds the `SRSConfig`.
+`SRSState` manages the interval and memory-model parameters associated with an
+exercise. `SentenceState` is separate: it tracks the exposure and performance
+of one sentence inside a sentence group.
 
-> Note: `SessionType` (see [sessions.md](sessions.md)) is an initialisation detail (validation/consistency) and is not a persistent state of `Session`.
+### Content
+
+The Domain does not know whether content contains text, HTML, images, audio, or
+video. Exercises expose an integer `contentId`, which the Application layer
+resolves into renderable content.
+
+For a sentence exercise, the content identifier belongs to the sentence
+instance currently selected from the group.
 
 ---
 
-## What the Domain Intentionally Ignores
+## Runtime and persistent state
 
-* Flutter UI (widgets, navigation, layout)
-* Persistence (SQL, schema, mapping)
-* "UX" application parameters (e.g. display preferences)
-* Organisation of content into "chapters" (this is an access/filtering structure on the Application/Stats side, not a runtime engine concern)
+Domain objects are not database models, but part of their state must survive
+between sessions:
+
+- exercise identity, subtype data, SRS state, and sentence state are stored;
+- answer history and session results are stored;
+- unfinished sessions store a minimal `ExerciseResume` for each exercise;
+- `Session` and `SessionScheduler` instances are reconstructed in memory.
+
+All conversions belong to Persistence. Domain code never imports DAOs, SQL, or
+persistence models.
 
 ---
 
-## Detail Distribution (to keep domain.md concise)
+## Domain boundaries
 
-* `Session` details (start/end, current, ordering, call constraints) → `sessions.md`
-* `Exercise` details (statuses, transition rules, allowed grades) → `exercises.md`
-* Progression details (`SRSState`, `SentenceState`, `Grade`, preview/apply) → `srs.md`
+The Domain intentionally ignores:
+
+- Flutter widgets, navigation, and presentation state;
+- SQL, transactions, and storage layout;
+- the structure and rendering of learning content;
+- repository queries and the selection limits used to build a session;
+- application-wide settings and synchronisation.
+
 ````
 
 ---
@@ -228,200 +211,114 @@ SentenceExercise "1" --> "1..*" SentenceState : updates
 ## 📄 architecture/domain_layer/exercises.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/exercises.md`
+# Exercises
 
 ## Purpose
 
-Describe the **role of exercises** in the learning engine.
+This document describes the role of an `Exercise`, its state during a session,
+and the differences between word and sentence exercises.
 
-This document specifies:
-
-* what an `Exercise` is,
-* how it evolves during a session,
-* how it interacts with progression mechanisms,
-* the invariants to respect.
-
-Temporal aspects and orchestration are described in [`sessions.md`](sessions.md).
+Temporal orchestration is described in [Sessions](sessions.md), while interval
+updates are described in [SRS](srs.md).
 
 ---
 
-## Role of an Exercise
-
-An `Exercise` is a **stateful runtime object**.
-
-It represents:
-
-* a **user interaction** with learning content,
-* within the context of a **given session**.
-
-An exercise:
-
-* is **created before** the session starts,
-* is **temporary** (not persisted),
-* encapsulates logic that is **local** to that interaction.
-
----
-
-## Conceptual Diagram
+## Conceptual diagram
 
 ```mermaid
 %%{init: {"class": {"hideEmptyMembersBox": true}} }%%
 classDiagram
-  class Exercise
-  namespace Exercises {
-    class WordExercise
-    class SentenceExercise
-  }
-
-    class SentenceState
-
-  namespace Answer {
-    class ExerciseAnswer
-    class RealExerciseAnswer
-    class PreviewExerciseAnswer
-  }
-
-  namespace Other {
-    class SRSState
-    class ExerciseStatus
-  }
-
-  namespace Sentences {
-    class SentenceGroup
-    class SentenceInstance
-  }
-  
-
     Exercise <|-- WordExercise
     Exercise <|-- SentenceExercise
-
-    Exercise "1" --> "1" ExerciseStatus : status
-    Exercise "1" --> "1" SRSState : srsState
-
-
-    SentenceInstance "1" --> "1..*" SentenceState : updates
-    SentenceExercise "1" --> "1" SentenceGroup
-    SentenceGroup "1" --> "1..*" SentenceInstance
-
-    ExerciseAnswer <|-- RealExerciseAnswer
-    ExerciseAnswer <|-- PreviewExerciseAnswer
-
-    Exercise ..> ExerciseAnswer : submit / preview answer
-
+    Exercise --> SRSState
+    Exercise --> ExerciseStatus
+    Exercise ..> ExerciseAnswer
+    SentenceExercise --> SentenceGroup
+    SentenceGroup --> SentenceInstance
+    SentenceInstance --> SentenceState
 ```
 
 ---
 
-## General Structure of an Exercise
+## General role
 
-An `Exercise` encapsulates:
+An exercise represents one learning task inside a session. It contains:
 
-* a **local intra-session state** (`ExerciseStatus`),
-* a **progression state** (`SRSState`),
-* logic for reacting to user responses.
+- a stable persisted identifier;
+- an `ExerciseStatus` used by the session scheduler;
+- an `SRSState` shared across sessions;
+- answer-history entries waiting to be persisted.
 
-It knows nothing about:
-
-* the global session,
-* the UI,
-* persistence.
-
----
-
-## ExerciseStatus
-
-`ExerciseStatus` describes the **current state** of an exercise during the session.
-
-It is used by:
-
-* the exercise (to manage its transitions),
-* the Scheduler (to orchestrate the presentation order).
-
-Typical status examples: not yet attempted, new exercise, already answered, completed.
+The object itself never accesses the database or UI. Repositories reconstruct
+it from persistent state before a session and save its updated progression
+after an answer.
 
 ---
 
-## User Interaction: ExerciseAnswer
+## Answers and status
 
-User interactions are modelled by the `ExerciseAnswer` type.
+A submitted answer contains a grade and timestamp. The exercise applies it to
+its progression, records history, and updates its session status. A preview
+answer runs the interval calculation without changing state.
 
-An exercise can receive:
+The current statuses are:
 
-* the **submitted response** (`SubmittedExerciseAnswer`):
-  * resulting from an actual user interaction,
-  * applied to the exercise and SRS state.
+| Status | Meaning |
+|---|---|
+| `newExercise` | The exercise has no previous answer history |
+| `toReview` | A previously answered exercise is entering a review session |
+| `learning` | A new exercise is repeating within the session |
+| `relearning` | A reviewed exercise is repeating after a failure |
+| `consolidating` | A sentence exercise is completing additional training |
+| `completed` | No more presentation is required in this session |
 
-* a **hypothetical response** (`PreviewExerciseAnswer`):
-  * used to simulate interval evolution,
-  * with no side effects whatsoever.
-
-The exercise is responsible for:
-* validating that the response is permitted,
-* delegating the progression update,
-* updating its intra-session state.
-
----
-
-## Exercise Specialisations
-
-### WordExercise
-
-A `WordExercise`:
-
-* targets a `ContentId`,
-* uses its `SRSState`.
-
-It does not manipulate any `SentenceState`.
-
-### SentenceExercise
-
-A `SentenceExercise`:
-
-* has its own `SRSState` (at the group level),
-* targets a **group of sentences** (`SentenceGroup`),
-* The `SentenceGroup` is composed of a list of `SentenceInstance`
-* Each `SentenceInstance` Have:
-  * his own `ContentId`
-  * a `SentenceState` updated by the `SentenceExercise`
-
-
-Using a group of sentences allows:
-
-* a single **SRS** state to cover several grammatically related sentences,
-* the user to be exposed to many sentences without compromising **SRS** quality.
+The base exercise flow becomes complete when it has left the SRS learning phase
+and its next review is beyond the configured day boundary. A sentence exercise
+may replace this completion with a consolidation phase. The session stops
+scheduling an exercise only after its final completion.
 
 ---
 
-## Content 
+## `WordExercise`
 
-### Content
+A word exercise references one `contentId` and uses one SRS state. It accepts
+all grades defined by the current model.
 
-Each Words and Sentences have their own `ContentId`.
-
-- A `ContentId` is used by the application layer to create the content needed for the UI.
-- The domain, doen't need to know the content itself, because no logic have to be done on it.
-
----
-
-## Core Invariants
-
-* An exercise is always temporary.
-* An exercise never persists any state.
-* All progression updates go through an exercise.
-* The session never directly modifies an exercise.
-* An exercise knows neither the UI nor persistence.
+The Domain does not require the referenced content to be a literal word. The
+name identifies the product use of this exercise type, while rendering remains
+an Application and UI responsibility.
 
 ---
 
-## What the Exercise Intentionally Ignores
+## `SentenceExercise`
 
-An exercise ignores:
+A sentence exercise references one `SentenceGroup` and has one group-level SRS
+state. The group contains one or more `SentenceInstance` objects, each with its
+own `contentId` and `SentenceState`.
 
-* the global session sequencing,
-* user parameters,
-* the origin of data (DB, API),
+Before each answer, the exercise selects the sentence with the lowest state
+score. This prioritises unseen, failed, or less successful sentences while the
+group remains one scheduled exercise.
+
+Sentence exercises accept `again`, `medium`, and `good`; `hard` and `easy` are
+not available. Once the group-level SRS phase finishes, the exercise may enter
+`consolidating` until the configured number of successful training answers has
+been reached. Consolidation updates sentence state but not the group SRS.
+
+---
+
+## Persistence boundary
+
+An answer may change several related values: SRS state, sentence state, history,
+and session state. The exercise only produces those changes in memory.
+`SessionRepository` and `ExerciseRepository` are responsible for storing them
+within the surrounding transaction.
+
+The minimal transient state needed to resume an unfinished session is exposed
+through `ExerciseResume`: exercise identifier, status, and the remaining
+sentence training count when applicable.
 
 ````
 
@@ -430,225 +327,120 @@ An exercise ignores:
 ## 📄 architecture/domain_layer/sessions.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/sessions.md`
+# Sessions
 
 ## Purpose
 
-Describe the **role of sessions** in the learning engine and their **lifecycle**.
+This document describes the lifecycle of a learning `Session`, how it selects
+exercises, and how unfinished sessions can be resumed.
 
-This document specifies:
-
-* what a `Session` is,
-* what it does and does not do,
-* how it interacts with exercises,
-* the invariants to respect when using it.
-
-Internal exercise details are described in [`exercises.md`](exercises.md).
+Exercise-specific behaviour is described in [Exercises](exercises.md).
 
 ---
 
-## Role of a Session
-
-A `Session` is a **runtime orchestrator**.
-
-It is responsible for:
-
-* the temporal sequencing of exercises,
-* managing the start and end of a session,
-* collecting a global result.
-
-It is **not responsible** for:
-
-* SRS logic,
-* response evaluation logic,
-* exercise creation,
-* display.
-
----
-
-## Conceptual Diagram
+## Lifecycle
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace Answer {
-  class ExerciseAnswer
-  class SubmittedExerciseAnswer
-  class PreviewExerciseAnswer
-}
-    class SessionType
-    class Session
-    class Exercise
-    class SessionResult
-    class SRSConfig
-
-    class ExerciseScheduler
-
-    
-
-    Session --> ExerciseScheduler : Orchestrate
-    Session <-- SessionType : Initialisation
-
-    ExerciseScheduler "1" --> "0..*" Exercise : Schedule
-    Session "1" --> "1" SRSConfig : config
-    Session "1" --> "1" SessionResult : result
-
-    ExerciseAnswer <|-- SubmittedExerciseAnswer
-    ExerciseAnswer <|-- PreviewExerciseAnswer
-
-    Session ..> ExerciseAnswer : submit / preview
+stateDiagram-v2
+    [*] --> Created
+    Created --> Active: beginSession
+    Active --> Snapshot: pause and persist
+    Snapshot --> Active: reconstruct and resumeSession
+    Active --> Ended: endSession
+    Ended --> [*]
 ```
 
----
-
-## Session Lifecycle
-
-A session follows a **strict lifecycle**:
-
-1. **Creation**
-
-   * A session is created with:
-
-     * a list of `Exercise` objects,
-     * a `SessionType`,
-     * a `SRSConfig`.
-   * No exercise is yet active.
-
-2. **Start**
-
-   * The session is explicitly started (`begin`).
-   * The first exercise becomes current.
-
-3. **Execution**
-
-   * The session:
-
-     * ask the `ExerciseShceduler` for the next exercise,
-     * is called with user responses (`ExerciseAnswer`) by the application layer,
-     * delegates processing to exercises,
-
-4. **End**
-
-* The session can terminated by the user at any moment
-* `Session.isSessionFinished()` tell you when there are no exercise left.
-* When a session is terminated no exercise can answered anymore.
-* A final `SessionResult` is produced when the session is terminated.
+`Snapshot` represents persisted resume data; it is not a state stored inside
+the Domain `Session` object.
 
 ---
 
-## Exercise Sequencing
+## Construction
 
-The `ExerciseScheduler`:
+A session receives:
 
-* holds a **pre-existing list of exercises** 
-* maintains a **current exercise**,
-* determines the presentation order based on:
+- a preloaded list of exercises;
+- a `SessionType` (`wordSession` or `sentenceSession`);
+- one `SRSConfig` shared by those exercises;
+- optionally, an existing `SessionResult` when resuming.
 
-  * exercise state (`ExerciseStatus`, `SRSState`),
-  * simple orchestration rules.
-
-The Scheduler:
-
-* **observes** exercise state,
-* **never directly modifies** their internal logic.
+Construction verifies that every exercise matches the requested session type.
+The session does not create exercises and does not decide which due or new
+exercises enter the list.
 
 ---
 
-## Interaction with Exercises
+## Execution
 
-When a user response is submitted:
+`beginSession` records the start time and selects the first exercise. For each
+submitted answer, the session:
 
-1. The session receives an `ExerciseAnswer`.
-2. It delegates the response to the current exercise.
-3. The exercise:
+1. counts the answer under the exercise's current status;
+2. delegates the state change to the exercise;
+3. updates the number of uniquely completed exercises;
+4. asks the scheduler for the next exercise.
 
-   * updates its state,
-   * updates the progression mechanisms.
-4. The session maintains exercise ordering, updates `SessionResult`, then selects the next exercise.
+Interval previews are delegated to the current exercise and leave both the
+exercise and session result unchanged.
 
-The session does not know:
-
-* the meaning of a response (`Grade`, durations),
-* evaluation or progression rules.
-
----
-
-## Preview vs Submitted Submission
-
-The session distinguishes two types of user interactions:
-
-* **Real submission** (`SubmittedExerciseAnswer`)
-  * modifies the exercise and SRS state,
-  * updates `SessionResult`,
-  * triggers persistence on the application side.
-
-* **Preview** (`PreviewExerciseAnswer`)
-  * simulates the theoretical interval,
-  * has no side effects,
-  * modifies neither the exercise nor the session.
-
-This distinction guarantees that:
-* calculation logic is unique,
-* the Domain state is never modified by an exploratory action.
+`endSession` records the end time and may be called before every exercise is
+complete. Once ended, the session cannot accept another answer. An empty
+exercise list produces a session that is immediately finished after starting.
 
 ---
 
-## SessionType
+## Exercise scheduling
 
-A `SessionType` represents the **pedagogical intent** of the session.
+`SessionScheduler` separates exercises into two groups:
 
-It is used:
+- `learning` and `relearning` exercises, ordered by their next review time;
+- immediately available `newExercise`, `toReview`, and `consolidating`
+  exercises, considered in shuffled order.
 
-* during initialisation only,
-* to validate the consistency of the provided exercises,
-* to qualify the session from a user and statistical perspective.
+A learning exercise takes priority once its short interval is due. Otherwise,
+an immediately available exercise is selected. If only learning work remains,
+the earliest exercise is selected even when its interval has not fully elapsed.
 
-It is **not a long-lived state** of the session
-and does not influence its internal behaviour after initialisation.
-
----
-
-## SessionResult
-
-A `SessionResult` is a **summary object**.
-It is created during initialisation and updated after each response.
-
-It aggregates:
-
-* counters (exercises processed, successes, failures),
-* timing information,
-* global progression data.
-
-It contains:
-
-* no business logic,
-* no evaluation rules.
+The scheduler reads exercise state but never applies answers itself.
 
 ---
 
-## Core Invariants
+## Pause and resume
 
-* A session orchestrates exercises — it does not create them.
-* A session contains no SRS logic and no response evaluation logic.
-* A session does not know the detailed pedagogical content.
-* All progression updates go through an exercise.
-* A session can only be started once.
-* A terminated session can no longer accept responses.
-* The application layer observes session state only through explicit getters (to ensure consistency and facilitate persistence).
+The Domain exposes one `ExerciseResume` per exercise. When the Application
+pauses a session, Persistence stores these snapshots with the intermediate
+`SessionResult` and releases the in-memory object.
+
+To resume, Persistence reloads each exercise's current progression, restores
+its saved status and optional sentence training count, and constructs a new
+`Session`. `resumeSession` then selects the next exercise without changing the
+original start time.
 
 ---
 
-## What the Session Intentionally Ignores
+## `SessionResult`
 
-The session ignores:
+`SessionResult` stores the session type, start and end times, the number of
+unique completed exercises, and answer counts grouped by exercise status. It is
+used both for statistics and as the persistent identity of an unfinished
+session.
 
-* UI and screens,
-* persistence,
-* user parameters,
-* organisation of content into chapters.
+The result is an aggregate only. It does not contain exercise evaluation or SRS
+logic.
+
+---
+
+## Boundaries
+
+- A session orchestrates exercises but does not load, create, or persist them.
+- Exercise and SRS rules remain inside the exercise objects.
+- The session knows content only through the identifier exposed by its current
+  exercise.
+- Repository access and transaction boundaries belong to the Application and
+  Persistence layers.
+
 ````
 
 ---
@@ -656,225 +448,17 @@ The session ignores:
 ## 📄 architecture/domain_layer/srs.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/srs.md`
+# Spaced repetition system
 
 ## Purpose
 
-Describe the **functioning of the Spaced Repetition System (SRS)** and its usage rules within the learning engine.
-
-This document specifies:
-
-* the role of the SRS,
-* the responsibilities of the classes involved,
-* the distinction between intra-session and inter-session behaviour,
-* persistence rules.
-
----
-
-## Role of the SRS
-
-The SRS is responsible for:
-
-* representing the memorisation state,
-* evolving that state after each response,
-* computing a **theoretical review interval**.
-
-The SRS:
-
-* has no concept of a session,
-* never decides when a review takes place — it only computes when a review would be optimal.
-
----
-
-## SRS Diagram
-
-```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace Runtime {
-  class Exercise
-  class WordExercise
-  class SentenceExercise
-}
-
-namespace Progression {
-  class SRSState
-  class SRSConfig
-  class SentenceState
-}
-
-namespace Answer {
-  class ExerciseAnswer
-  class RealExerciseAnswer
-  class PreviewExerciseAnswer
-}
-
-%% Inheritance
-Exercise <|-- WordExercise
-Exercise <|-- SentenceExercise
-
-ExerciseAnswer <|-- RealExerciseAnswer
-ExerciseAnswer <|-- PreviewExerciseAnswer
-
-%% Core relations
-Exercise "1" --> "1" SRSState : owns
-SentenceExercise "1..*" --> "1..*" SentenceState : updates
-
-%% SRS usage
-SRSState ..> ExerciseAnswer : apply / preview
-SRSState ..> SRSConfig : uses
-```
-
----
-
-## SRSState
-
-`SRSState` represents the memorisation state of an exercise.
-
-* Attached directly to `Exercise`.
-* Persisted.
-* Modified only as the result of a user response.
-
-Responsibilities:
-
-* interpret a user response (`ExerciseAnswer`),
-* evolve the memorisation state,
-* compute a theoretical review interval,
-* provide an interval simulation without side effects (preview).
-
-`SRSState` never directly consumes a `Grade`.
-It interprets an `ExerciseAnswer`, which encapsulates:
-* the grade (`Grade`),
-* The timestamp (the moment of the response),
-* and optionally timing information (step durations).
-
----
-
-## SRSConfig
-
-`SRSConfig` groups the parameters of the SRS model.
-
-* Provided to the `Session`.
-* Used when updating `SRSState`.
-* Contains no runtime logic.
-
----
-
-## SentenceState
-
-`SentenceState` represents the exposure/usage state of a sentence. It is updated by `SentenceExercise` objects (typically one state per sentence in the group), independently of the SRS: it does not compute a review interval but serves contextual progression tracking.
-
-Its role is to hold the information that allows `SentenceExercise` to choose which sentence to display — typically: the least shown / least successfully answered sentence in the group.
-
----
-
-## ExerciseAnswer
-
-The SRS does not process raw grades directly, but **modelled user responses**.
-
-`ExerciseAnswer` is a sealed type representing an interaction with an exercise:
-
-* `RealExerciseAnswer` corresponds to an actual user response and triggers a persisted update to `SRSState`.
-
-* `PreviewExerciseAnswer` represents a hypothetical response, allows simulation of interval evolution, and has **no side effects**.
-
-This distinction guarantees that:
-* preview never alters the persisted state,
-* every real SRS update is explicitly intentional.
-
----
-
-## Grade
-
-`Grade` represents the quality of a user response (e.g. failure, partial success, success). It is provided by the application layer, but its interpretation (effect on progression) is entirely managed by the exercise and the SRS.
-Not all grades are valid for every exercise type.
-
----
-
-## Intra-Session vs Inter-Session
-
-### Theoretical Interval
-
-After a response, the SRS computes an interval **independent of context**:
-
-* minutes,
-* hours,
-* days.
-
-### Intra-Session Usage
-
-The `Session` may use the interval to:
-
-* reorder exercises,
-* re-present an exercise within the session,
-* ignore intervals that exceed the session duration.
-
-The session:
-
-* never modifies the interval,
-* only applies an orchestration policy.
-
-### Inter-Session Usage
-
-Outside of a session:
-
-* the interval is used to schedule the next review,
-* no session logic is involved.
-
----
-
-## Practical Usage
-
-### Interval Preview
-
-The session can expose an **interval preview**:
-
-* without modifying `SRSState`,
-* using a `PreviewExerciseAnswer`,
-* with logic strictly identical to that of a real response,
-* for informational purposes: the user knows when they will see the same exercise again if they achieve a given grade.
-
-### Persistence: Fundamental Rule
-
-`SRSState` objects are persisted **after each valid user response**.
-
-* The Domain updates the SRS.
-* The application layer triggers persistence.
-* Sessions and exercises are never persisted.
-
-### Mobile Considerations
-
-* An interrupted session is abandoned.
-* Unfinished exercises are lost.
-* Already persisted `SRSState` objects remain valid.
-* Timing statistics are best-effort.
-
----
-
-## Invariants
-
-* The SRS computes only theoretical intervals.
-* The SRS has no concept of a session.
-* Every SRS update goes through an exercise.
-* Persistence is immediate after each response.
-````
-
----
-
-## 📄 architecture/overview.md
-
-````markdown
-[Documentation Index](/docs/index.md)
-
-# `docs/architecture/overview.md`
-
-## Purpose
-
-Describe the overall application architecture and the dependency rules between the main building blocks.
-This diagram provides a **macroscopic view** of the project; the internal details of each block are covered in the following diagrams.
+This document explains the role of the SRS inside the Domain and the distinction
+between exercise scheduling, sentence progression, and session orchestration.
+
+The exact formulas are documented in
+[SRS model mathematics](../../maths_and_srs/maths_srs.md).
 
 ---
 
@@ -882,109 +466,182 @@ This diagram provides a **macroscopic view** of the project; the internal detail
 
 ```mermaid
 flowchart TD
-    %% UI
-    UI["UI<br/>Screens / Widgets"]
-
-    %% Application
-    APP["Application<br/>Controllers"]
-
-    %% Domain (with internal structure)
-    subgraph DOM["Domain"]
-        DOM_SESS["<u>Sessions</u>"]
-        DOM_EXO["<u>Exercises</u>"]
-        DOM_SRS["SRS"]
-    end
-
-    %% Persistence
-    subgraph PERS["Persistence"]
-        REPO["Repositories"]
-        DB[(SQLite DB)]
-        REPO --> DB
-    end
-
-    %% Utils (transversal, no explicit dependencies)
-    UTILS["Utils<br/>Pure helpers"]
-
-    %% Main dependencies
-    UI --> APP
-    APP --> DOM
-    APP --> PERS
-
+    ANSWER["Grade and timestamp"] --> EXERCISE["Exercise"]
+    EXERCISE --> SRS["SRSState"]
+    SRS --> INTERVAL["Theoretical interval"]
+    INTERVAL --> SCHEDULER["SessionScheduler"]
+    EXERCISE -. "sentence exercise" .-> SENTENCE["SentenceState"]
 ```
 
 ---
 
-## Reading the Diagram
+## Role of `SRSState`
 
-### [UI](ui.md)
+Each exercise owns one `SRSState`. It stores the current interval, the last
+review time, the learning-step index, and the parameters used by the recall
+model. The next review time is derived from the last review and interval.
 
-The **UI** block groups all Flutter screens and widgets.
-It is solely responsible for rendering and handling user interactions.
+`SRSState` has two update modes:
 
-### [Application](application.md) / Controllers
+- **learning mode**, which uses short configured steps;
+- **review mode**, which computes a longer interval from the recall model.
 
-The **Application** block is the entry point for application logic.
-Controllers:
+A failed review returns the state to learning. A successful learning sequence
+graduates it to review mode.
 
-* receive user actions from the UI,
-* orchestrate business operations,
-* coordinate the use of the Domain and Persistence layers.
-
-### [Domain](domain.md)
-
-The **Domain** groups all business logic of the application.
-It is intentionally represented as a **single block**, but structured into conceptual sub-components:
-
-* **Exercises**
-  Represents the concrete exercises presented to the user.
-  Exercises are stateful runtime objects, created before the session starts and destroyed at its end.
-
-  The UI only knows exercises through a `Content`. An sentence exercise can have multiple content.
-
-* **Sessions**
-  Manages the organisation of exercises into learning sessions. It's the starting point of the domain.
-
-* **SRS**
-  Implements spaced repetition logic and progression state.
-
-The Domain is **independent of all technology** (UI, DB, Flutter, SQLite).
-
-### [Persistence](persistence.md)
-
-The **Persistence** block is responsible for storing and reconstructing Domain data.
-
-* **Repositories** expose a business-oriented data access interface.
-* The **SQLite database** handles physical storage.
-
-SQL, mapping (`toMap / fromMap`), and persistence details are confined to this block.
-
-### Utils
-
-The **Utils** block groups pure utility functions (dates, conversions, helpers).
-It is transversal and does not belong to the main dependency hierarchy.
+The SRS computes an interval but does not decide which exercises enter a
+session. Repository queries select due and new exercises, while
+`SessionScheduler` uses the resulting state to order exercises inside the
+session.
 
 ---
 
-## Dependency Rules
+## Configuration
 
-* The **UI** depends only on the **Application** layer.
-* The **Application** depends on the **Domain** and **Persistence** layers.
-* The **Domain** does not depend on any technical layer.
-* The **Persistence** contains no business logic.
-* **SQL and DB mapping** are confined to Persistence.
+`SRSConfig` groups the parameters shared by every exercise in one session:
+
+- recall target and model coefficients;
+- grade-dependent weights;
+- learning steps and interval multipliers;
+- maximum and graduation intervals;
+- day boundary;
+- limits on new and due exercises loaded for a session.
+
+`SessionController` currently uses a default in-memory configuration. There is
+no persisted or user-editable SRS configuration yet.
 
 ---
 
-## Architecture Notes
+## Answers and grades
 
-* The Domain is presented as a single block at the global level; its internal structure is detailed in the following diagrams.
-* The Application acts as an orchestrator between the UI, Domain, and Persistence layers.
-* Utility functions are intentionally excluded from the explicit dependency diagram to preserve readability.
+`SubmittedExerciseAnswer` changes progression. `PreviewExerciseAnswer` applies
+the same interval calculation to a copy and has no side effect.
 
-### Notes on the Chapter Concept
+| Grade | Quality | Successful |
+|---|---:|---|
+| `again` | 0 | no |
+| `hard` | 2 | no |
+| `medium` | 3 | yes |
+| `good` | 4 | yes |
+| `easy` | 5 | yes |
 
-* Words and sentences are organised by chapter. This chapter concept only exists in `StatsScreen` and `HomeScreen`.
-* Chapters structure content for the user, but play no role in the learning logic and are therefore ignored by sessions and the domain.
+Word exercises accept every grade. Sentence exercises deliberately expose only
+`again`, `medium`, and `good`.
+
+---
+
+## Sentence progression
+
+`SentenceState` is independent from `SRSState`. It records how often one
+sentence has been shown, its accumulated answer score, and whether it is
+currently learning. A sentence exercise uses this information to select the
+least-known sentence in its group.
+
+The group-level SRS determines when the sentence exercise is reviewed; the
+per-sentence state determines which example is presented.
+
+---
+
+## Persistence rule
+
+SRS state changes only after a submitted answer. The Application then asks
+Persistence to store the updated exercise state together with history and the
+current session state. Preview operations are never persisted.
+
+The distinction between enforced checks and assumed parameter constraints is
+documented in [SRS validity rules](../../maths_and_srs/invariant.md).
+
+````
+
+---
+
+## 📄 architecture/overview.md
+
+````markdown
+[Documentation index](../index.md)
+
+# Architecture overview
+
+## Purpose
+
+This document presents the main architectural blocks of Psitta and the
+dependency rules between them. Internal behaviour is described in the dedicated
+documents for each layer.
+
+---
+
+## Diagram
+
+```mermaid
+flowchart TD
+    UI["UI / Presentation"] --> APP["Application / Controllers"]
+    APP --> DOMAIN["Domain / Learning engine"]
+    APP --> PERSISTENCE["Persistence"]
+    PERSISTENCE --> DB[(SQLite)]
+    PERSISTENCE -. "reconstructs state" .-> DOMAIN
+```
+
+---
+
+## Reading the diagram
+
+### [UI](ui_layer/ui.md)
+
+The UI renders application content and will eventually expose the user
+interactions. The current implementation contains the content-rendering
+pipeline, but no screens or navigation.
+
+### [Application](application_layer/application.md)
+
+The Application layer exposes the use cases required by the UI. Its controllers
+coordinate sessions, content loading, statistics, and persistence operations.
+
+### [Domain](domain_layer/domain.md)
+
+The Domain contains the learning rules: sessions, exercises, scheduling, SRS
+state, sentence progression, grades, and answer history. It depends on neither
+Flutter nor SQLite.
+
+Learning content is represented by identifiers in the Domain. Its field and
+media structure belongs to the Application layer.
+
+### [Persistence](persistence_layer/persistence.md)
+
+Persistence stores content, exercises, progression, history, and session state.
+Repositories expose application-oriented operations while DAOs, mappers, and
+persistence models remain internal to the layer.
+
+### Utilities
+
+`lib/utils` contains pure conversion helpers shared by the Domain and
+Persistence layers, notably duration and timestamp conversions.
+
+---
+
+## Dependency rules
+
+- UI code uses Application controllers and models; it does not execute SQL.
+- Application controllers coordinate Domain objects and repositories.
+- The Domain imports neither Flutter nor persistence code.
+- SQL, database rows, and persistence-only models remain in Persistence.
+- Persistence may depend on Domain types to reconstruct learning state.
+
+The current controllers depend directly on concrete repository classes, and
+content persistence maps to models defined in the Application layer. These are
+current MVP boundaries; repository interfaces have not been introduced.
+
+---
+
+## Application composition
+
+`AppDependencies` is the composition root. It opens and migrates the database,
+constructs the repositories, controllers, and content renderer, and owns the
+database lifetime.
+
+The current `main.dart` only validates this initialisation and then disposes the
+dependencies. Once the Flutter interface is connected, the same dependency
+container must remain alive for the application lifetime.
+
 ````
 
 ---
@@ -992,117 +649,94 @@ It is transversal and does not belong to the main dependency hierarchy.
 ## 📄 architecture/persistence_layer/database.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/database.md`
+# SQLite database
 
 ## Purpose
 
-Physical counterpart of [`persistence.md`](persistence.md): how the concepts described in the Domain docs actually map onto SQLite tables (schema v1). This doc doesn't restate the schema column-by-column — it focuses on the relationships and the parts that aren't obvious just from reading the SQL or the diagram.
-
----
-
-## Diagram
+The SQLite schema stores learning content, exercise progression, answer
+history, session statistics, and the snapshot required to resume an unfinished
+session.
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace ExerciseAndSRS {
-  class exercise
-  class word_exercise
-  class sentence_exercise
-  class srs_state
-  class exercise_history
-}
-
-namespace ContentAndFields {
-  class content
-  class field_definition
-  class field_value
-  class media
-  class tag
-}
-
-namespace Sentences {
-  class sentence_group
-  class sentence_instance
-  class sentence_state
-}
-
-namespace SessionsAndStats {
-  class session_result
-  class session_result_status_count
-}
-
-exercise <|-- word_exercise
-exercise <|-- sentence_exercise
-exercise "1" --> "1" srs_state
-exercise "1" --> "0..*" exercise_history
-
-word_exercise "0..*" --> "1" content
-sentence_exercise "1" --> "1" sentence_group
-sentence_group "1" --> "1..*" sentence_instance
-sentence_instance "0..*" --> "1" content
-sentence_instance "1" --> "1" sentence_state
-
-content "1" --> "1..*" field_value
-field_definition "1" --> "1..*" field_value
-field_value "0..1" --> "0..1" media
-field_definition "0..*" --> "0..*" tag
-
-session_result "1" --> "0..*" session_result_status_count
+flowchart TD
+    CONTENT["Content and media"] --> EXERCISES["Word or sentence exercises"]
+    SENTENCES["Sentence groups and state"] --> EXERCISES
+    EXERCISES --> HISTORY["Answer history"]
+    EXERCISES --> SESSION["Session result and resume snapshot"]
 ```
 
----
+This is an aggregate view rather than a table-level entity diagram. The
+version 1 schema is normalized across the following tables.
 
-## Reading the Diagram
+## Schema areas
 
-### Exercise identity vs. Exercise runtime
+| Area | Tables | Role |
+|---|---|---|
+| Exercise | `exercise`, `srs_state`, `word_exercise`, `sentence_exercise` | Stable identity, subtype data, and one SRS state per exercise |
+| Sentence | `sentence_group`, `sentence_instance`, `sentence_state` | Group structure, content references, and per-sentence progress |
+| Content | `content`, `field_definition`, `field_value`, `media` | Ordered typed fields and local media metadata |
+| History | `exercise_history` | Immutable submitted-answer events, optionally tied to a sentence instance |
+| Session | `session_result`, `session_result_status_count`, `active_session_exercise` | Aggregate statistics and unfinished-session snapshots |
 
-`exercise`, `word_exercise`, `sentence_exercise`, `srs_state`, and `exercise_history` all describe the **persisted identity and progression** of an exercise — not the ephemeral runtime `Exercise` object from `exercises.md`, which is created on demand and never persisted.
+The repository model expects each `exercise` to have one `srs_state` row and
+exactly one subtype row. Primary keys prevent duplicate rows of either kind,
+but SQLite does not enforce their required existence or subtype exclusivity. A
+`word_exercise` points directly to content. A `sentence_exercise` points to one
+unique sentence group, whose instances each point to content and own one
+`sentence_state`.
 
-The pattern: `exercise` holds what's common (id, type, creation date); `word_exercise` / `sentence_exercise` hold what's specific to each kind, sharing `exercise`'s id as their own PK. `srs_state` and `exercise_history` do the same — one row of *current* state, plus an append-only log of every past grade. That's precisely why `history` got pulled out of `srs_state` into its own table: it's a growing log, not a piece of state, so it needed its own PK rather than living inside a 1:1 row.
+## Persistent and reconstructed state
 
-### Content is deliberately generic
+The database stores enough information to reconstruct domain aggregates, but it
+does not serialize an in-memory object graph.
 
-`content` + `field_definition` + `field_value` form a generic key/value model instead of one column per language or media type. This is what lets the same `content` table represent both a word and a sentence, and lets new field kinds (a new language, an audio field) be added without a schema migration.
+- Exercise identity, subtype configuration, and SRS values are persistent.
+- `next_review` is stored so SQL can select due exercises, while the domain
+  reconstructs its value from `lastReview + interval` rather than reading that
+  column as independent state.
+- Normal exercise loading derives `newExercise` versus `toReview` from the
+  existence of answer history.
+- An unfinished session stores its exact per-exercise status and remaining
+  sentence `trainingCount` in `active_session_exercise`.
+- `Session` and `SessionScheduler` instances are reconstructed in memory and
+  are never stored directly.
+- Session results remain after completion; active-session rows are removed.
 
-The one invariant to keep in mind: in `field_value`, exactly one of `text_value` / `media_id` is ever set — which one is dictated by the field's `type` on `field_definition`. Nothing in the DB enforces this; it's on the mapping layer to guarantee it. `media` rows are pointers to files on disk, not the files themselves.
+## Referential integrity
 
-### Sentences: two different "progression" mechanisms at two different levels
+Foreign keys are enabled for every native connection by
+`PsittaSqliteOpenFactory`, because SQLite's foreign-key setting belongs to a
+connection rather than to the database file.
 
-This is the trickiest part of the schema. There are **two SRS-like mechanisms, at two different granularities**:
+Owned rows generally use `ON DELETE CASCADE`, including SRS state, subtype rows,
+exercise history, sentence instances and state, session status counts, and
+active-session snapshots. Content and media references are shared references
+and do not cascade from the referencing exercise or field.
 
-* `srs_state` operates at the **group** level, via `sentence_exercise` — this is the *real* SRS: it's what schedules the next review of the exercise as a whole.
-* `sentence_state` operates at the **instance** level (one row per sentence in the group) — but it does **not** schedule anything. It only tracks how often / how successfully each individual sentence has been shown, so that when the group's exercise comes up for review, it can pick *which* sentence to actually display (least shown / least successful).
+The database also enforces that one sentence group is associated with at most
+one `sentence_exercise` through a unique constraint.
 
-So a `SentenceExercise` has exactly one real progression state (its `srs_state`), and as many `sentence_state` rows as it has sentences, purely to drive a "which one do I show" heuristic.
+## Opening and migration
 
-### Sessions are summarised, never stored
+`SqliteDatabase.open()` is idempotent for an already open wrapper:
 
-`session_result` / `session_result_status_count` only capture the *outcome* of a session (counts, timing) — never the session or its exercises. This matches `sessions.md`: sessions and exercises are never persisted; only what they produce (`srs_state`, `exercise_history`, `session_result`) survives beyond the session's lifetime.
+1. resolve the application-support directory;
+2. create `<application-support>/psitta.db` through the custom native factory;
+3. initialise `sqlite_async`;
+4. read `PRAGMA user_version`;
+5. apply each newer registered migration in version order;
+6. update `user_version` in the same transaction as its migration.
 
----
+If initialisation or migration fails, the newly created database object is
+closed and the error is rethrown. `close()` releases it and resets the wrapper,
+allowing a later call to reopen the database.
 
-## Repository Ownership
+The only registered migration is currently `V1InitialSchema` with version 1.
+Future schema changes must be added as new ordered migrations rather than by
+editing databases that may already exist.
 
-| Table(s) | Owner |
-|---|---|
-| `content`, `field_definition`, `field_value`, `tag`, `field_tag`, `media`, `word_exercise`, `exercise` (type `word`) | `WordRepository` |
-| `sentence_group`, `sentence_instance`, `sentence_state`, `sentence_exercise`, `exercise` (type `sentence`) | `SentenceRepository` |
-| `srs_state`, `exercise_history` | `SrsRepository` |
-| `session_result`, `session_result_status_count` | *(not yet listed in `persistence.md` — candidate `StatsRepository`)* |
-
-*(Chapters aren't modelled yet — out of scope for this schema version.)*
-
----
-
-## Structural Notes
-
-* `PRAGMA foreign_keys = ON` — every FK below is actually enforced, not just documentation.
-* Shared-PK tables (`word_exercise`, `sentence_exercise`, `srs_state`, `exercise_history` share... well, `exercise_history` has its own surrogate `id` since it's 1:many, but the 1:1 ones — `word_exercise`, `sentence_exercise`, `srs_state`, `sentence_state` — reuse their parent's PK) keep joins cheap and keep subtype-specific data physically separate.
-* `ON DELETE CASCADE` is used for **ownership** (deleting an `exercise` takes its `srs_state`/`exercise_history` with it; deleting a `sentence_group` takes its `sentence_instance`s with it) but not for plain **references** to shared data (`word_exercise.content_id`, `sentence_instance.content_id`) — deleting a `Content` doesn't ripple into the exercises that merely display it.
 ````
 
 ---
@@ -1110,183 +744,209 @@ So a `SentenceExercise` has exactly one real progression state (its `srs_state`)
 ## 📄 architecture/persistence_layer/persistence.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/persistence.md`
+# Persistence layer
 
 ## Purpose
 
-Describe the **Persistence** layer, responsible for storing and retrieving application data.
-
-This layer:
-
-* encapsulates **SQLite**,
-* implements the **repositories**,
-* handles **DB ↔ Domain mapping**,
-* isolates all technical decisions related to performance.
-
-No business logic should reside here.
-
-⚠️ Persistence only records states computed by the Domain.
+The Persistence layer stores application data, reconstructs Domain and
+Application models, and isolates the rest of the project from SQLite-specific
+details. It records state produced by the Domain; it does not implement
+learning rules.
 
 ---
 
-## Diagram
+## Architecture
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace Persistence {
-  class WordRepository
-  class SentenceRepository
-  class ExerciseRepository
-  class ChapterRepository
-  class SrsRepository
-  class SettingsRepository
-}
-
-class SQLiteDatabase
-
-WordRepository --> SQLiteDatabase
-SentenceRepository --> SQLiteDatabase
-ExerciseRepository --> SQLiteDatabase
-ChapterRepository --> SQLiteDatabase
-SrsRepository --> SQLiteDatabase
-SettingsRepository --> SQLiteDatabase
+flowchart TD
+    APP["Application"] --> REPOSITORIES["Repositories"]
+    REPOSITORIES --> DAOS["DAOs"]
+    REPOSITORIES --> MAPPERS["Mappers"]
+    DAOS --> DB[(SQLite)]
+    MAPPERS <--> MODELS["Domain and Application models"]
 ```
 
 ---
 
-## Repository Responsibilities
+## Main components
 
-### General Principle
+### Repositories
 
-A **repository** represents a **business concept used by the application**,
-not necessarily a single SQL table.
+Repositories expose operations aligned with application use cases. They
+coordinate DAOs and mappers, rebuild complete objects, and define transaction
+boundaries that span several tables.
 
-Each repository:
+See [Persistence repositories](repositories.md).
 
-* exposes business-oriented methods,
-* hides SQL,
-* returns only **Domain** objects.
+### DAOs
 
----
+DAOs contain SQL and operate on persistence models. Simple operations open
+their own `sqlite_async` transaction; aggregate writes may receive a transaction
+created by a repository.
 
-### Main Repositories
+### Persistence models
 
-#### `WordRepository`
+Persistence models represent normalized stored data. They contain database
+identifiers, scalar values, timestamps, and enum codes without business
+behaviour. They never leave the Persistence layer.
 
-* loads words by chapter,
-* loads due words (via SRS),
-* saves the SRS state of words.
+### Mappers
 
-#### `SentenceRepository`
+Mappers translate persistence models into Domain objects or Application content
+models and back. They handle structural conversion, not learning decisions.
 
-* loads sentences by group or by chapter,
-* used primarily for exercise generation.
+### Database
 
-#### `ExerciseRepository`
+The database component owns connection lifecycle, native connection
+configuration, schema migrations, and access to the shared
+`sqlite_async.SqliteDatabase` instance.
 
-* creates exercises using `WordRepository`, `SentenceRepository`, and `SrsRepository`,
-* exercises are not persisted, but created on demand by the application layer through the other repositories, which are themselves persisted.
-
-#### `ChapterRepository`
-
-* loads the pedagogical structure,
-* chapter order and content, metadata.
-
-#### `SrsRepository`
-
-* manages **SRSState**, **SRSConfig**, and **SentenceState**,
-* persists:
-
-  * progression states computed by the Domain,
-  * next review date,
-  * level / interval.
-
-👉 For the MVP, `SRSState`, `SRSConfig`, and `SentenceState` are intentionally grouped here (may be split later).
-
-#### `SettingsRepository`
-
-* global application parameters, e.g.:
-
-  * languages A / B,
-  * session size,
-  * user preferences,
-  * SRS parameters.
+See [SQLite database](database.md).
 
 ---
 
-## DB ↔ Domain Mapping
+## General flow
 
-Mapping between SQLite and the Domain is **confined to Persistence**.
+For a read, a repository asks one or more DAOs for normalized data, uses mappers
+to reconstruct the required object, and returns only that object to the
+Application layer.
 
-Two possible implementations:
+For a write, the Domain has already produced the new state. The repository maps
+it to persistence models and coordinates the necessary DAO operations.
 
-* private mapping inside the repository (recommended for MVP),
-* dedicated `Row` classes if complexity grows.
-
-In all cases:
-
-* no `Map<String, dynamic>` leaves the Persistence layer,
-* the Domain does not know the SQL schema.
-
----
-
-## Optimisations and Performance
-
-All technical optimisations are **exclusively managed within this layer**, including:
-
-* SQL indexes,
-* complex joins,
-* in-memory cache,
-* multi-table transactions.
-
-These optimisations can evolve **without impacting**:
-
-* the Domain,
-* Controllers,
-* the UI.
+The most important aggregate write occurs after an answer. One transaction
+stores the exercise progression, sentence progression when applicable, answer
+history, session result, and resumable exercise snapshots. This prevents the
+stored exercise and active session from describing different answers.
 
 ---
 
-## Key Implementation Boundaries ⚠️
+## Time representation
 
-### 1. Boundaries never to cross
-
-* ❌ SQL in Controllers
-* ❌ SQL in the Domain
-* ❌ `Map<String, dynamic>` outside Persistence
-
----
-
-### 2. Repository methods
-
-Methods must be:
-
-* oriented towards **use cases**,
-* not oriented towards **tables**.
-
-❌ `getAllWordsFromTable()`
-
-✔ `getDueWords(chapterId)`
+Durations and review lookup values are stored as integer microseconds.
+Date-time values are serialized as ISO-8601 UTC strings and converted back to
+local `DateTime` values when reconstructed. Repository date ranges use an
+inclusive start and exclusive end.
 
 ---
 
-### 3. Future evolution
+## Dependency rules
 
-* If statistics become complex → add a `StatsRepository`.
-* If the SRS evolves → modify only `SrsRepository`.
-* If the DB changes → Persistence absorbs the change.
-* If repositories become too large → add DAOs for CRUD operations.
+- Application code accesses stored data through repositories.
+- SQL remains in DAOs and migrations.
+- Persistence models and raw rows never cross the repository boundary.
+- The Domain never imports Persistence.
+- Repositories may depend on Domain types to reconstruct or store their state.
+- The database is opened and migrated before any repository is constructed.
+
+The current backend uses `sqlite_async` native connections and does not support
+the Flutter web target.
 
 ---
 
-## Golden Rule
+## Directory structure
 
-> **Everything related to "how it is stored" or "how it is fast"
-> belongs to Persistence, and to Persistence alone.**
+```text
+infrastructure/persistence/
+├── database/
+├── dao/
+├── mappers/
+├── models/
+└── repositories/
+```
+
+````
+
+---
+
+## 📄 architecture/persistence_layer/repositories.md
+
+````markdown
+[Documentation index](../../index.md)
+
+# Persistence repositories
+
+## Purpose
+
+Repositories are the application-facing API of the persistence layer. They
+combine DAO operations and mappers so callers work with domain or application
+objects rather than normalized SQLite rows.
+
+```mermaid
+flowchart LR
+    CONTROLLER["Controller"] --> REPOSITORY["Repository"]
+    REPOSITORY --> DAO["One or more DAOs"]
+    REPOSITORY --> MAPPER["Mapper"]
+    DAO --> DB[(SQLite)]
+```
+
+## Current repositories
+
+| Repository | Main responsibility |
+|---|---|
+| `ExerciseRepository` | Create, load, select, save, delete, and reset word or sentence exercise aggregates |
+| `SessionRepository` | Store results and resume snapshots, rebuild unfinished sessions, and coordinate answer transactions |
+| `ExerciseHistoryRepository` | Read submitted-answer history with exercise and half-open date filters |
+| `ContentRepository` | Create, load, update, and delete application content and its ordered field values |
+| `MediaRepository` | Resolve media metadata by SHA-256 |
+| `SentenceGroupRepository` | Create groups and instances, move instances, and delete sentence structures |
+
+## Exercise selection and persistence
+
+`ExerciseRepository.getDueExercises` selects rows whose `next_review` is not
+null and is at or before the supplied time. Results are ordered by earliest
+review and may be filtered by the persisted `word` or `sentence` type.
+
+`getNewExercises` selects exercises with no answer history, ordered by exercise
+identifier. When loaded normally, history existence determines the initial
+session status: `newExercise` or `toReview`.
+
+Saving an exercise updates its SRS state, sentence states when applicable, and
+all buffered history entries. `resetProgress` restores a new SRS state, removes
+history, and resets per-sentence progress.
+
+## Session aggregate
+
+`SessionRepository` owns the persistence boundary for session lifecycle:
+
+- `save` inserts a new `SessionResult` and all `ExerciseResume` snapshots;
+- `update` replaces an unfinished result and its snapshots when pausing;
+- `getActiveSession` reconstructs a session from persistent exercise state and
+  resume-specific status;
+- `saveAnswerProgress` atomically stores the answered exercise, history,
+  session result, and new snapshot set;
+- `completeSession` stores the final result and removes active snapshots;
+- `getList` returns session results for statistics.
+
+The repository receives an existing `ExerciseRepository` so answer persistence
+can reuse `saveInTransaction` without nesting independent transactions.
+
+## Content and sentence structure
+
+`ContentRepository` maps normalized `content`, `field_value`, and
+`field_definition` rows into application `Content` models. Media-valued fields
+include media metadata; HTML `media://` lookup is handled separately through
+`MediaRepository`.
+
+`SentenceGroupRepository` changes sentence-group structure but is not currently
+constructed by `AppDependencies`. The current composition root supports reading
+content during sessions, not an application workflow for creating learning
+material.
+
+## Boundary rules
+
+- Controllers use repositories, not DAOs.
+- Repositories define multi-table and multi-aggregate transaction boundaries.
+- DAOs and persistence models remain internal implementation details.
+- Repositories persist state produced by the domain; they do not decide grades,
+  intervals, or exercise transitions.
+
+The controller layer currently depends on concrete repository classes. This is
+an explicit MVP trade-off, not evidence that repository interfaces already
+exist.
+
 ````
 
 ---
@@ -1294,122 +954,71 @@ Methods must be:
 ## 📄 architecture/ui_layer/ui.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/ui.md`
+# UI presentation layer
 
 ## Purpose
 
-Describe:
-
-* the main screens of the application,
-* their functional role,
-* which **Controller** each screen uses.
-
-This diagram establishes the **UI ↔ Application contract**.
-
----
-
-## Diagram
+The implemented UI code is a content-rendering pipeline. It turns application
+`Content` models into one Flutter widget for the requested exercise side.
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace UI {
-  class HomeScreen
-  class WordSessionScreen
-  class SentenceSessionScreen
-  class StatsScreen
-  class SettingsScreen
-}
-
-namespace Application {
-  class HomeController
-  class SessionController
-  class StatsController
-  class SettingsController
-}
-
-%% UI -> Controllers
-HomeScreen --> HomeController
-WordSessionScreen --> SessionController
-SentenceSessionScreen --> SessionController
-StatsScreen --> StatsController
-SettingsScreen --> SettingsController
+flowchart TD
+    CONTENT["Content and side"] --> CR["ContentRenderer"]
+    CR --> FR["FieldRenderer"]
+    FR --> HTML["Combined HTML"]
+    HTML --> WIDGET["HtmlWidget"]
+    FR -. "media:// lookup" .-> RESOLVER["MediaResolver"]
 ```
 
----
+## Rendering flow
 
-## Reading the Diagram
+`ContentRenderer.render(content, side)` performs four operations:
 
-### HomeScreen
+1. keep fields whose side is `front`, `back`, or `both` as appropriate;
+2. order them by `displayOrder`; for equal orders, null identifiers come first
+   and non-null identifiers are ordered numerically;
+3. ask `FieldRenderer` to produce an HTML fragment for each field;
+4. concatenate the fragments and return a `flutter_widget_from_html`
+   `HtmlWidget`.
 
-* Application entry screen.
-* Displays the overall progression state.
-* Allows the user to:
+## Field types
 
-  * start a session (words / sentences),
-  * navigate to statistics,
-  * navigate to settings.
+`FieldRenderer` dispatches according to `FieldValueType`:
 
-Uses: `HomeController`
+| Type | Expected value | Rendering behaviour |
+|---|---|---|
+| `text` | `TextFieldValue` | Escaped text with line breaks converted to `<br>` |
+| `html` | `TextFieldValue` | HTML fragment with internal media references resolved |
+| `image` | `MediaFieldValue` | `<img>` using a local file URI |
+| `audio` | `MediaFieldValue` | `<audio>` using a local file URI |
+| `video` | `MediaFieldValue` | `<video>` using a local file URI |
 
-### WordSessionScreen
+A type/value mismatch is treated as invalid application data and produces a
+`StateError`.
 
-* Displays a word exercise session.
-* Renders exercises provided by the session as projections, one at a time.
-* Forwards user responses to the controller.
+## Media resolution
 
-Uses: `SessionController`
+HTML may refer to stored media with `media://<sha256>`. `MediaResolver` parses
+the fragment, finds `src` and `poster` attributes, asks `ContentController` for
+the matching media record, and replaces the internal reference with a local
+file URI.
 
-### SentenceSessionScreen
+Only simple `src` and `poster` attributes are handled. URI-list attributes such
+as `srcset` are intentionally unsupported, and a missing media hash is an
+error.
 
-* Displays a sentence exercise session.
-* Same logic as `WordSessionScreen`, but with grammatical targets.
+## Current scope
 
-Uses: `SessionController`
+The repository does not currently implement screens, navigation, exercise
+input controls, or state-management bindings. Those elements remain part of the
+future MVP interface.
 
-### StatsScreen
+The presentation layer may depend on application models and controllers. It
+must not access DAOs, repositories, SQLite rows, or domain mutation methods
+directly.
 
-* Displays learning statistics.
-* Does not trigger any session.
-* Does not manipulate any exercise.
-
-Uses: `StatsController`
-
-### SettingsScreen
-
-* Displays and modifies application settings.
-* Includes SRS parameters in particular.
-
-Uses: `SettingsController`
-
----
-
-## UI Architecture Rules
-
-* Screens:
-
-  * know **only their Controller**,
-  * know neither the Domain nor Persistence.
-* Every user action is forwarded to the Controller.
-* No business logic is computed in the UI.
-* The UI never persists data directly.
-
----
-
-## Implementation Notes ⚠️
-
-* Each Screen may be implemented as:
-
-  * a Flutter `Widget`,
-  * or a `Widget + ViewModel` pair.
-* The Controller may be injected:
-
-  * via constructor,
-  * via Provider / Riverpod / other (free choice).
-* This diagram remains valid regardless of the chosen state management framework.
 ````
 
 ---
@@ -1417,287 +1026,172 @@ Uses: `SettingsController`
 ## 📄 index.md
 
 ````markdown
-# 📚 Documentation
+# Psitta documentation
 
-This directory contains the complete technical documentation of the project.
+[Project README](../README.md)
 
-The documentation is divided into two main parts:
-
-- **Architecture**, which describes how the application is structured.
-- **Mathematics & SRS**, which documents the learning algorithm and its theoretical foundations.
-
----
-
-# Architecture
-
-## [Overview](architecture/overview.md)
-
-Provides a high-level view of the application's architecture and the dependency rules between the different layers.
+These documents describe the implementation that currently exists in Psitta.
+They focus on the architectural boundaries, runtime flows, persistence model,
+and SRS rules needed by a developer entering the project.
 
 
+## Architecture
 
-## [UI](architecture/ui_layer/ui.md)
+- [Overview](architecture/overview.md) — layers, dependency directions, and
+  application bootstrap.
+- [UI](architecture/ui_layer/ui.md) — the implemented content-rendering
+  pipeline and its current limits.
+- [Application](architecture/application_layer/application.md) — controllers,
+  application models, and session use cases.
+- [Domain](architecture/domain_layer/domain.md) — the business model and its
+  boundaries.
+  - [Sessions](architecture/domain_layer/sessions.md) — lifecycle, scheduling,
+    pause/resume, and results.
+  - [Exercises](architecture/domain_layer/exercises.md) — word and sentence
+    exercise behaviour.
+  - [SRS](architecture/domain_layer/srs.md) — how scheduling state is used by
+    exercises.
+- [Persistence](architecture/persistence_layer/persistence.md) — repositories,
+  DAOs, mappers, and transaction boundaries.
+  - [Database](architecture/persistence_layer/database.md) — database lifecycle
+    and version 1 schema.
+  - [Repositories](architecture/persistence_layer/repositories.md) — the APIs
+    exposed to the application layer.
 
-Describes the application's screens, their responsibilities, and the controllers they interact with.
+## Mathematics and SRS
 
-## [Application](architecture/application_layer/application.md)
+- [Hypotheses and scope](maths_and_srs/hypotheses_and_mvp_scopes.md) — explicit
+  product and modelling choices.
+- [Mathematical model](maths_and_srs/maths_srs.md) — formulas and implemented
+  update order.
+- [Validity rules](maths_and_srs/invariant.md) — enforced checks, repairs, and
+  configuration assumptions.
 
-Explains the role of the controllers and how they coordinate the UI, Domain, and Persistence layers.
+## Maintenance
 
-## [Persistence](architecture/persistence_layer/persistence.md)
+Each source document has one primary topic and one compact Mermaid diagram.
+Keep statements tied to the current code; planned components should be labelled
+as planned rather than documented as existing.
 
-Documents the Persistence layer, repositories, database mapping, and storage responsibilities.
+`FULL_DOC.md` is generated by `dart run tools/merge_docs.dart`. It should not be
+edited manually.
 
+Some documentation was written with AI assistance and reviewed by the project
+author.
 
-## [Domain](architecture/domain_layer/domain.md)
-
-Introduces the core business model of the application, including sessions, exercises, content, and progression.
-
-### [Sessions](architecture/domain_layer/sessions.md)
-
-Details the lifecycle of a learning session and how it orchestrates exercises.
-
-### [Exercises](architecture/domain_layer/exercises.md)
-
-Describes runtime exercises, their responsibilities, state transitions, and interactions with the SRS.
-
-### [SRS](architecture/domain_layer/srs.md)
-
-Explains how the spaced repetition system integrates into the Domain and how progression is managed.
-
-
----
-
-# Mathematics & SRS
-
-## [SRS Hypotheses](maths_and_srs/hypotheses_et_info_srs.md)
-
-Lists the cognitive assumptions, product choices, and scope of the SRS model.
-
-## [SRS Mathematics](maths_and_srs/maths_srs.md)
-
-Presents the mathematical model, formulas, variables, and update equations used by the SRS.
-
-## [SRS Invariants](maths_and_srs/invariant.md)
-
-Defines the formal invariants that every valid `SRSConfig` and `SRSState` must satisfy.
-
----
-
-Each document focuses on a single aspect of the project to minimise duplication and keep the documentation easy to maintain.
-
-Some parts of this documentation were written with the assistance of AI. All generated content has been reviewed and verified by the project author to ensure consistency and accuracy.
 ````
 
 ---
 
-## 📄 maths_and_srs/hypotheses_et_info_srs.md
+## 📄 maths_and_srs/hypotheses_and_mvp_scopes.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../index.md)
 
-# Hypotheses and Scope of the SRS Model
+# SRS hypotheses and MVP scope
 
-This document describes the **non-mathematical hypotheses** of the spaced repetition model (SRS) used in the application.
+## Purpose
 
-It complements:
+This document records the non-mathematical assumptions behind Psitta's current
+spaced repetition system. These are modelling and product choices, not claims
+that the model is cognitively optimal.
 
-* the mathematical SRS documentation [`maths_srs.md`](maths_srs.md),
-* the architecture diagrams (Domain, Sessions, Application).
 
-Its purpose is to make **explicit the cognitive, pedagogical, and product choices** that guide the model, in order to:
+## The SRS models a task
 
-* avoid ambiguity during future evolutions,
-* clearly distinguish what is intentionally simplified from what is genuinely missing,
-* define the scope of the MVP.
+One `SRSState` belongs to one exercise, not to an abstract word, sentence, or
+language skill. Two tasks using related content may therefore progress
+independently, for example recognition and production exercises.
 
----
+This local model avoids an ill-defined global notion of mastery and keeps the
+MVP scheduling state composable. It does not attempt to infer transfer of
+knowledge between exercises.
 
-## 1. Core Hypothesis: the SRS evaluates a task, not abstract knowledge
+## The response signal is subjective
 
-Each **exercise** (in the sense of: type of task) has its own SRS state.
+The user supplies a grade after seeing an exercise. The grade is expected to
+summarise correctness, hesitation, and perceived effort.
 
-The same content (word, rule, sentence) may therefore be associated with **several distinct exercises**, for example:
+Measured response duration is not currently part of `ExerciseAnswer` or the SRS
+formula. This is a deliberate MVP simplification; it also means the scheduler
+cannot independently verify the user's assessment.
 
-* language A → language B,
-* language B → language A,
-* recognition vs. active recall.
+## Delay affects failed reviews
 
-The SRS never evaluates a "global mastery" of a word or rule, but only the ability to succeed at **one specific task**.
+In review mode, lateness is used only when the submitted grade is unsuccessful.
+A sufficiently late failure weakens or resets the long-term recall estimate
+before the normal grade update. A successful late review is not penalised solely
+because it was late.
 
-This choice allows:
+This is a product hypothesis: observed success is considered stronger evidence
+than elapsed time. It is not a consequence of the exponential recall formula.
 
-* avoiding any ambiguity about what it means to "know" an item,
-* aligning the model with Anki (one note → multiple cards),
-* keeping the SRS simple and local.
+## Exercises are locally independent
 
----
+The current engine does not model:
 
-## 2. Hypothesis on the response signal: subjective self-assessment
+- dependencies between vocabulary and grammar;
+- prerequisites or knowledge graphs;
+- transfer between exercises sharing content;
+- a global estimate of the learner's fatigue or ability.
 
-The model assumes that the user is capable of honestly self-assessing after each exercise.
+Every answer changes only the selected exercise, its optional sentence state,
+its history, and the enclosing session aggregate.
 
-The possible responses (Easy / Good / Medium / Hard / Again) reflect:
+## Sentence exercises represent exposure
 
-* the correctness of the answer,
-* the degree of hesitation felt,
-* the perceived time to answer,
-* confidence in the response.
+A sentence exercise uses two distinct levels of progression:
 
-**Actual measured time** is not used. The signal is intentionally subjective.
+- one group-level `SRSState` schedules the exercise;
+- one `SentenceState` per sentence chooses the least-known example and tracks
+  its local exposure.
 
-This choice is deliberate because:
+After the group-level SRS phase completes, a configurable number of successful
+consolidation answers may still be required. This design favours repeated
+exposure to related sentences without creating an independent SRS schedule for
+every sentence instance.
 
-* users perceive their own difficulty better than a raw time measurement would,
-* it avoids heavy and fragile instrumentation,
-* it is the model successfully used by Anki.
+## Session policy
 
----
+The application layer chooses the session pool by loading at most
+`reviewCount` due exercises and `newCount` exercises of the requested type.
+Due exercises are prioritised by persisted review time; new exercises are
+ordered by identifier.
 
-## 3. Hypothesis on delay: success takes precedence over elapsed time
+Inside the session, `SessionScheduler` handles short learning repetitions and
+randomises immediately available candidates. The resulting presentation order
+is therefore not simply the repository query order.
 
-A successful response to an exercise is **never penalised**, even after a significant delay.
+Sessions can be paused and reconstructed. Persistence stores the session result
+and minimal per-exercise resume state; it does not serialize the in-memory
+`Session` object.
 
-The model considers that:
+## Explainability over automatic optimisation
 
-* if the user succeeds despite the delay, the mastery state was sufficient,
-* elapsed time alone is not more reliable information than the success itself.
+For the MVP, Psitta uses fixed global parameters and deterministic update
+formulas. It does not learn parameters from user history and does not implement
+a Bayesian or machine-learned memory model.
 
-Delay is only taken into account **when the exercise is failed**, in order to:
+The following are explicitly outside the current scope:
 
-* reset or weaken the SRS state,
-* prevent repeated lucky successes from masking a real fragility.
+- automatic per-user parameter fitting;
+- cross-exercise knowledge inference;
+- probabilistic uncertainty estimates;
+- fatigue-aware session adaptation;
+- recommendation across different learning activities.
 
-This choice favours:
+These capabilities may be introduced later, but documentation and code should
+not describe them as current behaviour.
 
-* SRS stability,
-* user confidence,
-* a simple and explainable system behaviour.
+## Relationship to the other SRS documents
 
----
+- [SRS architecture](../architecture/domain_layer/srs.md) explains which
+  classes own each responsibility.
+- [SRS mathematics](maths_srs.md) describes the implemented formulas and update
+  order.
+- [SRS validity rules](invariant.md) distinguishes enforced checks from
+  configuration assumptions.
 
-## 4. Hypothesis of local independence between exercises
-
-Each exercise is treated as **independent from the others**.
-
-The SRS does not model:
-
-* skill transfer between exercises,
-* dependencies between vocabulary and grammar,
-* hierarchical relationships between items of knowledge.
-
-This choice is intentional.
-
-It rests on the idea that:
-
-* good vocabulary coverage is critical,
-* sentences serve mainly as exposure and contextualisation,
-* a poorly mastered sentence should simply reappear sooner.
-
-The approximation is considered acceptable as long as:
-
-* words are correctly revised,
-* errors on sentences lead to rapid repetition.
-
----
-
-## 5. Hypothesis on the role of sentences
-
-Sentences are not fundamental units of knowledge.
-
-They serve primarily to:
-
-* illustrate grammatical rules,
-* provide real-world context,
-* reinforce memorisation through repeated exposure.
-
-The SRS for sentences may be less precise than that for words without compromising overall learning.
-
-Aids (e.g. displaying word translations within a sentence) are acceptable and do not invalidate the exercise, since the primary objective remains exposure and comprehension.
-
----
-
-## 6. Product hypothesis: priority on simplicity and explainability
-
-The model favours:
-
-* simple rules,
-* predictable behaviour,
-* complete explainability for both the user and the developer.
-
-It does not aim for maximum theoretical optimality.
-
-This implies in particular:
-
-* no Bayesian probabilistic model,
-* fixed global parameters,
-* no automatic parameter learning.
-
-These limitations are accepted for the MVP.
-
----
-
-## 7. Session management (MVP)
-
-Sessions are **ephemeral** objects.
-
-Their role is to:
-
-* orchestrate a sequence of exercises,
-* collect responses,
-* delegate SRS updates.
-
-**Exercise prioritisation** (e.g. if 150 exercises are due but the daily maximum is 100) is performed **before the session**, in the Application layer.
-
-Inside a session:
-
-* no additional sorting is necessary,
-* exercises are presented in the order defined at session creation.
-
----
-
-## 8. Cognitive load management (MVP)
-
-The model has no global representation of the user's state (fatigue, declining performance).
-
-For the MVP, management relies on simple rules:
-
-* the user may interrupt a session at any time,
-* a stop or pause may be suggested in case of repeated errors.
-
-Occasional errors or a poor session should not permanently penalise the SRS state.
-
----
-
-## 9. Explicit MVP scope
-
-The MVP **does not attempt** to solve the following problems:
-
-* fine-grained probabilistic memory modelling,
-* skill transfer between items of knowledge,
-* automatic SRS parameter learning,
-* global model adaptation to the user.
-
-These evolutions are considered **post-MVP** and must not influence current choices as long as the hypotheses above are respected.
-
----
-
-## 10. Role of this document
-
-This document serves as a reference for:
-
-* justifying the SRS model choices,
-* guiding future evolutions without distorting the system,
-* preventing the introduction of features inconsistent with the founding hypotheses.
-
-Any major SRS modification must be evaluated against the hypotheses described here.
-
----
-
-## TODO:
-
-* Suggestion to stop or pause in case of repeated errors.
-* **Exercise prioritisation** in the application layer based on recall probability (rather than interval).
 ````
 
 ---
@@ -1705,322 +1199,130 @@ Any major SRS modification must be evaluated against the hypotheses described he
 ## 📄 maths_and_srs/invariant.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../index.md)
 
-# SRS Model Invariants
+# SRS validity rules
 
-This document lists **all formal invariants** of the SRS model used in the application.
+## Purpose
 
-An invariant is a property that **must always hold** to guarantee:
-- the mathematical validity of the model,
-- the cognitive consistency of its behaviour,
-- the absence of undefined states (NaN, negative intervals, etc.).
+This document distinguishes three different kinds of property:
 
-Invariants are divided into two categories:
-1. invariants related to `SRSConfig` (global, static configuration),
-2. invariants related to `SRSState` (dynamic, persisted state).
+1. values enforced by the `SRSConfig` constructor;
+2. state repaired after `SRSState.applyAnswer`;
+3. assumptions required for meaningful behaviour but not currently enforced.
 
----
+Calling every desired property an invariant would be inaccurate: the current
+implementation validates only a subset.
 
-## 1. `SRSConfig` Invariants
 
-These invariants concern **only the model configuration**.
+## Enforced configuration properties
 
-They must be verified:
-- when a `SRSConfig` is created,
-- when loading from persistence,
-- when modified via the `SettingsScreen`.
+The `SRSConfig` constructor throws unless
 
-They **must not** be verified on every runtime SRS update.
+$$
+0<R^*<1
+\qquad\text{and}\qquad
+0<\texttt{wMaxFactor}<1.
+$$
 
----
+Consequently,
 
-### 1.1. Probabilistic parameters
+$$
+0<w_{\max}=\texttt{wMaxFactor}\,R^*<R^*.
+$$
 
-- For every `λ` in `lambdas`:  
-`0 < λ ≤ 1`
-- `lambdas.length == 6`
+The constructor also normalizes `lambdas`:
 
-Rationale:
-- `λ` is a weighted forgetting factor.
-- Outside this range, the weighted success average (`rbar`) becomes unstable or unbounded.
-- `lambdas` must provide a value for each `Grade` used by the SRS.
-  In the current implementation, this corresponds to a length of 6
-  (grades 0 to 5), even if some grades may be unused.
+- the stored list always has length 6;
+- supplied values are clamped to $[0,1]$;
+- missing positions use defaults;
+- the resulting list is unmodifiable.
 
----
+`learningSteps` is copied into an unmodifiable list, but its length, ordering,
+and duration values are not validated.
 
-### 1.2. Temporal decay parameters
+## Repairs performed after a submitted answer
 
-- `mu ≥ 0`
+After `applyAnswer`, `_checkInvariants` repairs the mutable state as follows.
 
-Rationale:
-- `mu < 0` would cause memory to strengthen with delay, which is nonsensical.
+| State | Repair |
+|---|---|
+| `interval` | Non-finite or non-positive values become one minute; values above `iMax` become `iMax` days |
+| `kFactor` | Non-finite or non-positive values become `defaultKFactor` |
+| `rbar` | Non-finite values become 0; finite values are clamped to $[0,1]$ |
+| `w` | Non-finite values become `defaultW`; finite values are clamped to $[0,wMax]$ |
+| `easeFactor` | Non-finite values become `defaultEF`; lower values become `efMin` |
+| `learningStepIndex` | Values below -1 become -1; values beyond the step list become its last index |
 
----
+These repairs are silent: they do not currently emit a log or exception.
+They assume that fallback configuration values such as `iMax`,
+`defaultKFactor`, `defaultW`, `defaultEF`, and `efMin` are themselves valid.
 
-### 1.3. Long pause handling
+No equivalent repair runs:
 
-- `longPause > 0`
+- in the `SRSState` constructor;
+- immediately after a state is reconstructed by `SRSStateMapper`;
+- during `previewInterval`.
 
-Rationale:
-- a zero or negative pause has no temporal meaning.
+A malformed stored state can therefore exist until a submitted answer reaches
+the repair step, and a preview is not a validation operation.
 
-- `0 ≤ minTolFactor ≤ 1`
+## Properties guaranteed by construction
 
-Rationale:
-- tolerance cannot exceed the expected interval,
-- nor be negative.
+- `nextReview` is null exactly when `lastReview` is null; otherwise it is
+  computed as `lastReview + interval`.
+- `isInLearning` is equivalent to `learningStepIndex >= 0`.
+- The stored grade set has numeric qualities $\{0,2,3,4,5\}$; quality 1 is not
+  a valid `Grade`.
+- `SentenceState.gradeWeights` has six positions so it can be indexed by these
+  numeric qualities.
 
----
+Answer history is not stored inside `SRSState`. It is represented separately by
+`ExerciseHistoryEntry`, so no SRS invariant can refer to an internal history
+length.
 
-### 1.4. Learning phases
+## Required configuration assumptions
 
-- `learningSteps.isNotEmpty`
+For mathematically and operationally meaningful behaviour, callers should also
+maintain the following constraints even though `SRSConfig` does not yet enforce
+them:
 
-**Hard** invariant.
+- `mu >= 0`;
+- `longPause > 0` and `minTolFactor >= 0`;
+- `iMax > 0` and `easyInterval > 0`;
+- `efMin > 0`, `defaultEF >= efMin`, and `defaultKFactor > 0`;
+- `0 <= defaultW <= wMax`;
+- every learning step is positive and the steps are ordered as intended;
+- `hardReviewFactor > 0`, `hardLearningFactor > 0`, and `easyBonus > 0`;
+- `0 <= dayBoundary < 24 hours`;
+- `newCount >= 0` and `reviewCount >= 0`.
 
-- `learningSteps.length > 1`
+Stronger model expectations, such as `minTolFactor <= 1`, a non-empty increasing
+learning-step sequence, `easyInterval <= iMax`, `hardReviewFactor >= 1`,
+`hardLearningFactor <= 1`, or `easyBonus >= 1`, are product choices rather than
+mathematical necessities. They should be validated if configuration becomes
+user-editable.
 
-**Soft** invariant (recommended, but not strictly required).
+## Persistence and enum constraints
 
-Rationale:
-- an empty or degenerate learning phase has no pedagogical value.
+The persistence format expects durations as non-negative integer microseconds
+and timestamps as parseable ISO-8601 values. Invalid nullable timestamps in SRS
+or session state map to null; an invalid required history timestamp prevents
+that history entry from being reconstructed.
 
----
+`Grade`, `ExerciseStatus`, and `SessionType` expose stable numeric codes.
+Persistence should use those codes rather than enum declaration order. The
+current `SessionResultMapper` still relies on status codes matching list
+indices, so changing `ExerciseStatus` codes or order requires updating that
+mapping together.
 
-### 1.5. Multiplicative factors
+## Recommended evolution
 
-- `hardReviewFactor ≥ 1`
-- `0 < hardLearningFactor ≤ 1`
-- `easyBonus ≥ 1`
+If SRS configuration becomes editable or remotely supplied, validate all
+required assumptions at construction and reject invalid data before running a
+preview or update. State loaded from persistence should likewise be validated
+or repaired explicitly instead of waiting for the next submitted answer.
 
-Rationale:
-- "Hard" must never be more favourable than "Good",
-- "Easy" must always accelerate progression.
-
----
-
-### 1.6. Day boundary
-
-- `dayBoundary < 24h`
-
-Rationale:
-- a boundary greater than or equal to 24h makes daily partitioning incoherent.
-
----
-
-### 1.7. Derived definition (not an invariant)
-
-- `wMax = wMaxFactor × rStar`
-- `0 ≤ wMaxFactor < 1`
-
-This relationship is **definitional** and guaranteed by a getter.
-It must not be verified dynamically.
-The second relation ensures that `w < rStar` and that the logarithmic
-expressions in the model are always defined.
-
----
-
-### 1.8. Default parameters
-
-- `0 < rstar < 1`
-
-`rstar` is a probabilistic parameter representing the target recall probability.
-
----
-
-- `0 < easyInterval < iMax`
-
-All intervals are in days.
-
-Note:
-It is recommended that `easyInterval` be greater than or equal to
-the last step in `learningSteps`, to avoid a regression when
-graduating with "Easy".
-
----
-
-- `0 < efMin`
-
-Minimum possible value of `easeFactor`.
-
----
-
-- `0 < iMax`
-
-Maximum review interval. An interval that is too short has no value but is not forbidden.
-
----
-
-- `efMin < defaultEF`
-
-Default value of `easeFactor`.
-
----
-
-- `0 < defaultW ≤ wMax`
-
-Default value of `w`.
-
-
----
-
-## 2. `SRSState` Invariants
-
-These invariants concern the **dynamic memorisation state**.
-
-They must be:
-- verified regularly,
-- corrected where possible,
-- signalled (exception / log) when an inconsistency is detected.
-
-Unlike `SRSConfig`, `SRSState` may attempt to **correct certain invariants**
-to prevent irreversible corruption.
-
----
-
-### 2.1. Temporal invariants
-
-- `interval > 0`
-- `interval ≤ config.iMax`
-
-Rationale:
-- a zero or negative interval is invalid,
-- an excessively large interval breaks scheduling.
-
----
-
-- `lastReview ≤ nextReview`
-
-Rationale:
-- time cannot go backwards.
-
----
-
-### 2.2. Mathematical invariants
-
-- `kFactor > 0`
-
-Rationale:
-- `kFactor` is a forgetting rate (unit: `1 / day`),
-- required for exponential computation.
-
----
-
-- `0 ≤ rbar ≤ 1`
-
-Rationale:
-- `rbar` is a weighted average of successes.
-
----
-
-- `0 ≤ w ≤ wMax`
-
-Rationale:
-- otherwise the recall probability becomes invalid
-  (`log` or exponential undefined).
-
----
-
-- `efMin ≤ easeFactor`
-
-Rationale: this is a minimum bound.
-
----
-
-### 2.3. Logical state invariants
-
-- `learningStepIndex == -1`  
-**or**
-- `0 ≤ learningStepIndex < learningSteps.length`
-
-Rationale:
-- no other state is semantically valid.
-
----
-
-### 2.4. History
-
-- All elements of `history` must be valid `Grade` values.
-
-- `history.isNotEmpty` after at least one effective review.
-- `history.length` must match the number of grades effectively applied.
-
-Rationale:
-- history is used for:
-  - statistics,
-  - updating `rbar`.
-
----
-
-### 2.5. Cross-variable invariants
-
-- `nextReview = lastReview + interval`
-
-Rationale:
-
-`interval` represents the theoretically optimal interval between
-`lastReview` and `nextReview`.
-
-By construction:
-`nextReview` is computed as `lastReview + interval`
-at the moment the SRS is updated, regardless of whether the current
-date has exceeded that value.
-
----
-
-### 2.6. Soft invariants (debug / monitoring)
-
-These invariants **must not** cause failures in production,
-but may trigger:
-- logs,
-- debug assertions.
-
-Examples:
-- minor inconsistency between `interval` and `nextReview - lastReview`,
-- `nextReview` slightly in the past.
-
----
-
-## 3. Fundamental Rule
-
-- Invariants **do not correct logic**.
-- They **detect** and **signal** violations of assumptions.
-- Any automatic correction must be:
-  - minimal,
-  - documented,
-  - followed by a notification (log / error).
-
----
-
-## 4. What Are Not Invariants
-
-Formulas that must **not** be treated as invariants:
-
-- `w = wMax * rbar`
-
-This is a `w` update equation.
-`w` is a stored latent state — it does not strictly depend on `wMax` and `rbar` at all times.
-
-For the same reason, there is no invariant between: `interval`, `easeFactor`, `kFactor`, and `w`.
-
----
-
-## 5. Recommended Usage
-
-- `SRSConfig`:
-  - invariants verified **once** at creation.
-- `SRSState`:
-  - invariants verified:
-    - after construction,
-    - after applying a `Grade`,
-    - after loading from persistence.
-
----
-
-This document is the reference for any future SRS evolution.
-Any modification to the model must preserve these invariants or explicitly justify their evolution.
 ````
 
 ---
@@ -2028,152 +1330,168 @@ Any modification to the model must preserve these invariants or explicitly justi
 ## 📄 maths_and_srs/maths_srs.md
 
 ````markdown
-[Documentation Index](/docs/index.md)
+[Documentation index](../index.md)
 
-# 🧮 SRS Model Mathematics
+# SRS model mathematics
 
-This document describes the formulas and variables used by the SRS engine of the application.
+## Scope
 
----
+This document describes the formulas implemented by `SRSState`. It is a code
+reference, not a validation that the model is an optimal representation of
+human memory.
 
-## 🔹 Base Model
+```mermaid
+flowchart LR
+    INPUT["Current state and answer"] --> MODE{"Mode"}
+    MODE -->|learning| STEP["Learning-step rule"]
+    MODE -->|review| MODEL["Recall-model rule"]
+    STEP --> OUTPUT["Interval and lastReview"]
+    MODEL --> OUTPUT
+```
 
-The retention probability after a delay $t$ is:
+## Recall model
+
+In review mode, the model assumes a recall probability
 
 $$
-P(t) = (1 - w)e^{-k t} + w
+P(t) = (1-w)e^{-kt}+w.
 $$
 
-We seek the interval $I$ such that $P(I) = R^*$:
+For target recall probability $R^*$, the theoretical interval is
 
 $$
-I = -\frac{1}{k}\ln\left(\frac{R^* - w}{1 - w}\right)
+I = -\frac{1}{k}\ln\left(\frac{R^*-w}{1-w}\right).
 $$
 
----
+This expression is defined under the intended conditions
+$k>0$ and $0\leq w<R^*<1$. The implementation clamps the logarithm argument to
+$[10^{-9},1-10^{-9}]$ as a numerical safeguard. Intervals and elapsed times are
+converted to days during the calculation and rounded to integer microseconds
+when converted back to `Duration`.
 
-## 🔹 Main Variables
+The main state variables are:
 
-| Symbol | Name (field / param) | Description |
+| Symbol | Code | Meaning |
 |---:|---|---|
-| $R^*$ | `rstar` | target recall probability |
-| $k$ | `kFactor` | forgetting coefficient (short-term) |
-| $\text{easeFactor}$ | `easeFactor` | ease factor (adjusts $k$ during review) |
-| $w$ | `w` | long-term memory weight (determined by $\bar{R}$) |
-| $w_{\max}$ | `wMax` (derived) | $w_{\max} = \text{wMaxFactor}\cdot R^*$ |
-| $\bar{R}$ | `rbar` | weighted average of recent successes |
-| $\lambda_q$ | `lambdas[q]` | weighting factor associated with grade $q$ |
-| $\mu$ | `mu` | exponential decay rate during long pauses |
-| `longPause` | `longPause` | delay (days) after which state is fully reset |
-| `minTolFactor` | `minTolFactor` | minimum tolerance factor for delay |
-| $I$ | `interval` | current interval (Duration) |
-| `nextReview` | `nextReview` | DateTime of the next scheduled review |
-| `lastReview` | `lastReview` | DateTime of the last review |
-| `history` | `history` | grade history (list) |
-| `learningStepIndex` | `learningStepIndex` | learning step index (-1 = review mode) |
-| `learningSteps` | `learningSteps` | learning step durations (List\<Duration\>) |
-| `easyInterval` | `easyInterval` | interval in days for "Easy" graduation |
-| `hardReviewFactor` | `hardReviewFactor` | multiplier for "Hard" in review mode |
-| `hardLearningFactor` | `hardLearningFactor` | multiplier for "Hard" in learning mode |
-| `easyBonus` | `easyBonus` | multiplier for "Easy" in review mode |
-| `iMax` | `iMax` | maximum interval (days) |
-| `defaultEF` | `defaultEF` | default ease factor value |
-| `defaultW` | `defaultW` | default `w` value |
-| `wMaxFactor` | `wMaxFactor` | factor used to compute $w_{\max}$ |
-| `dayBoundary` | `dayBoundary` | duration representing the day boundary (Duration) |
+| $R^*$ | `rstar` | Target recall probability |
+| $k$ | `kFactor` | Exponential forgetting coefficient in day$^{-1}$ |
+| $w$ | `w` | Long-term recall floor |
+| $\bar R$ | `rbar` | Weighted success estimate |
+| $E$ | `easeFactor` | Review interval growth factor |
+| $I$ | `interval` | Current theoretical interval |
+| $j$ | `learningStepIndex` | Learning step; `-1` means review mode |
 
-(Verified: all fields present in `SRSState` and `SRSConfig` are listed above.)
-
----
-
-## 🔹 Parameter Updates
-
-### 1) Weighted success average
-After an observation `obs` (1 = success, 0 = failure) and a weight $\lambda_q$ depending on grade $q$:
+The derived maximum recall floor is
 
 $$
-\bar{R}_{t+1} = \lambda_q\bar{R}_t + (1 - \lambda_q)\,\text{obs}
+w_{\max}=\texttt{wMaxFactor}\,R^*.
 $$
 
-### 2) Long-term memory
-$$
-w = w_{\max}\cdot \bar{R},\qquad w_{\max} = \text{wMaxFactor}\cdot R^*
-$$
+## Review-mode update
 
-### 3) Forgetting rate adjustment via easeFactor
-On a successful review:
+Let $q$ be the numeric grade, with success indicator
+$x=\mathbf{1}_{q\geq3}$. Let $\Delta$ be the elapsed time since the previous
+review, or zero when no previous review exists. Lateness and tolerance are
 
 $$
-k_{\text{new}} = \dfrac{k_{\text{old}}}{\text{easeFactor}}
+\ell=\max(0,\Delta-I),
+\qquad
+\tau=\min(\texttt{longPause},\texttt{minTolFactor}\cdot I).
 $$
 
-### 4) Next interval computation
-With updated $k_{\text{new}}$ and $w$:
+For an unsuccessful answer with $\ell\geq\tau$:
+
+- if $\ell\geq\texttt{longPause}$, set $\bar R=0$ and $w=0$;
+- otherwise, set
+  $\bar R\leftarrow\bar R e^{-\mu\ell}$ and
+  $w\leftarrow w_{\max}\bar R$.
+
+For a successfull answer, there is no late penalty.
+
+
+Define
 
 $$
-I_{\text{next}} = -\frac{1}{k_{\text{new}}}\ln\left(\frac{R^* - w}{1 - w}\right)
+g(w)=-\ln\left(\frac{R^*-w}{1-w}\right).
 $$
 
-Constraint applied: $I_{\text{next}} \le iMax$ (in days).
+The interval branch is then:
 
----
+- `again` ($q=0$): enter learning step 0 and use its duration, with a one-minute
+  fallback;
+- `hard` ($q=2$): enter learning step 1 and use its duration, with a ten-minute
+  fallback;
+- `medium` ($q=3$):
+  $I\leftarrow\max(1, I\,\texttt{hardReviewFactor})$ days and
+  $k\leftarrow g(w)/I$;
+- `good` or `easy` ($q=4,5$):
+  $k\leftarrow k/E$ and $I\leftarrow\max(1,g(w)/k)$ days;
+- `easy` additionally multiplies the resulting interval by `easyBonus`.
 
-## 🔹 Long Pause (Delay) Handling and the Role of $\mu$
+All review intervals are capped at `iMax`. Failed reviews recompute $k$ from
+the selected short interval using a denominator of at least one day.
 
-Let $\Delta t$ be the time elapsed since the last review and $I$ the expected interval. Define:
+Next, the ease factor is updated with the SM-2-derived rule
 
 $$
-l = \max(0,\Delta t - I)
+\Delta E=0.1-(5-q)\left(0.08+(5-q)0.02\right),
+\qquad
+E\leftarrow\max(E+\Delta E,\texttt{efMin}).
 $$
 
-Tolerance:
+Finally, using the grade-specific coefficient $\lambda_q$:
 
 $$
-\text{tol} = \min(\text{longPause}, \text{minTolFactor}\cdot I)
+\bar R\leftarrow
+\lambda_q\bar R+(1-\lambda_q)x,
+\qquad
+w\leftarrow w_{\max}\bar R.
 $$
 
-- If $l \ge \text{longPause}$ and grade $q < 2$ (review is failed), then reset:
+The value of $\bar R$ is clamped to $[0,1]$, and `lastReview` becomes the
+answer timestamp.
+
+The update order matters: the new interval uses the pre-answer value of $w$
+after any late-failure correction. The grade's final $\bar R$ and $w$ update is
+used by later reviews, not retroactively by the interval just computed.
+
+## Learning-mode update
+
+Let $s_0,\ldots,s_{n-1}$ be `learningSteps` and let $j\geq0$ be the current
+learning index.
+
+| Grade | Implemented transition |
+|---|---|
+| `again` | Set $j=0$ and $I=s_0$; fall back to one minute if no step exists |
+| `hard` | Keep $j$; use $(s_j\cdot\texttt{hardLearningFactor})$ when $0<j<n$, otherwise a scaled mean of $s_0,s_1$ or a four-minute fallback |
+| `medium` | Keep $j$; use $s_j$ when $0<j<n$, otherwise the mean of $s_0,s_1$ or a 5.5-minute fallback |
+| `good` | Advance to the next short step while its index is strictly below $n-1$; otherwise graduate to review with the last step as interval |
+| `easy` | Graduate immediately with `easyInterval` days and increase $E$ by 0.1, bounded below by `efMin` |
+
+On graduation, $j=-1$ and $k=g(w)/I$. Every branch updates `lastReview`.
+Learning-mode answers do not update $\bar R$ or $w$ in the current
+implementation.
+
+The last configured learning step therefore acts as the graduation interval;
+it is not selected as another short learning repetition by the `good` branch.
+
+## Scheduling consequences
+
+`nextReview` is a getter:
+
 $$
-\bar{R}\leftarrow 0,\quad w\leftarrow 0
-$$
-- Otherwise, if $l > \text{tol}$, apply exponential decay:
-$$
-\bar{R}_{t+1} = \bar{R}_t \space e^{-\mu l}
-$$
-  then:
-$$
-w \leftarrow w_{\max}\cdot \bar{R}_{t+1}
+\texttt{nextReview}=\texttt{lastReview}+I,
 $$
 
-$\mu$ controls the rate of memory loss after a long absence.
+when `lastReview` exists. `SessionScheduler` uses it to prioritise learning and
+relearning exercises.
 
-Multiplying `wMax` by `Rbar` ensures that `w <= wMax` while avoiding an abrupt discontinuity.
+Separately, `Exercise.applyAnswer` marks an exercise complete for the current
+session only when `nextReview` is after the configured day boundary and the SRS
+has left learning mode. This completion policy is not part of the recall
+formula itself.
 
----
+`previewInterval` applies the same branch calculations to a clone. It returns
+only the interval and does not run persistence or change the original state.
 
-## 🔹 Implementation Notes
-
-- Extreme values are clamped to avoid division by zero or invalid logarithms (arguments are clamped in code).
-- Transitions between *learning* and *review* mode are handled via `learningStepIndex == -1`.
-- Buttons (grades $q\in\{0..5\}$) determine $\lambda$ via `getLambda(q)` and influence both $\bar{R}$ and the evolution of `easeFactor`:
-  - Again button: $q=0$
-  - Hard button:  $q=2$  → New button, does not exist in Anki
-  - Medium button: $q=3$ → Equivalent to Anki's Hard button
-  - Good button:  $q=4$
-  - Easy button:  $q=5$
-- The formulas presented are those implicitly used by `computePreview*` and `apply*` in `SRSState`.
-
----
-
-## 🔹 Summary Cycle
-
-1. The user gives a grade $q$.
-2. Optional decay ($\mu$) applied if delay is significant.
-3. Adjustment of $k$ (via `easeFactor`) and update of `easeFactor` if in review mode.
-4. Computation of $I_{\text{next}}$ and update of `interval`, `nextReview`, `lastReview`, `history`.
-5. Computation/update of $\bar{R}$ and $w$.
-
----
-
-_File: `docs/maths_and_srs/maths_srs.md` — key formulas and variables of the SRS._
 ````

@@ -1,19 +1,13 @@
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/persistence.md`
+# Persistence layer
 
 ## Purpose
 
-Describe the general architecture of the **Persistence** layer and its role in the application.
-
-The Persistence layer is responsible for:
-
-* storing application data,
-* loading persisted data,
-* translating between Persistence models and Domain objects,
-* isolating the Domain from SQLite and other storage-specific details.
-
-The Persistence layer does **not** contain business logic.
+The Persistence layer stores application data, reconstructs Domain and
+Application models, and isolates the rest of the project from SQLite-specific
+details. It records state produced by the Domain; it does not implement
+learning rules.
 
 ---
 
@@ -21,224 +15,98 @@ The Persistence layer does **not** contain business logic.
 
 ```mermaid
 flowchart TD
-
-    APP["Application"]
-
-    subgraph PERSISTENCE["Persistence"]
-        REPO["Repositories"]
-
-        subgraph DATA["Data access"]
-            DAO["DAOs"]
-            DB["SQLite Database"]
-        end
-
-        MODELS["Persistence Models"]
-        MAPPERS["Mappers"]
-    end
-
-    DOMAIN["Domain"]
-
-    APP --> REPO
-
-    REPO --> DAO
-    DAO --> DB
-
-    REPO --> MAPPERS
-    MAPPERS <--> MODELS
-    MAPPERS <--> DOMAIN
+    APP["Application"] --> REPOSITORIES["Repositories"]
+    REPOSITORIES --> DAOS["DAOs"]
+    REPOSITORIES --> MAPPERS["Mappers"]
+    DAOS --> DB[(SQLite)]
+    MAPPERS <--> MODELS["Domain and Application models"]
 ```
 
 ---
 
-## General Flow
-
-Persistence acts as a boundary between the **Domain** and the physical database.
-
-When data is loaded:
-
-```mermaid
-sequenceDiagram
-
-    participant A as Application
-    participant R as Repository
-    participant D as DAO
-    participant DB as SQLite
-    participant M as Mapper
-    participant DOM as Domain
-
-    A->>R: request data
-    R->>D: query
-    D->>DB: SQL
-    DB-->>D: database rows
-    D-->>R: Persistence models
-    R->>M: map to Domain
-    M-->>R: Domain objects
-    R-->>A: Domain objects
-```
-
-When Domain state must be persisted, the flow is reversed:
-
-```mermaid
-sequenceDiagram
-
-    participant A as Application
-    participant R as Repository
-    participant M as Mapper
-    participant D as DAO
-    participant DB as SQLite
-
-    A->>R: save Domain state
-    R->>M: map to Persistence model
-    M-->>R: Persistence model
-    R->>D: persist model
-    D->>DB: SQL
-    DB-->>D: result
-    D-->>R: success
-    R-->>A: success
-```
-
-The important boundary is that **SQL and Persistence models never leave the Persistence layer**.
-
----
-
-## Main Components
+## Main components
 
 ### Repositories
 
-Repositories expose a **Domain-oriented interface** to the Application layer.
+Repositories expose operations aligned with application use cases. They
+coordinate DAOs and mappers, rebuild complete objects, and define transaction
+boundaries that span several tables.
 
-They:
-
-* coordinate data access,
-* combine several DAOs when necessary,
-* convert Persistence models into Domain objects,
-* hide the database implementation.
-
-A repository therefore represents an application concept rather than necessarily a single database table.
+See [Persistence repositories](repositories.md).
 
 ### DAOs
 
-DAOs are responsible for **database access**.
+DAOs contain SQL and operate on persistence models. Simple operations open
+their own `sqlite_async` transaction; aggregate writes may receive a transaction
+created by a repository.
 
-They:
+### Persistence models
 
-* execute SQL queries,
-* insert, update and delete database data,
-* reconstruct Persistence models from database rows.
-
-DAOs do not contain Domain logic.
-
-### Persistence Models
-
-Persistence models represent the data as it is stored and manipulated inside the Persistence layer.
-
-They are intentionally separate from Domain objects.
-
-This allows the database schema to evolve without forcing the Domain model to follow the same structure.
+Persistence models represent normalized stored data. They contain database
+identifiers, scalar values, timestamps, and enum codes without business
+behaviour. They never leave the Persistence layer.
 
 ### Mappers
 
-Mappers translate between:
-
-* Persistence models ↔ Domain objects.
-
-They contain structural conversion logic, but no business rules.
+Mappers translate persistence models into Domain objects or Application content
+models and back. They handle structural conversion, not learning decisions.
 
 ### Database
 
-The database component manages SQLite itself:
+The database component owns connection lifecycle, native connection
+configuration, schema migrations, and access to the shared
+`sqlite_async.SqliteDatabase` instance.
 
-* database connection,
-* schema creation,
-* migrations,
-* transactions,
-* database-level configuration.
-
-SQLite-specific details remain confined to Persistence.
+See [SQLite database](database.md).
 
 ---
 
-## Dependency Rules
+## General flow
 
-```mermaid
-flowchart LR
+For a read, a repository asks one or more DAOs for normalized data, uses mappers
+to reconstruct the required object, and returns only that object to the
+Application layer.
 
-    APPLICATION["Application"]
-    REPOSITORIES["Repositories"]
-    MAPPERS["Mappers"]
-    MODELS["Persistence Models"]
-    DAOS["DAOs"]
-    DATABASE["SQLite"]
-    DOMAIN["Domain"]
+For a write, the Domain has already produced the new state. The repository maps
+it to persistence models and coordinates the necessary DAO operations.
 
-    APPLICATION --> REPOSITORIES
-
-    REPOSITORIES --> DOMAIN
-    REPOSITORIES --> MAPPERS
-    REPOSITORIES --> DAOS
-
-    MAPPERS --> DOMAIN
-    MAPPERS --> MODELS
-
-    DAOS --> MODELS
-    DAOS --> DATABASE
-```
-
-The following rules must hold:
-
-* The Application accesses persisted data through repositories.
-* The Domain never accesses Persistence.
-* DAOs never expose SQL rows or `Map<String, dynamic>` outside Persistence.
-* Persistence models never leave Persistence.
-* Mappers are the boundary between Domain objects and Persistence models.
-* SQL is confined to DAOs and database infrastructure.
-* Persistence does not implement business rules.
+The most important aggregate write occurs after an answer. One transaction
+stores the exercise progression, sentence progression when applicable, answer
+history, session result, and resumable exercise snapshots. This prevents the
+stored exercise and active session from describing different answers.
 
 ---
 
-## Persistence vs Domain
+## Time representation
 
-The distinction is intentional:
-
-**Domain**
-
-* defines what the application means,
-* owns business rules,
-* computes progression,
-* manages runtime state.
-
-**Persistence**
-
-* defines how data is stored,
-* reconstructs Domain state,
-* executes queries,
-* handles database-specific concerns.
-
-Persistence records the state produced by the Domain; it does not decide what that state should be.
+Durations and review lookup values are stored as integer microseconds.
+Date-time values are serialized as ISO-8601 UTC strings and converted back to
+local `DateTime` values when reconstructed. Repository date ranges use an
+inclusive start and exclusive end.
 
 ---
 
-## Current Structure
+## Dependency rules
 
-The Persistence layer is currently organised around four main technical components:
+- Application code accesses stored data through repositories.
+- SQL remains in DAOs and migrations.
+- Persistence models and raw rows never cross the repository boundary.
+- The Domain never imports Persistence.
+- Repositories may depend on Domain types to reconstruct or store their state.
+- The database is opened and migrated before any repository is constructed.
+
+The current backend uses `sqlite_async` native connections and does not support
+the Flutter web target.
+
+---
+
+## Directory structure
 
 ```text
-persistence/
+infrastructure/persistence/
 ├── database/
-├── models/
-├── mappers/
 ├── dao/
+├── mappers/
+├── models/
 └── repositories/
 ```
-
-Each component has a distinct responsibility:
-
-| Component | Responsibility |
-|---|---|
-| `database/` | SQLite database and migrations |
-| `models/` | Persistence representation of stored data |
-| `mappers/` | Domain ↔ Persistence conversion |
-| `dao/` | SQL and low-level database access |
-| `repositories/` | Domain-oriented data access API |
-
-The detailed design of each component is documented separately.

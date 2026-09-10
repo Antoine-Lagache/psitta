@@ -11,8 +11,6 @@ import 'package:psitta/infrastructure/persistence/mappers/exercise_history_mappe
 import 'package:psitta/infrastructure/persistence/mappers/exercise/sentence_exercise_mapper.dart';
 import 'package:psitta/infrastructure/persistence/mappers/sentence_mapper.dart';
 
-import 'package:psitta/infrastructure/persistence/models/sentence/sentence_group_persistence.dart';
-
 /// Reconstructs and persists complete exercise aggregates across their tables.
 class ExerciseRepository {
   final sqlite.SqliteDatabase database;
@@ -89,10 +87,7 @@ class ExerciseRepository {
   }
 
   /// Stores an exercise inside a transaction coordinated by another repository.
-  Future<void> saveInTransaction(
-    sqlite.SqliteWriteContext txn,
-    Exercise exercise,
-  ) async {
+  Future<void> saveInTransaction(sqlite.SqliteWriteContext txn, Exercise exercise) async {
     ExercisePersistence persistence;
     switch (exercise) {
       case WordExercise word:
@@ -146,7 +141,10 @@ class ExerciseRepository {
             sentence.trainingCountMax,
             id: exerciseId,
           );
-          final group = await _sentencesDao.getById(sentence.sentenceGroupId);
+          final group = await _sentencesDao.getByIdInTransaction(
+            txn,
+            sentence.sentenceGroupId,
+          );
           if (group == null) {
             throw StateError("Missing SentenceGroup for sentenceExercise");
           }

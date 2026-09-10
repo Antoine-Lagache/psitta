@@ -1,175 +1,82 @@
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# Persistence Repositories
+# Persistence repositories
 
 ## Purpose
 
-Repositories provide the **application-facing API** of the Persistence layer.
-
-They:
-
-* expose operations oriented toward application use cases,
-* hide DAOs and SQL queries,
-* convert Persistence models into Domain objects,
-* persist Domain state produced by the application and Domain layers.
-
-The Application layer should interact with repositories rather than with DAOs directly.
-
----
-
-## Architecture
+Repositories are the application-facing API of the persistence layer. They
+combine DAO operations and mappers so callers work with domain or application
+objects rather than normalized SQLite rows.
 
 ```mermaid
 flowchart LR
-
-    subgraph Application
-        Controller
-    end
-
-    subgraph Persistence
-        Repo["Repositories"]
-        DAO["DAOs"]
-        DB[("SQLite")]
-    end
-
-    Controller --> Repo
-    Repo --> DAO
-    DAO --> DB
+    CONTROLLER["Controller"] --> REPOSITORY["Repository"]
+    REPOSITORY --> DAO["One or more DAOs"]
+    REPOSITORY --> MAPPER["Mapper"]
+    DAO --> DB[(SQLite)]
 ```
 
-Repositories are therefore the **boundary between the Application layer and the database implementation**.
+## Current repositories
 
----
+| Repository | Main responsibility |
+|---|---|
+| `ExerciseRepository` | Create, load, select, save, delete, and reset word or sentence exercise aggregates |
+| `SessionRepository` | Store results and resume snapshots, rebuild unfinished sessions, and coordinate answer transactions |
+| `ExerciseHistoryRepository` | Read submitted-answer history with exercise and half-open date filters |
+| `ContentRepository` | Create, load, update, and delete application content and its ordered field values |
+| `MediaRepository` | Resolve media metadata by SHA-256 |
+| `SentenceGroupRepository` | Create groups and instances, move instances, and delete sentence structures |
 
-## Repository API
+## Exercise selection and persistence
 
-```mermaid
-classDiagram
+`ExerciseRepository.getDueExercises` selects rows whose `next_review` is not
+null and is at or before the supplied time. Results are ordered by earliest
+review and may be filtered by the persisted `word` or `sentence` type.
 
-    class ExerciseRepository {
-        createWordExercise()
-        createSentenceExercise()
-        getById()
-        getDueExercises()
-        getNewExercises()
-        save()
-        delete()
-        resetProgress()
-    }
+`getNewExercises` selects exercises with no answer history, ordered by exercise
+identifier. When loaded normally, history existence determines the initial
+session status: `newExercise` or `toReview`.
 
-    class SentenceGroupRepository {
-        createGroup()
-        createInstance()
-        moveSentenceInstance()
-        deleteSentenceGroup()
-        deleteSentenceInstance()
-    }
+Saving an exercise updates its SRS state, sentence states when applicable, and
+all buffered history entries. `resetProgress` restores a new SRS state, removes
+history, and resets per-sentence progress.
 
-    class ExerciseHistoryRepository {
-        getList()
-    }
+## Session aggregate
 
-    class SessionResultRepository {
-        save()
-        getList()
-    }
-```
+`SessionRepository` owns the persistence boundary for session lifecycle:
 
-### `ExerciseRepository`
+- `save` inserts a new `SessionResult` and all `ExerciseResume` snapshots;
+- `update` replaces an unfinished result and its snapshots when pausing;
+- `getActiveSession` reconstructs a session from persistent exercise state and
+  resume-specific status;
+- `saveAnswerProgress` atomically stores the answered exercise, history,
+  session result, and new snapshot set;
+- `completeSession` stores the final result and removes active snapshots;
+- `getList` returns session results for statistics.
 
-Manages the persisted state associated with learning exercises.
+The repository receives an existing `ExerciseRepository` so answer persistence
+can reuse `saveInTransaction` without nesting independent transactions.
 
-It is responsible for:
+## Content and sentence structure
 
-* creating Word and Sentence exercises,
-* loading exercises by ID,
-* loading due or new exercises,
-* saving progression after a response,
-* deleting exercises,
-* resetting an exercise's progression.
+`ContentRepository` maps normalized `content`, `field_value`, and
+`field_definition` rows into application `Content` models. Media-valued fields
+include media metadata; HTML `media://` lookup is handled separately through
+`MediaRepository`.
 
-When saving a `SentenceExercise`, the repository also persists the associated sentence progression state and exercise history.
+`SentenceGroupRepository` changes sentence-group structure but is not currently
+constructed by `AppDependencies`. The current composition root supports reading
+content during sessions, not an application workflow for creating learning
+material.
 
----
+## Boundary rules
 
-### `SentenceGroupRepository`
+- Controllers use repositories, not DAOs.
+- Repositories define multi-table and multi-aggregate transaction boundaries.
+- DAOs and persistence models remain internal implementation details.
+- Repositories persist state produced by the domain; they do not decide grades,
+  intervals, or exercise transitions.
 
-Manages sentence groups and their sentence instances.
-
-It provides operations to:
-
-* create a group,
-* add a sentence instance,
-* move an instance between groups,
-* delete a group,
-* delete an instance.
-
-It does not create or manage `SentenceExercise` objects.
-
----
-
-### `ExerciseHistoryRepository`
-
-Provides read access to the history of exercise responses.
-
-History can be filtered by:
-
-* exercise,
-* start date,
-* end date.
-
-History entries are returned as Domain `ExerciseHistoryEntry` objects.
-
----
-
-### `SessionResultRepository`
-
-Persists completed session results and provides historical results.
-
-It provides:
-
-* saving a `SessionResult`,
-* retrieving results within an optional date range.
-
----
-
-## Content
-
-Content repositories are **not implemented yet**.
-
-This is intentional: the current architecture does not define `Content` as a Domain object. Content is assembled by the **Application layer** from the `contentId` exposed by exercises.
-
-The Persistence layer currently stores the underlying content data, but its application-facing API will be defined when the Application-level content model is implemented.
-
----
-
-## Repository Boundary
-
-The intended dependency flow is:
-
-```mermaid
-flowchart LR
-
-    subgraph Application
-        Controller
-    end
-
-    subgraph Persistence
-        Repo["Repository API"]
-        Mapper["Mappers"]
-        DAO["DAOs"]
-        DB[("SQLite")]
-    end
-
-    Controller --> Repo
-    Repo --> Mapper
-    Repo --> DAO
-    DAO --> DB
-    Mapper --> Repo
-```
-
-The important rule is:
-
-> **Controllers use repositories; repositories use DAOs and mappers.**
-
-DAOs and Persistence models remain implementation details of the Persistence layer.
+The controller layer currently depends on concrete repository classes. This is
+an explicit MVP trade-off, not evidence that repository interfaces already
+exist.

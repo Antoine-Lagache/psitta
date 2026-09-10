@@ -1,116 +1,64 @@
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/ui.md`
+# UI presentation layer
 
 ## Purpose
 
-Describe:
-
-* the main screens of the application,
-* their functional role,
-* which **Controller** each screen uses.
-
-This diagram establishes the **UI ↔ Application contract**.
-
----
-
-## Diagram
+The implemented UI code is a content-rendering pipeline. It turns application
+`Content` models into one Flutter widget for the requested exercise side.
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace UI {
-  class HomeScreen
-  class WordSessionScreen
-  class SentenceSessionScreen
-  class StatsScreen
-  class SettingsScreen
-}
-
-namespace Application {
-  class HomeController
-  class SessionController
-  class StatsController
-  class SettingsController
-}
-
-%% UI -> Controllers
-HomeScreen --> HomeController
-WordSessionScreen --> SessionController
-SentenceSessionScreen --> SessionController
-StatsScreen --> StatsController
-SettingsScreen --> SettingsController
+flowchart TD
+    CONTENT["Content and side"] --> CR["ContentRenderer"]
+    CR --> FR["FieldRenderer"]
+    FR --> HTML["Combined HTML"]
+    HTML --> WIDGET["HtmlWidget"]
+    FR -. "media:// lookup" .-> RESOLVER["MediaResolver"]
 ```
 
----
+## Rendering flow
 
-## Reading the Diagram
+`ContentRenderer.render(content, side)` performs four operations:
 
-### HomeScreen
+1. keep fields whose side is `front`, `back`, or `both` as appropriate;
+2. order them by `displayOrder`; for equal orders, null identifiers come first
+   and non-null identifiers are ordered numerically;
+3. ask `FieldRenderer` to produce an HTML fragment for each field;
+4. concatenate the fragments and return a `flutter_widget_from_html`
+   `HtmlWidget`.
 
-* Application entry screen.
-* Displays the overall progression state.
-* Allows the user to:
+## Field types
 
-  * start a session (words / sentences),
-  * navigate to statistics,
-  * navigate to settings.
+`FieldRenderer` dispatches according to `FieldValueType`:
 
-Uses: `HomeController`
+| Type | Expected value | Rendering behaviour |
+|---|---|---|
+| `text` | `TextFieldValue` | Escaped text with line breaks converted to `<br>` |
+| `html` | `TextFieldValue` | HTML fragment with internal media references resolved |
+| `image` | `MediaFieldValue` | `<img>` using a local file URI |
+| `audio` | `MediaFieldValue` | `<audio>` using a local file URI |
+| `video` | `MediaFieldValue` | `<video>` using a local file URI |
 
-### WordSessionScreen
+A type/value mismatch is treated as invalid application data and produces a
+`StateError`.
 
-* Displays a word exercise session.
-* Renders exercises provided by the session as projections, one at a time.
-* Forwards user responses to the controller.
+## Media resolution
 
-Uses: `SessionController`
+HTML may refer to stored media with `media://<sha256>`. `MediaResolver` parses
+the fragment, finds `src` and `poster` attributes, asks `ContentController` for
+the matching media record, and replaces the internal reference with a local
+file URI.
 
-### SentenceSessionScreen
+Only simple `src` and `poster` attributes are handled. URI-list attributes such
+as `srcset` are intentionally unsupported, and a missing media hash is an
+error.
 
-* Displays a sentence exercise session.
-* Same logic as `WordSessionScreen`, but with grammatical targets.
+## Current scope
 
-Uses: `SessionController`
+The repository does not currently implement screens, navigation, exercise
+input controls, or state-management bindings. Those elements remain part of the
+future MVP interface.
 
-### StatsScreen
-
-* Displays learning statistics.
-* Does not trigger any session.
-* Does not manipulate any exercise.
-
-Uses: `StatsController`
-
-### SettingsScreen
-
-* Displays and modifies application settings.
-* Includes SRS parameters in particular.
-
-Uses: `SettingsController`
-
----
-
-## UI Architecture Rules
-
-* Screens:
-
-  * know **only their Controller**,
-  * know neither the Domain nor Persistence.
-* Every user action is forwarded to the Controller.
-* No business logic is computed in the UI.
-* The UI never persists data directly.
-
----
-
-## Implementation Notes ⚠️
-
-* Each Screen may be implemented as:
-
-  * a Flutter `Widget`,
-  * or a `Widget + ViewModel` pair.
-* The Controller may be injected:
-
-  * via constructor,
-  * via Provider / Riverpod / other (free choice).
-* This diagram remains valid regardless of the chosen state management framework.
+The presentation layer may depend on application models and controllers. It
+must not access DAOs, repositories, SQLite rows, or domain mutation methods
+directly.

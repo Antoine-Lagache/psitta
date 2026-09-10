@@ -1,101 +1,95 @@
-[Documentation Index](/docs/index.md)
+[Documentation index](../../index.md)
 
-# `docs/architecture/application.md`
+# Application layer
 
 ## Purpose
 
-Describe the **Application / Controllers** layer, which coordinates:
-
-* actions coming from the UI,
-* business logic from the **Domain** (sessions, exercises),
-* **Persistence** (loading and saving via repositories).
-
-This diagram does not describe the UI or SQL details — only the **structural dependencies**.
+The Application layer coordinates actions coming from the UI, business logic
+from the Domain, and storage operations exposed by Persistence. It contains no
+Flutter widgets and no SQL.
 
 ---
 
 ## Diagram
 
 ```mermaid
-%%{init: {"class": {"hideEmptyMembersBox": true}} }%%
-classDiagram
-
-namespace Application {
-  class HomeController
-  class SessionController
-  class StatsController
-  class SettingsController
-}
-
-namespace Domain {
-  class Session
-  class Exercise
-  class WordExercise
-  class SentenceExercise
-}
-
-
-%% Domain inheritance
-Exercise <|-- WordExercise
-Exercise <|-- SentenceExercise
-
-%% Application -> Domain
-HomeController --> SessionController : starts sessions
-SessionController --> Session : manages
-SessionController --> Exercise : produces/consumes
-
-%% Application -> Persistence
-SessionController --> Repositories : **load**<br/> words, groups
-SessionController --> Repositories : **load/save** SRS
-
-StatsController --> Repositories: read
-
-SettingsController --> Repositories : read/write config
+flowchart TD
+    SESSION["SessionController"] --> DOMAIN["Session"]
+    SESSION --> REPOSITORIES["Session and Exercise repositories"]
+    SESSION --> CONTENT["ContentController"]
+    CONTENT --> CONTENT_REPOS["Content and Media repositories"]
+    STATS["StatisticController"] --> STAT_REPOS["Session and History repositories"]
 ```
 
 ---
 
-## Reading the Diagram
+## Controllers
 
-### Controllers (Application)
+### `SessionController`
 
-* `HomeController`: entry-point logic (starting a session, application-side navigation).
-* `SessionController`: orchestrates the flow of a session (exercise and session creation; sending `Content` objects to the UI and collecting user input; session teardown).
-* `StatsController`: computes and exposes statistics from persisted data, without depending on sessions or the exercise runtime.
-* `SettingsController`: exposes and modifies configuration (e.g. SRS parameters).
+`SessionController` owns at most one active `Session`. It implements the
+application workflow for:
 
-### Domain
+- loading due and new exercises of the requested session type;
+- starting or resuming a session;
+- loading the content selected by the current exercise;
+- previewing an interval and submitting a grade;
+- pausing or ending the session;
+- persisting progression after each accepted answer.
 
-* `Session` orchestrates the exercises of a session.
-* `Exercise` is an abstract **runtime** object used during a session. `WordExercise` and `SentenceExercise` are two specialisations.
+Exercise limits and SRS parameters currently come from the default `SRSConfig`
+owned by the controller.
 
-### Persistence
+### `ContentController`
 
-Controllers access data through **repositories**:
+`ContentController` loads renderable `Content` by identifier and resolves
+`Media` by SHA-256. It is used both by session workflows and by the UI media
+resolver.
 
-SQL, DB mapping, and table definitions are confined to the Persistence diagram.
+### `StatisticController`
+
+`StatisticController` builds statistics from persisted session results and
+answer history. It exposes session-level and exercise-level aggregates, with
+optional half-open date ranges.
 
 ---
 
-## Architecture Rules
+## Application models
 
-* The UI calls controllers; it never calls the Domain or Persistence directly.
-* `StatsController` does not depend on the runtime (sessions/exercises) — only on repositories.
-* `SessionController` orchestrates sessions and delegates persistence to repositories (no SQL here).
-* The Domain remains independent of the Flutter UI layer.
+The Application layer owns models intended for presentation:
+
+- `Content`, `Field`, `FieldDefinition`, and `FieldValue` describe ordered
+  renderable content;
+- `Media` identifies a local media resource;
+- `SessionStatistics` and `ExerciseStatistics` expose calculated aggregates.
+
+These models are not learning entities. The Domain only manipulates the content
+identifier selected by an exercise.
 
 ---
 
-## Note on Controller Lifecycle
+## Session workflow
 
-**Controllers** are **long-lived** objects, created at application startup and shared across screens.
+For a new session, the controller loads a limited set of due and new exercises,
+constructs and starts the Domain session, then persists its initial resumable
+state. After each answer, the Domain is updated first and `SessionRepository`
+stores the resulting exercise, history, and session result atomically. It also
+refreshes the resume snapshot, or removes it when the session has finished.
 
-* They hold dependencies (repositories, configuration).
-* They **do not represent** an ongoing session.
-* They create and destroy **Session** instances on demand, parameterised by `SessionType`.
+Pausing releases the in-memory session after updating its snapshot. Resuming
+reconstructs a new Domain `Session` from persisted progression and the snapshot.
 
-**Sessions** are **ephemeral** objects, scoped to the duration of a single learning session.
+---
 
-This decoupling allows multiple sessions to be run sequentially without recreating controllers, and ensures a clear lifecycle management.
+## Lifecycle and boundaries
 
-* The Application layer knows neither `Widget`, nor Flutter, nor `BuildContext`.
+Controllers are constructed once by `AppDependencies` and are intended to be
+shared by the future screens. A Domain `Session`, by contrast, exists only while
+a learning session is active.
+
+- The UI calls controllers rather than repositories.
+- Controllers decide when to load and persist data, but learning transitions
+  remain in the Domain.
+- Persistence models and SQLite rows never enter the Application layer.
+- Controllers currently depend on concrete repositories; no repository
+  interface abstraction exists yet.

@@ -103,23 +103,25 @@ class SentenceGroupDao {
     });
   }
 
-  Future<SentenceGroupPersistence?> getById(int id) {
-    return database.readTransaction((txn) async {
-      final sentenceGroupRow = await txn.getAll(
-        '''
+  Future<SentenceGroupPersistence?> getByIdInTransaction(
+    sqlite.SqliteReadContext txn,
+    int id,
+  ) async {
+    final sentenceGroupRow = await txn.getAll(
+      '''
         SELECT id
         FROM sentence_group
         WHERE id = ?
       ''',
-        [id],
-      );
+      [id],
+    );
 
-      if (sentenceGroupRow.isEmpty) {
-        return null;
-      }
+    if (sentenceGroupRow.isEmpty) {
+      return null;
+    }
 
-      final sentenceInstanceRows = await txn.getAll(
-        '''
+    final sentenceInstanceRows = await txn.getAll(
+      '''
         SELECT
           si.id,
           si.content_id,
@@ -131,17 +133,20 @@ class SentenceGroupDao {
           ON ss.sentence_instance_id = si.id
         WHERE si.sentence_group_id = ?
       ''',
-        [id],
-      );
+      [id],
+    );
 
-      final List<SentenceInstancePersistence> sentenceInstances = sentenceInstanceRows
-          .map((row) {
-            return SentenceInstancePersistence.fromRow(row, row);
-          })
-          .toList();
+    final List<SentenceInstancePersistence> sentenceInstances = sentenceInstanceRows.map((
+      row,
+    ) {
+      return SentenceInstancePersistence.fromRow(row, row);
+    }).toList();
 
-      return SentenceGroupPersistence.fromRow(sentenceGroupRow.first, sentenceInstances);
-    });
+    return SentenceGroupPersistence.fromRow(sentenceGroupRow.first, sentenceInstances);
+  }
+
+  Future<SentenceGroupPersistence?> getById(int id) {
+    return database.readTransaction((txn) => getByIdInTransaction(txn, id));
   }
 
   /// Reconciles group membership and state within the caller's transaction.
