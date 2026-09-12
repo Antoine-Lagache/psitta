@@ -78,7 +78,7 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
           );
         }
 
-        return const PsittaApp();
+        return PsittaApp(dependencies: snapshot.requireData);
       },
     );
   }
