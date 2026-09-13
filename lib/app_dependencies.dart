@@ -42,15 +42,18 @@ class AppDependencies {
       sessionRepository: sessionRepository,
       exerciseHistoryRepository: ExerciseHistoryRepository(connection),
     );
-    contentRenderer = ContentRenderer(
-      FieldRenderer(MediaResolver(contentController)),
-    );
+    contentRenderer = ContentRenderer(FieldRenderer(MediaResolver(contentController)));
   }
 
   static Future<AppDependencies> initialize() async {
     final database = SqliteDatabase();
     await database.open();
-    return AppDependencies._(database);
+    try {
+      return AppDependencies._(database);
+    } on Object {
+      await database.close();
+      rethrow;
+    }
   }
 
   Future<void> dispose() => _database.close();
