@@ -1,10 +1,13 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:psitta/app_dependencies.dart';
+import 'package:psitta/ui/app/bootstrap/startup_screen.dart';
+import 'package:psitta/ui/app/bootstrap/startup_state.dart';
 import 'package:psitta/ui/screens/home/home_screen.dart';
 
+/// Creates the dependencies owned by the application bootstrap.
+/// Each call must create a fresh instance and clean up resources on failure.
 typedef AppDependenciesFactory = Future<AppDependencies> Function();
 
 /// Initializes and owns the dependencies that live for the whole application.
@@ -21,7 +24,7 @@ class PsittaBootstrap extends StatefulWidget {
 }
 
 class _PsittaBootstrapState extends State<PsittaBootstrap> {
-  _StartupState _startupState = const _StartupLoading();
+  StartupState _startupState = const StartupLoading();
 
   @override
   void initState() {
@@ -34,12 +37,12 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
       final dependencies = await widget.initializeDependencies();
 
       if (!mounted) {
-        await dependencies.dispose();
+        await _disposeDependencies(dependencies);
         return;
       }
 
       setState(() {
-        _startupState = _StartupReady(dependencies);
+        _startupState = StartupReady(dependencies);
       });
     } on Object catch (error, stackTrace) {
       FlutterError.reportError(
@@ -58,25 +61,44 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
       }
 
       setState(() {
-        _startupState = _StartupFailure(error);
+        _startupState = StartupFailure(error);
       });
     }
   }
 
   void _retryInitialization() {
+    if (!mounted || _startupState is! StartupFailure) {
+      return;
+    }
+
     setState(() {
-      _startupState = const _StartupLoading();
+      _startupState = const StartupLoading();
     });
 
     unawaited(_initializeDependencies());
+  }
+
+  Future<void> _disposeDependencies(AppDependencies dependencies) async {
+    try {
+      await dependencies.dispose();
+    } on Object catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'Psitta bootstrap',
+          context: ErrorDescription('while disposing application dependencies'),
+        ),
+      );
+    }
   }
 
   @override
   void dispose() {
     final startupState = _startupState;
 
-    if (startupState is _StartupReady) {
-      unawaited(startupState.dependencies.dispose());
+    if (startupState is StartupReady) {
+      unawaited(_disposeDependencies(startupState.dependencies));
     }
 
     super.dispose();
@@ -85,87 +107,12 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
   @override
   Widget build(BuildContext context) {
     return switch (_startupState) {
-      _StartupLoading() => const _StartupView(
-        child: CircularProgressIndicator(),
+      StartupLoading() => const StartupScreen.loading(),
+      StartupFailure(:final error) => StartupScreen.failure(
+        error: error,
+        onRetry: _retryInitialization,
       ),
-      _StartupFailure(:final error) => _StartupView(
-        child: _StartupError(
-          error: error,
-          onRetry: _retryInitialization,
-        ),
-      ),
-      _StartupReady(:final dependencies) => HomeScreen(
-        sessionController: dependencies.sessionController,
-      ),
+      StartupReady() => const HomeScreen(),
     };
-  }
-}
-
-sealed class _StartupState {
-  const _StartupState();
-}
-
-final class _StartupLoading extends _StartupState {
-  const _StartupLoading();
-}
-
-final class _StartupReady extends _StartupState {
-  final AppDependencies dependencies;
-
-  const _StartupReady(this.dependencies);
-}
-
-final class _StartupFailure extends _StartupState {
-  final Object error;
-
-  const _StartupFailure(this.error);
-}
-
-class _StartupView extends StatelessWidget {
-  final Widget child;
-
-  const _StartupView({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: child,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StartupError extends StatelessWidget {
-  final Object error;
-  final VoidCallback onRetry;
-
-  const _StartupError({required this.error, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text('Psitta could not be initialized.'),
-        if (kDebugMode) ...[
-          const SizedBox(height: 8),
-          Text(
-            error.toString(),
-            textAlign: TextAlign.center,
-          ),
-        ],
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: onRetry,
-          child: const Text('Retry'),
-        ),
-      ],
-    );
   }
 }

@@ -50,7 +50,12 @@ class AppDependencies {
   static Future<AppDependencies> initialize() async {
     final database = SqliteDatabase();
     await database.open();
-    return AppDependencies._(database);
+    try {
+      return AppDependencies._(database);
+    } on Object {
+      await database.close();
+      rethrow;
+    }
   }
 
   Future<void> dispose() => _database.close();
