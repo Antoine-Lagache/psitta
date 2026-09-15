@@ -62,9 +62,7 @@ void main() {
       completed.beginSession(startedAt.add(const Duration(hours: 1)));
       completed.intermediateResult.id = await sessionRepository.save(completed);
       completed.addTimeSpent(const Duration(minutes: 3));
-      completed.endSession(
-        startedAt.add(const Duration(hours: 1, minutes: 3)),
-      );
+      completed.endSession(startedAt.add(const Duration(hours: 1, minutes: 3)));
       await sessionRepository.completeSession(completed);
 
       final statistics = await controller.getSessionStatistics();
@@ -85,10 +83,7 @@ void main() {
       final answeredExercise = session.currentExercise;
 
       session.submitAnswer(
-        SubmittedExerciseAnswer(
-          grade: Grade.easy,
-          answeredAt: answeredAt,
-        ),
+        SubmittedExerciseAnswer(grade: Grade.easy, answeredAt: answeredAt),
       );
       session.addTimeSpent(const Duration(minutes: 1));
       session.endSession(answeredAt);
@@ -97,10 +92,7 @@ void main() {
       final statistics = await controller.getSessionStatistics();
 
       expect(statistics.numberOfAnswers, 1);
-      expect(
-        statistics.getNumberOfAnswersByStatus(ExerciseStatus.newExercise),
-        1,
-      );
+      expect(statistics.getNumberOfAnswersByStatus(ExerciseStatus.newExercise), 1);
       expect(statistics.numberOfExercisesCompleted, 1);
       expect(statistics.averageNumberOfAnswersPerSession, 1);
     });

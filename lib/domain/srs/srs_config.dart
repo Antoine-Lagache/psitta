@@ -20,6 +20,7 @@ class SRSConfig {
   final double hardReviewFactor;
   final double hardLearningFactor;
   final double easyBonus;
+
   /// Offset from midnight used to decide whether an interval crosses a day.
   final Duration dayBoundary;
 

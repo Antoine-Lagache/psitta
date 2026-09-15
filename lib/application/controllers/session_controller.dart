@@ -57,10 +57,9 @@ class SessionController {
         SessionType.wordSession => 'word',
         SessionType.sentenceSession => 'sentence',
       };
-      final now = _now();
 
       final dueExercises = await _exerciseRepository.getDueExercises(
-        now,
+        _now(),
         config.reviewCount,
         exerciseType,
       );
@@ -79,7 +78,7 @@ class SessionController {
         sessionType: sessionType,
         config: config,
       );
-      session.beginSession(now);
+      session.beginSession(_now());
 
       final id = await _sessionRepository.save(session);
       session.intermediateResult.id = id;
@@ -283,7 +282,7 @@ class SessionController {
       }
     } else if (leftStartedAt == null && rightStartedAt != null) {
       return 1;
-    } else if (leftStartedAt != null) {
+    } else if (leftStartedAt != null && rightStartedAt == null) {
       return -1;
     }
 

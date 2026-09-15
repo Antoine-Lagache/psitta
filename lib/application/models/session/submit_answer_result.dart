@@ -1,5 +1,2 @@
 /// Outcome of a successfully persisted answer submission.
-enum SubmitAnswerResult {
-  nextExercise,
-  sessionCompleted,
-}
+enum SubmitAnswerResult { nextExercise, sessionCompleted }
