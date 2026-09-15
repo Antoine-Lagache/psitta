@@ -12,7 +12,8 @@ class MigrationRunner {
   Future<void> migrate(sqlite.SqliteDatabase database) async {
     final currentVersion = await _getCurrentVersion(database);
 
-    final sortedMigrations = [...migrations]..sort((a, b) => a.version.compareTo(b.version));
+    final sortedMigrations = [...migrations]
+      ..sort((a, b) => a.version.compareTo(b.version));
 
     for (final migration in sortedMigrations) {
       if (migration.version <= currentVersion) {

@@ -11,30 +11,30 @@ class SessionStatistics {
     return numberOfSessionsBySessionType[sessionType.index];
   }
 
-  final int numberOfExercisesAnswered;
+  final int numberOfAnswers;
   final int numberOfExercisesCompleted;
 
-  final List<int> numberOfExercisesByStatus;
+  final List<int> numberOfAnswersByStatus;
 
-  int getNumberOfExercisesByStatus(ExerciseStatus status) {
-    return numberOfExercisesByStatus[status.index];
+  int getNumberOfAnswersByStatus(ExerciseStatus status) {
+    return numberOfAnswersByStatus[status.index];
   }
 
   final Duration totalTimeSpent;
   final int numberOfTimedSessions;
   final Duration averageTimePerSession;
 
-  final double averageNumberOfExercisesPerSession;
+  final double averageNumberOfAnswersPerSession;
 
   SessionStatistics({
     required this.numberOfSessions,
     required this.numberOfSessionsBySessionType,
-    required this.numberOfExercisesAnswered,
+    required this.numberOfAnswers,
     required this.numberOfExercisesCompleted,
-    required this.numberOfExercisesByStatus,
+    required this.numberOfAnswersByStatus,
     required this.totalTimeSpent,
     required this.numberOfTimedSessions,
     required this.averageTimePerSession,
-    required this.averageNumberOfExercisesPerSession,
+    required this.averageNumberOfAnswersPerSession,
   });
 }

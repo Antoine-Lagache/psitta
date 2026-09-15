@@ -22,15 +22,17 @@ class SessionResultDao {
         INSERT INTO session_result (
           session_type_index,
           number_unique_exercises_completed,
+          total_time_spent_us,
           started_at,
           end_at
         )
-        VALUES (?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?)
         RETURNING id
         ''',
       [
         sessionResult.sessionTypeIndex,
         sessionResult.uniqueExercisesCompleted,
+        sessionResult.totalTimeSpent,
         sessionResult.startedAt,
         sessionResult.endAt,
       ],
@@ -48,7 +50,7 @@ class SessionResultDao {
           )
           VALUES (?, ?, ?)
           ''',
-        [id, statusCount.statusCode, statusCount.exercisesCompleted],
+        [id, statusCount.statusCode, statusCount.answerCount],
       );
     }
 
@@ -63,6 +65,7 @@ class SessionResultDao {
           id,
           session_type_index,
           number_unique_exercises_completed,
+          total_time_spent_us,
           started_at,
           end_at
         FROM session_result
@@ -91,7 +94,11 @@ class SessionResultDao {
     });
   }
 
-  Future<List<SessionResultPersistence>> getList({String? startDate, String? endDate}) {
+  Future<List<SessionResultPersistence>> getList({
+    String? startDate,
+    String? endDate,
+    bool completedOnly = false,
+  }) {
     return database.readTransaction((txn) async {
       final conditions = <String>[];
       final parameters = <Object?>[];
@@ -106,6 +113,10 @@ class SessionResultDao {
         parameters.add(endDate);
       }
 
+      if (completedOnly) {
+        conditions.add('end_at IS NOT NULL');
+      }
+
       final whereClause = conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
 
       final resultRows = await txn.getAll('''
@@ -113,6 +124,7 @@ class SessionResultDao {
           id,
           session_type_index,
           number_unique_exercises_completed,
+          total_time_spent_us,
           started_at,
           end_at
         FROM session_result
@@ -159,6 +171,7 @@ class SessionResultDao {
         SET
           session_type_index = ?,
           number_unique_exercises_completed = ?,
+          total_time_spent_us = ?,
           started_at = ?,
           end_at = ?
         WHERE id = ?
@@ -166,6 +179,7 @@ class SessionResultDao {
       [
         sessionResult.sessionTypeIndex,
         sessionResult.uniqueExercisesCompleted,
+        sessionResult.totalTimeSpent,
         sessionResult.startedAt,
         sessionResult.endAt,
         id,
@@ -190,7 +204,7 @@ class SessionResultDao {
           )
           VALUES (?, ?, ?)
           ''',
-        [id, statusCount.statusCode, statusCount.exercisesCompleted],
+        [id, statusCount.statusCode, statusCount.answerCount],
       );
     }
   }

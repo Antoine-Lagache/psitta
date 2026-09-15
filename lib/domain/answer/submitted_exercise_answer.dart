@@ -4,6 +4,7 @@ part of 'exercise_answer.dart';
 final class SubmittedExerciseAnswer extends ExerciseAnswer {
   @override
   final Grade grade;
+
   /// Time at which the user completed the exercise.
   final DateTime answeredAt;
   //final List<Duration> stepDurations; // TODO: Store step durations if needed.

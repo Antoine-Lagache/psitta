@@ -65,6 +65,13 @@ class SentenceExercise extends Exercise {
 
   @override
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
+    if (status == ExerciseStatus.completed) {
+      throw StateError('Cannot answer a completed exercise');
+    }
+    if (!isGradeAllowed(answer.grade)) {
+      throw StateError('The grade is not allowed by this exercise');
+    }
+
     newHistoryEntry.add(
       ExerciseHistoryEntry.fromAnswer(
         answer: answer,

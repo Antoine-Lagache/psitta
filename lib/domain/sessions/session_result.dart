@@ -9,20 +9,23 @@ class SessionResult {
 
   SessionType sessionType;
 
-  List<int> numberOfExercicesByStatus;
-  int getNumberOfExercisesByStatus(ExerciseStatus status) {
-    return numberOfExercicesByStatus[status.index];
+  List<int> numberOfAnswersByStatus;
+  int getNumberOfAnswersByStatus(ExerciseStatus status) {
+    return numberOfAnswersByStatus[status.index];
   }
 
   int numberOfUniqueExercisesCompleted;
 
   DateTime? startedAt;
   DateTime? endAt;
-  Duration? get totalTimeSpent =>
-      (startedAt == null) ? null : endAt?.difference(startedAt!);
+  Duration totalTimeSpent;
 
-  SessionResult({this.id, required this.sessionType})
-    : numberOfExercicesByStatus = List<int>.filled(ExerciseStatus.values.length, 0),
+  SessionResult({this.id, required this.sessionType, this.totalTimeSpent = Duration.zero})
+    : numberOfAnswersByStatus = List<int>.filled(ExerciseStatus.values.length, 0),
       numberOfUniqueExercisesCompleted = 0,
-      endAt = null;
+      endAt = null {
+    if (totalTimeSpent.isNegative) {
+      throw ArgumentError.value(totalTimeSpent, 'totalTimeSpent', 'Must not be negative');
+    }
+  }
 }

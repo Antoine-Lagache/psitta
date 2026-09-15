@@ -7,9 +7,6 @@ final class PsittaSqliteOpenFactory extends NativeSqliteOpenFactory {
 
   @override
   List<String> pragmaStatements(SqliteOpenOptions options) {
-    return [
-      ...super.pragmaStatements(options),
-      'PRAGMA foreign_keys = ON',
-    ];
+    return [...super.pragmaStatements(options), 'PRAGMA foreign_keys = ON'];
   }
 }

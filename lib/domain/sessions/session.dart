@@ -74,6 +74,10 @@ class Session {
     if (_intermediateResult.startedAt == null || _intermediateResult.endAt != null) {
       throw StateError('Only an unfinished session can be resumed');
     }
+    if (now.isBefore(_intermediateResult.startedAt!)) {
+      throw StateError('Cannot resume a session before it started');
+    }
+
     _scheduler.selectNextExercise(now);
   }
 
@@ -92,22 +96,25 @@ class Session {
 
   /// Applies [answer], updates aggregates, and selects the next exercise.
   void submitAnswer(SubmittedExerciseAnswer answer) {
-    if (_scheduler.currentExercise == null) {
+    final exercise = _scheduler.currentExercise;
+    if (exercise == null) {
       throw StateError('No current exercise');
     }
 
     if (isSessionFinished()) {
       throw Exception("Cannot submit answer for a finished session");
     }
+    if (!exercise.isGradeAllowed(answer.grade)) {
+      throw StateError('The grade is not allowed by this exercise');
+    }
+    _validateTimestamp(answer.answeredAt);
 
-    _intermediateResult.numberOfExercicesByStatus[_scheduler
-        .currentExercise!
-        .status
-        .code]++;
+    final answeredStatus = exercise.status;
+    exercise.applyAnswer(answer, config);
 
-    _scheduler.currentExercise!.applyAnswer(answer, config);
+    _intermediateResult.numberOfAnswersByStatus[answeredStatus.index]++;
 
-    if (_scheduler.currentExercise!.status == ExerciseStatus.completed) {
+    if (exercise.status == ExerciseStatus.completed) {
       _intermediateResult.numberOfUniqueExercisesCompleted++;
     }
 
@@ -123,6 +130,9 @@ class Session {
     if (isSessionFinished()) {
       throw Exception("Cannot preview interval for a finished session");
     }
+    if (!_scheduler.currentExercise!.isGradeAllowed(answer.grade)) {
+      throw StateError('The grade is not allowed by this exercise');
+    }
 
     return _scheduler.currentExercise!.previewInterval(answer, config);
   }
@@ -131,12 +141,36 @@ class Session {
     return !_scheduler.hasNextExercise() || _intermediateResult.endAt != null;
   }
 
+  /// Adds one measured active segment to the persisted session aggregate.
+  void addTimeSpent(Duration duration) {
+    if (_intermediateResult.startedAt == null || _intermediateResult.endAt != null) {
+      throw StateError('Time can only be added to an active session');
+    }
+    if (duration.isNegative) {
+      throw ArgumentError.value(duration, 'duration', 'Must not be negative');
+    }
+
+    _intermediateResult.totalTimeSpent += duration;
+  }
+
   /// Marks the session complete and returns its final aggregate result.
   SessionResult endSession(DateTime now) {
+    if (_intermediateResult.startedAt == null) {
+      throw StateError('Cannot end a session before it started');
+    }
     if (_intermediateResult.endAt != null) {
       throw StateError('Session already ended');
     }
+
+    _validateTimestamp(now);
     _intermediateResult.endAt = now;
     return _intermediateResult;
+  }
+
+  void _validateTimestamp(DateTime now) {
+    final startedAt = _intermediateResult.startedAt;
+    if (startedAt != null && now.isBefore(startedAt)) {
+      throw StateError('Session timestamps must be chronological');
+    }
   }
 }

@@ -14,30 +14,29 @@ class SessionResultMapper {
       uniqueExercisesCompleted: domain.numberOfUniqueExercisesCompleted,
       // ExerciseStatus codes currently match their positions in this list.
       // This mapping must become explicit if those values ever diverge.
-      statusCounts: domain.numberOfExercicesByStatus.asMap().entries.map((entry) {
-        return StatusCountPersistence(
-          statusCode: entry.key,
-          exercisesCompleted: entry.value,
-        );
+      statusCounts: domain.numberOfAnswersByStatus.asMap().entries.map((entry) {
+        return StatusCountPersistence(statusCode: entry.key, answerCount: entry.value);
       }).toList(),
+      totalTimeSpent: safeFromDuration(domain.totalTimeSpent),
       startedAt: toIsoUtc(domain.startedAt),
       endAt: toIsoUtc(domain.endAt),
     );
   }
 
   static SessionResult toDomain(SessionResultPersistence persistence) {
-    final numberOfExercicesByStatus = List<int>.filled(ExerciseStatus.values.length, 0);
+    final numberOfAnswersByStatus = List<int>.filled(ExerciseStatus.values.length, 0);
     for (final statusCount in persistence.statusCounts) {
       // Persisted status codes currently double as list indices.
-      numberOfExercicesByStatus[statusCount.statusCode] = statusCount.exercisesCompleted;
+      numberOfAnswersByStatus[statusCount.statusCode] = statusCount.answerCount;
     }
 
     return SessionResult(
         id: persistence.id,
         sessionType: SessionType.fromCode(persistence.sessionTypeIndex),
+        totalTimeSpent: safeToDuration(persistence.totalTimeSpent),
       )
       ..numberOfUniqueExercisesCompleted = persistence.uniqueExercisesCompleted
-      ..numberOfExercicesByStatus = numberOfExercicesByStatus
+      ..numberOfAnswersByStatus = numberOfAnswersByStatus
       ..startedAt = safeParseDate(persistence.startedAt)
       ..endAt = safeParseDate(persistence.endAt);
   }

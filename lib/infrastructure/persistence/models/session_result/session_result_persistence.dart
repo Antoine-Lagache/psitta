@@ -9,6 +9,7 @@ class SessionResultPersistence {
 
   final int uniqueExercisesCompleted;
   final List<StatusCountPersistence> statusCounts;
+  final int totalTimeSpent;
 
   final String? startedAt;
   final String? endAt;
@@ -18,6 +19,7 @@ class SessionResultPersistence {
     required this.sessionTypeIndex,
     required this.uniqueExercisesCompleted,
     required this.statusCounts,
+    required this.totalTimeSpent,
     this.startedAt,
     this.endAt,
   });
@@ -32,6 +34,7 @@ class SessionResultPersistence {
       sessionTypeIndex: resultRow['session_type_index'] as int,
       uniqueExercisesCompleted: resultRow['number_unique_exercises_completed'] as int,
       statusCounts: statusRows.map(StatusCountPersistence.fromRow).toList(),
+      totalTimeSpent: resultRow['total_time_spent_us'] as int,
       startedAt: resultRow['started_at'] as String?,
       endAt: resultRow['end_at'] as String?,
     );
@@ -42,6 +45,7 @@ class SessionResultPersistence {
       'id': id,
       'session_type_index': sessionTypeIndex,
       'number_unique_exercises_completed': uniqueExercisesCompleted,
+      'total_time_spent_us': totalTimeSpent,
       'started_at': startedAt,
       'end_at': endAt,
     };
