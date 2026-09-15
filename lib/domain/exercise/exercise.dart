@@ -51,8 +51,7 @@ abstract class Exercise {
       nextDay = nextDay.add(const Duration(days: 1));
     }
 
-    if (answer.at.add(srsState.interval).isAfter(nextDay) &&
-        !srsState.isInLearning) {
+    if (answer.at.add(srsState.interval).isAfter(nextDay) && !srsState.isInLearning) {
       status = ExerciseStatus.completed;
     } else {
       if (status == ExerciseStatus.newExercise) {
@@ -65,6 +64,9 @@ abstract class Exercise {
 
   /// Returns the interval produced by [answer] without mutating this exercise.
   Duration previewInterval(PreviewExerciseAnswer answer, SRSConfig config) {
+    if (!isGradeAllowed(answer.grade)) {
+      throw StateError('The grade is not allowed by this exercise');
+    }
     return srsState.previewInterval(answer, config);
   }
 

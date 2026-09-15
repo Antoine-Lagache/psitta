@@ -27,14 +27,12 @@ class SessionRepository {
   final SentenceGroupDao _sentencesDao;
   final ExerciseRepository _exerciseRepository;
 
-  SessionRepository(
-    this.database, {
-    required ExerciseRepository exerciseRepository,
-  }) : _exerciseRepository = exerciseRepository,
-       _sessionResultDao = SessionResultDao(database),
-       _sessionExerciseDao = SessionExerciseDao(database),
-       _exerciseDao = ExerciseDao(database),
-       _sentencesDao = SentenceGroupDao(database);
+  SessionRepository(this.database, {required ExerciseRepository exerciseRepository})
+    : _exerciseRepository = exerciseRepository,
+      _sessionResultDao = SessionResultDao(database),
+      _sessionExerciseDao = SessionExerciseDao(database),
+      _exerciseDao = ExerciseDao(database),
+      _sentencesDao = SentenceGroupDao(database);
 
   /// Inserts a new session result and its resumable exercise snapshot.
   Future<int> save(Session session) async {
@@ -211,10 +209,15 @@ class SessionRepository {
     });
   }
 
-  Future<List<SessionResult>> getList({DateTime? startedDate, DateTime? endDate}) async {
+  Future<List<SessionResult>> getList({
+    DateTime? startedDate,
+    DateTime? endDate,
+    bool completedOnly = false,
+  }) async {
     final persistenceList = await _sessionResultDao.getList(
       startDate: toIsoUtc(startedDate),
       endDate: toIsoUtc(endDate),
+      completedOnly: completedOnly,
     );
 
     return persistenceList.map(SessionResultMapper.toDomain).toList();

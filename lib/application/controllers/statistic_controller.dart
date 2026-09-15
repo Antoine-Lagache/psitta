@@ -27,6 +27,7 @@ class StatisticController {
     final sessions = await _sessionRepository.getList(
       startedDate: startDate,
       endDate: endDate,
+      completedOnly: true,
     );
 
     return _calculateSessionStatistics(sessions);
@@ -46,49 +47,43 @@ class StatisticController {
   }
 
   SessionStatistics _calculateSessionStatistics(List<SessionResult> sessions) {
-    int numberOfExercisesAnswered = 0;
+    int numberOfAnswers = 0;
     int numberOfExercisesCompleted = 0;
 
     final numberOfSessionsBySessionType = List<int>.filled(SessionType.values.length, 0);
 
-    final numberOfExercisesByStatus = List<int>.filled(ExerciseStatus.values.length, 0);
+    final numberOfAnswersByStatus = List<int>.filled(ExerciseStatus.values.length, 0);
 
     Duration totalTimeSpent = Duration.zero;
-    int numberOfTimedSessions = 0;
-
     for (final session in sessions) {
       numberOfSessionsBySessionType[session.sessionType.index]++;
 
       for (final status in ExerciseStatus.values) {
-        final count = session.getNumberOfExercisesByStatus(status);
+        final count = session.getNumberOfAnswersByStatus(status);
 
-        numberOfExercisesByStatus[status.index] += count;
-        numberOfExercisesAnswered += count;
+        numberOfAnswersByStatus[status.index] += count;
+        numberOfAnswers += count;
       }
 
       numberOfExercisesCompleted += session.numberOfUniqueExercisesCompleted;
 
-      final timeSpent = session.totalTimeSpent;
-      if (timeSpent != null) {
-        totalTimeSpent += timeSpent;
-        numberOfTimedSessions++;
-      }
+      totalTimeSpent += session.totalTimeSpent;
     }
 
     return SessionStatistics(
       numberOfSessions: sessions.length,
       numberOfSessionsBySessionType: numberOfSessionsBySessionType,
-      numberOfExercisesAnswered: numberOfExercisesAnswered,
+      numberOfAnswers: numberOfAnswers,
       numberOfExercisesCompleted: numberOfExercisesCompleted,
-      numberOfExercisesByStatus: numberOfExercisesByStatus,
+      numberOfAnswersByStatus: numberOfAnswersByStatus,
       totalTimeSpent: totalTimeSpent,
-      numberOfTimedSessions: numberOfTimedSessions,
-      averageTimePerSession: numberOfTimedSessions == 0
+      numberOfTimedSessions: sessions.length,
+      averageTimePerSession: sessions.isEmpty
           ? Duration.zero
-          : totalTimeSpent ~/ numberOfTimedSessions,
-      averageNumberOfExercisesPerSession: sessions.isEmpty
+          : totalTimeSpent ~/ sessions.length,
+      averageNumberOfAnswersPerSession: sessions.isEmpty
           ? 0.0
-          : numberOfExercisesAnswered / sessions.length,
+          : numberOfAnswers / sessions.length,
     );
   }
 

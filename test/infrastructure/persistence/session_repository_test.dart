@@ -58,6 +58,7 @@ void main() {
       expect(activeResults.single.sessionType, SessionType.wordSession);
       expect(activeResults.single.startedAt?.toUtc(), startedAt);
       expect(activeResults.single.endAt, isNull);
+      expect(activeResults.single.totalTimeSpent, Duration.zero);
 
       final restored = await repository.getActiveSession(
         activeResults.single,
@@ -85,6 +86,7 @@ void main() {
       session.submitAnswer(
         SubmittedExerciseAnswer(grade: Grade.again, answeredAt: answeredAt),
       );
+      session.addTimeSpent(const Duration(minutes: 2));
 
       await repository.saveAnswerProgress(session, answeredExercise);
 
@@ -95,9 +97,8 @@ void main() {
       expect(persistedExercise.srsState.lastReview?.toUtc(), answeredAt);
       expect(persistedExercise.srsState.learningStepIndex, 0);
 
-      final history = await ExerciseHistoryRepository(
-        database,
-      ).getList(exerciseId: exercise.id);
+      final history = await ExerciseHistoryRepository(database)
+          .getList(exerciseId: exercise.id);
       expect(history, hasLength(1));
       expect(history.single.exerciseId, exercise.id);
       expect(history.single.grade, Grade.again);
@@ -107,9 +108,10 @@ void main() {
       final activeResults = await repository.getAllActiveSessionResult();
       expect(activeResults, hasLength(1));
       expect(
-        activeResults.single.getNumberOfExercisesByStatus(ExerciseStatus.newExercise),
+        activeResults.single.getNumberOfAnswersByStatus(ExerciseStatus.newExercise),
         1,
       );
+      expect(activeResults.single.totalTimeSpent, const Duration(minutes: 2));
 
       final restored = await repository.getActiveSession(
         activeResults.single,
@@ -134,6 +136,7 @@ void main() {
       session.submitAnswer(
         SubmittedExerciseAnswer(grade: Grade.easy, answeredAt: answeredAt),
       );
+      session.addTimeSpent(endedAt.difference(startedAt));
       session.endSession(endedAt);
 
       await repository.saveAnswerProgress(session, answeredExercise);
@@ -145,8 +148,9 @@ void main() {
       expect(results, hasLength(1));
       expect(results.single.id, session.intermediateResult.id);
       expect(results.single.endAt?.toUtc(), endedAt);
+      expect(results.single.totalTimeSpent, endedAt.difference(startedAt));
       expect(results.single.numberOfUniqueExercisesCompleted, 1);
-      expect(results.single.getNumberOfExercisesByStatus(ExerciseStatus.newExercise), 1);
+      expect(results.single.getNumberOfAnswersByStatus(ExerciseStatus.newExercise), 1);
       expect(
         await ExerciseHistoryRepository(database).getList(exerciseId: exercise.id),
         hasLength(1),
@@ -201,6 +205,7 @@ void main() {
 
       session.beginSession(startedAt);
       session.intermediateResult.id = await repository.save(session);
+      session.addTimeSpent(const Duration(minutes: 4));
       session.endSession(endedAt);
 
       await repository.completeSession(session);
@@ -208,6 +213,7 @@ void main() {
       expect(await repository.getAllActiveSessionResult(), isEmpty);
       final persisted = (await repository.getList()).single;
       expect(persisted.endAt?.toUtc(), endedAt);
+      expect(persisted.totalTimeSpent, const Duration(minutes: 4));
       expect(await testDatabase.countRows('active_session_exercise'), 0);
       expect(await testDatabase.countRows('exercise_history'), 0);
     });
@@ -226,15 +232,17 @@ void main() {
         learningStepIndex: 0,
       );
       await exerciseRepository.save(exercise);
-      session.intermediateResult.numberOfExercicesByStatus[ExerciseStatus
+      session.intermediateResult.numberOfAnswersByStatus[ExerciseStatus
               .newExercise
               .index] =
           2;
+      session.addTimeSpent(const Duration(minutes: 2));
 
       await repository.update(session);
 
       final activeResult = (await repository.getAllActiveSessionResult()).single;
-      expect(activeResult.getNumberOfExercisesByStatus(ExerciseStatus.newExercise), 2);
+      expect(activeResult.getNumberOfAnswersByStatus(ExerciseStatus.newExercise), 2);
+      expect(activeResult.totalTimeSpent, const Duration(minutes: 2));
       final restored = await repository.getActiveSession(activeResult, SRSConfig());
       expect(restored.getResumeList().single.status, ExerciseStatus.learning);
       expect(await testDatabase.countRows('active_session_exercise'), 1);
@@ -279,6 +287,47 @@ void main() {
       expect(
         results.map((result) => result.startedAt?.toUtc()),
         orderedEquals(starts.take(2)),
+      );
+    });
+
+    test('getList can return only completed sessions', () async {
+      final exercise = await createWordExercise();
+      final active = createWordSession(exercise);
+      final completed = createWordSession(exercise);
+      final startedAt = DateTime.utc(2026, 9, 5, 10);
+
+      active.beginSession(startedAt);
+      active.intermediateResult.id = await repository.save(active);
+
+      completed.beginSession(startedAt.add(const Duration(hours: 1)));
+      completed.intermediateResult.id = await repository.save(completed);
+      completed.endSession(startedAt.add(const Duration(hours: 1, minutes: 5)));
+      await repository.completeSession(completed);
+
+      final results = await repository.getList(completedOnly: true);
+
+      expect(results, hasLength(1));
+      expect(results.single.id, completed.intermediateResult.id);
+    });
+
+    test('allows multiple active sessions of the same type', () async {
+      final firstExercise = await createWordExercise();
+      final secondExercise = await createWordExercise();
+      final startedAt = DateTime.utc(2026, 9, 5, 10);
+      final first = createWordSession(firstExercise);
+      final second = createWordSession(secondExercise);
+
+      first.beginSession(startedAt);
+      first.intermediateResult.id = await repository.save(first);
+      second.beginSession(startedAt.add(const Duration(minutes: 1)));
+      second.intermediateResult.id = await repository.save(second);
+
+      final activeSessions = await repository.getAllActiveSessionResult();
+
+      expect(activeSessions, hasLength(2));
+      expect(
+        activeSessions.map((session) => session.sessionType),
+        everyElement(SessionType.wordSession),
       );
     });
   });

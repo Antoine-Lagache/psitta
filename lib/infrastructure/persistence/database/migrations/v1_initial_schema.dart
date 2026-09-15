@@ -191,6 +191,8 @@ class V1InitialSchema implements DatabaseMigration {
         session_type_index INTEGER NOT NULL,
 
         number_unique_exercises_completed INTEGER NOT NULL,
+        total_time_spent_us INTEGER NOT NULL DEFAULT 0
+          CHECK (total_time_spent_us >= 0),
 
         started_at TEXT,
         end_at TEXT
