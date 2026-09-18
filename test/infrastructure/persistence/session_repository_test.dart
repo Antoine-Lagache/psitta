@@ -88,8 +88,7 @@ void main() {
       for (final status in statuses) {
         final exercise = await createWordExercise();
         exercise.status = status;
-        if (status == ExerciseStatus.learning ||
-            status == ExerciseStatus.relearning) {
+        if (status == ExerciseStatus.learning || status == ExerciseStatus.relearning) {
           exercise.srsState = SRSState(
             interval: const Duration(minutes: 1),
             lastReview: now,
@@ -107,9 +106,7 @@ void main() {
       session.beginSession(now);
       final sessionId = await repository.save(session);
 
-      final counts = await repository.countActiveSessionExercisesByStatus(
-        sessionId,
-      );
+      final counts = await repository.countActiveSessionExercisesByStatus(sessionId);
 
       expect(counts, {
         ExerciseStatus.newExercise: 1,
@@ -118,10 +115,7 @@ void main() {
         ExerciseStatus.relearning: 1,
         ExerciseStatus.completed: 1,
       });
-      expect(
-        () => counts[ExerciseStatus.consolidating] = 1,
-        throwsUnsupportedError,
-      );
+      expect(() => counts[ExerciseStatus.consolidating] = 1, throwsUnsupportedError);
     });
 
     test('atomically persists answer progress and its resumable state', () async {

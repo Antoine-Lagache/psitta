@@ -66,13 +66,8 @@ void main() {
     return exerciseRepository.createWordExercise(contentId);
   }
 
-  SessionOverview overviewOf(
-    List<SessionOverview> overviews,
-    SessionType sessionType,
-  ) {
-    return overviews.singleWhere(
-      (overview) => overview.sessionType == sessionType,
-    );
+  SessionOverview overviewOf(List<SessionOverview> overviews, SessionType sessionType) {
+    return overviews.singleWhere((overview) => overview.sessionType == sessionType);
   }
 
   group('SessionController', () {
@@ -121,10 +116,7 @@ void main() {
 
         final overviews = await controller.getSessionOverviews();
         final wordOverview = overviewOf(overviews, SessionType.wordSession);
-        final sentenceOverview = overviewOf(
-          overviews,
-          SessionType.sentenceSession,
-        );
+        final sentenceOverview = overviewOf(overviews, SessionType.sentenceSession);
 
         expect(overviews, hasLength(SessionType.values.length));
         expect(wordOverview.hasActiveSession, isFalse);
@@ -150,11 +142,9 @@ void main() {
 
       for (final status in statuses) {
         final exerciseId = await createWordExercise();
-        final exercise =
-            await exerciseRepository.getById(exerciseId) as WordExercise;
+        final exercise = await exerciseRepository.getById(exerciseId) as WordExercise;
         exercise.status = status;
-        if (status == ExerciseStatus.learning ||
-            status == ExerciseStatus.relearning) {
+        if (status == ExerciseStatus.learning || status == ExerciseStatus.relearning) {
           exercise.srsState = SRSState(
             interval: const Duration(minutes: 1),
             lastReview: now,

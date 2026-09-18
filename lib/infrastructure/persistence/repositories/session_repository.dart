@@ -76,9 +76,7 @@ class SessionRepository {
   Future<Map<ExerciseStatus, int>> countActiveSessionExercisesByStatus(
     int sessionResultId,
   ) async {
-    final persistenceCounts = await _sessionExerciseDao.countByStatus(
-      sessionResultId,
-    );
+    final persistenceCounts = await _sessionExerciseDao.countByStatus(sessionResultId);
 
     return Map.unmodifiable({
       for (final count in persistenceCounts)

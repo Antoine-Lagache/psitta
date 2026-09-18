@@ -182,10 +182,7 @@ void main() {
       final sentenceGroupRepository = SentenceGroupRepository(database);
       final sentenceGroupId = await sentenceGroupRepository.createGroup();
       await sentenceGroupRepository.createInstance(sentenceGroupId, thirdContentId);
-      final dueSentenceId = await repository.createSentenceExercise(
-        sentenceGroupId,
-        1,
-      );
+      final dueSentenceId = await repository.createSentenceExercise(sentenceGroupId, 1);
 
       await database.execute(
         '''

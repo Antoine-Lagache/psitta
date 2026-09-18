@@ -117,9 +117,7 @@ class ExerciseDao {
   Future<int> countDueExercises(int nowInMicroseconds, String? type) {
     return database.readTransaction((txn) async {
       final typeCondition = type == null ? '' : 'AND e.type = ?';
-      final arguments = type == null
-          ? [nowInMicroseconds]
-          : [nowInMicroseconds, type];
+      final arguments = type == null ? [nowInMicroseconds] : [nowInMicroseconds, type];
 
       final rows = await txn.getAll('''
         SELECT COUNT(*) AS count

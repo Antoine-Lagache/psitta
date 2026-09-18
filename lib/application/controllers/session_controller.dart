@@ -97,19 +97,13 @@ class SessionController {
       }
 
       final persistedSessions = await _sessionRepository.getAllActiveSessionResult();
-      final activeSession = _mostRecentSessionOfType(
-        persistedSessions,
-        sessionType,
-      );
+      final activeSession = _mostRecentSessionOfType(persistedSessions, sessionType);
 
       if (activeSession == null) {
         return false;
       }
 
-      final session = await _sessionRepository.getActiveSession(
-        activeSession,
-        config,
-      );
+      final session = await _sessionRepository.getActiveSession(activeSession, config);
       session.resumeSession(_now());
       _startTimingSegment();
       _activeSession = session;
@@ -123,10 +117,7 @@ class SessionController {
     final overviews = <SessionOverview>[];
 
     for (final sessionType in SessionType.values) {
-      final activeSession = _mostRecentSessionOfType(
-        activeSessions,
-        sessionType,
-      );
+      final activeSession = _mostRecentSessionOfType(activeSessions, sessionType);
 
       final overview = activeSession == null
           ? await _buildNewSessionOverview(sessionType)
@@ -171,9 +162,7 @@ class SessionController {
     );
   }
 
-  Future<SessionOverview> _buildNewSessionOverview(
-    SessionType sessionType,
-  ) async {
+  Future<SessionOverview> _buildNewSessionOverview(SessionType sessionType) async {
     final exerciseType = _exerciseTypeFor(sessionType);
 
     // Never cache a wall-clock value across an unrelated await: read it
@@ -183,9 +172,7 @@ class SessionController {
       now,
       exerciseType,
     );
-    final newExerciseCount = await _exerciseRepository.countNewExercises(
-      exerciseType,
-    );
+    final newExerciseCount = await _exerciseRepository.countNewExercises(exerciseType);
 
     return SessionOverview(
       sessionType: sessionType,
