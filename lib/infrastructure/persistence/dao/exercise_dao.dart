@@ -113,6 +113,48 @@ class ExerciseDao {
     });
   }
 
+  /// Counts due exercises, optionally filtered by type.
+  Future<int> countDueExercises(int nowInMicroseconds, String? type) {
+    return database.readTransaction((txn) async {
+      final typeCondition = type == null ? '' : 'AND e.type = ?';
+      final arguments = type == null
+          ? [nowInMicroseconds]
+          : [nowInMicroseconds, type];
+
+      final rows = await txn.getAll('''
+        SELECT COUNT(*) AS count
+        FROM exercise e
+        JOIN srs_state s ON s.exercise_id = e.id
+        WHERE s.next_review IS NOT NULL
+          AND s.next_review <= ?
+          $typeCondition
+      ''', arguments);
+
+      return rows.single['count'] as int;
+    });
+  }
+
+  /// Counts exercises with no history, optionally filtered by type.
+  Future<int> countNewExercises(String? type) {
+    return database.readTransaction((txn) async {
+      final typeCondition = type == null ? '' : 'AND e.type = ?';
+      final arguments = type == null ? const <Object?>[] : <Object?>[type];
+
+      final rows = await txn.getAll('''
+        SELECT COUNT(*) AS count
+        FROM exercise e
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM exercise_history h
+          WHERE h.exercise_id = e.id
+        )
+        $typeCondition
+      ''', arguments);
+
+      return rows.single['count'] as int;
+    });
+  }
+
   /// Updates an exercise aggregate within the caller's transaction.
   Future<void> update(sqlite.SqliteWriteContext txn, ExercisePersistence exercise) async {
     if (exercise.id == null) {

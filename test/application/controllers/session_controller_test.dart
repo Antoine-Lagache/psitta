@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:psitta/application/controllers/content_controller.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
+import 'package:psitta/application/models/session/session_overview.dart';
 import 'package:psitta/application/models/session/start_session_result.dart';
 import 'package:psitta/application/models/session/submit_answer_result.dart';
-import 'package:psitta/domain/sessions/session_result.dart';
-import 'package:psitta/domain/sessions/session_type.dart';
+import 'package:psitta/domain/exercise/word_exercise.dart';
+import 'package:psitta/domain/history/exercise_history_entry.dart';
+import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/domain/srs/grade.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/infrastructure/persistence/repositories/content_repository.dart';
@@ -63,6 +65,15 @@ void main() {
     return exerciseRepository.createWordExercise(contentId);
   }
 
+  SessionOverview overviewOf(
+    List<SessionOverview> overviews,
+    SessionType sessionType,
+  ) {
+    return overviews.singleWhere(
+      (overview) => overview.sessionType == sessionType,
+    );
+  }
+
   group('SessionController', () {
     test('does not persist an empty session', () async {
       final controller = createController();
@@ -72,6 +83,102 @@ void main() {
       expect(result, StartSessionResult.noExerciseAvailable);
       expect(controller.hasActiveSession, isFalse);
       expect(await testDatabase.countRows('session_result'), 0);
+    });
+
+    test(
+      'builds limited overviews for new sessions with one timestamp',
+      () async {
+        final exerciseIds = <int>[];
+        for (var index = 0; index < 12; index++) {
+          exerciseIds.add(await createWordExercise());
+        }
+
+        final dueExercise =
+            await exerciseRepository.getById(exerciseIds.first) as WordExercise;
+        dueExercise.srsState = SRSState(
+          interval: const Duration(days: 1),
+          lastReview: now.subtract(const Duration(days: 2)),
+          learningStepIndex: -1,
+        );
+        dueExercise.newHistoryEntry.add(
+          ExerciseHistoryEntry(
+            exerciseId: dueExercise.id,
+            grade: Grade.good,
+            answeredAt: now.subtract(const Duration(days: 2)),
+            status: ExerciseStatus.newExercise,
+          ),
+        );
+        await exerciseRepository.save(dueExercise);
+
+        var clockCalls = 0;
+        final controller = createController(
+          clock: () {
+            clockCalls++;
+            return now;
+          },
+        );
+
+        final overviews = await controller.getSessionOverviews();
+        final wordOverview = overviewOf(overviews, SessionType.wordSession);
+        final sentenceOverview = overviewOf(
+          overviews,
+          SessionType.sentenceSession,
+        );
+
+        expect(overviews, hasLength(SessionType.values.length));
+        expect(wordOverview.hasActiveSession, isFalse);
+        expect(wordOverview.newExerciseCount, 10);
+        expect(wordOverview.reviewExerciseCount, 1);
+        expect(sentenceOverview.hasActiveSession, isFalse);
+        expect(sentenceOverview.newExerciseCount, 0);
+        expect(sentenceOverview.reviewExerciseCount, 0);
+        expect(clockCalls, 1);
+        expect(() => overviews.add(wordOverview), throwsUnsupportedError);
+      },
+    );
+
+    test('builds an active overview from resumable exercise statuses', () async {
+      final statuses = [
+        ExerciseStatus.newExercise,
+        ExerciseStatus.toReview,
+        ExerciseStatus.learning,
+        ExerciseStatus.relearning,
+        ExerciseStatus.completed,
+      ];
+      final exercises = <WordExercise>[];
+
+      for (final status in statuses) {
+        final exerciseId = await createWordExercise();
+        final exercise =
+            await exerciseRepository.getById(exerciseId) as WordExercise;
+        exercise.status = status;
+        if (status == ExerciseStatus.learning ||
+            status == ExerciseStatus.relearning) {
+          exercise.srsState = SRSState(
+            interval: const Duration(minutes: 1),
+            lastReview: now,
+            learningStepIndex: 0,
+          );
+        }
+        exercises.add(exercise);
+      }
+
+      final session = Session(
+        exercises: exercises,
+        sessionType: SessionType.wordSession,
+        config: SRSConfig(),
+      );
+      session.beginSession(now);
+      session.intermediateResult.id = await sessionRepository.save(session);
+
+      final wordOverview = overviewOf(
+        await createController().getSessionOverviews(),
+        SessionType.wordSession,
+      );
+
+      expect(wordOverview.hasActiveSession, isTrue);
+      expect(wordOverview.newExerciseCount, 1);
+      expect(wordOverview.reviewExerciseCount, 3);
     });
 
     test(
@@ -237,7 +344,11 @@ void main() {
       await expectLater(controller.submitAnswer(Grade.again), throwsA(anything));
 
       expect(controller.hasActiveSession, isFalse);
-      expect(await controller.numberActiveSession(SessionType.wordSession), 1);
+      final overview = overviewOf(
+        await controller.getSessionOverviews(),
+        SessionType.wordSession,
+      );
+      expect(overview.hasActiveSession, isTrue);
       expect(
         (await sessionRepository.getAllActiveSessionResult()).single.totalTimeSpent,
         Duration.zero,

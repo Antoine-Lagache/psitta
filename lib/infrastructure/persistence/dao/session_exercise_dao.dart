@@ -1,6 +1,7 @@
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/infrastructure/persistence/models/session_result/session_exercise_persistence.dart';
+import 'package:psitta/infrastructure/persistence/models/session_result/session_exercise_status_count_persistence.dart';
 
 /// Stores transient exercise snapshots used to resume active sessions.
 class SessionExerciseDao {
@@ -63,6 +64,29 @@ class SessionExerciseDao {
         ''');
 
       return rows.map((r) => (r['session_result_id'] as int)).toList();
+    });
+  }
+
+  /// Counts the exercise snapshots of one active session by status code.
+  Future<List<SessionExerciseStatusCountPersistence>> countByStatus(
+    int sessionResultId,
+  ) {
+    return database.readTransaction((txn) async {
+      final rows = await txn.getAll(
+        '''
+        SELECT
+          status_index,
+          COUNT(*) AS exercise_count
+        FROM active_session_exercise
+        WHERE session_result_id = ?
+        GROUP BY status_index
+        ''',
+        [sessionResultId],
+      );
+
+      return rows
+          .map(SessionExerciseStatusCountPersistence.fromRow)
+          .toList();
     });
   }
 

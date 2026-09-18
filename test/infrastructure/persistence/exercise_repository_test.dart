@@ -145,6 +145,76 @@ void main() {
       expect(exercises.first.id, exerciseId);
     });
 
+    test('countNewExercises counts exercises with no history by type', () async {
+      final firstContentId = await testDatabase.insertContent();
+      final secondContentId = await testDatabase.insertContent();
+      final wordExerciseId = await repository.createWordExercise(firstContentId);
+
+      final sentenceGroupRepository = SentenceGroupRepository(database);
+      final sentenceGroupId = await sentenceGroupRepository.createGroup();
+      await sentenceGroupRepository.createInstance(sentenceGroupId, secondContentId);
+      await repository.createSentenceExercise(sentenceGroupId, 1);
+
+      final reviewedWord = await repository.getById(wordExerciseId) as WordExercise;
+      reviewedWord.newHistoryEntry.add(
+        ExerciseHistoryEntry(
+          exerciseId: wordExerciseId,
+          grade: Grade.good,
+          answeredAt: DateTime.utc(2026, 9, 18),
+          status: ExerciseStatus.newExercise,
+        ),
+      );
+      await repository.save(reviewedWord);
+
+      expect(await repository.countNewExercises('word'), 0);
+      expect(await repository.countNewExercises('sentence'), 1);
+      expect(await repository.countNewExercises(null), 1);
+    });
+
+    test('countDueExercises filters by type and includes the exact boundary', () async {
+      final now = DateTime.utc(2026, 9, 18, 12);
+      final firstContentId = await testDatabase.insertContent();
+      final secondContentId = await testDatabase.insertContent();
+      final thirdContentId = await testDatabase.insertContent();
+      final dueWordId = await repository.createWordExercise(firstContentId);
+      final futureWordId = await repository.createWordExercise(secondContentId);
+
+      final sentenceGroupRepository = SentenceGroupRepository(database);
+      final sentenceGroupId = await sentenceGroupRepository.createGroup();
+      await sentenceGroupRepository.createInstance(sentenceGroupId, thirdContentId);
+      final dueSentenceId = await repository.createSentenceExercise(
+        sentenceGroupId,
+        1,
+      );
+
+      await database.execute(
+        '''
+        UPDATE srs_state
+        SET next_review = CASE exercise_id
+          WHEN ? THEN ?
+          WHEN ? THEN ?
+          WHEN ? THEN ?
+        END
+        WHERE exercise_id IN (?, ?, ?)
+        ''',
+        [
+          dueWordId,
+          now.microsecondsSinceEpoch,
+          futureWordId,
+          now.add(const Duration(microseconds: 1)).microsecondsSinceEpoch,
+          dueSentenceId,
+          now.subtract(const Duration(days: 1)).microsecondsSinceEpoch,
+          dueWordId,
+          futureWordId,
+          dueSentenceId,
+        ],
+      );
+
+      expect(await repository.countDueExercises(now, 'word'), 1);
+      expect(await repository.countDueExercises(now, 'sentence'), 1);
+      expect(await repository.countDueExercises(now, null), 2);
+    });
+
     test('save round-trips every word SRS field', () async {
       final contentId = await testDatabase.insertContent();
 

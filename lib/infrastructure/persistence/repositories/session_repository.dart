@@ -72,6 +72,20 @@ class SessionRepository {
     return allSessionResult;
   }
 
+  /// Counts the persisted exercise snapshots of an active session by status.
+  Future<Map<ExerciseStatus, int>> countActiveSessionExercisesByStatus(
+    int sessionResultId,
+  ) async {
+    final persistenceCounts = await _sessionExerciseDao.countByStatus(
+      sessionResultId,
+    );
+
+    return Map.unmodifiable({
+      for (final count in persistenceCounts)
+        ExerciseStatus.fromCode(count.statusCode): count.exerciseCount,
+    });
+  }
+
   /// Rebuilds an unfinished session from its result and exercise snapshots.
   Future<Session> getActiveSession(SessionResult sessionResult, SRSConfig config) async {
     final sessionResultId = sessionResult.id!;
