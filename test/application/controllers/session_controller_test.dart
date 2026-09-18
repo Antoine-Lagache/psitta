@@ -10,6 +10,7 @@ import 'package:psitta/domain/history/exercise_history_entry.dart';
 import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/domain/srs/grade.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
+import 'package:psitta/domain/srs/srs_state.dart';
 import 'package:psitta/infrastructure/persistence/repositories/content_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_history_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
@@ -86,7 +87,7 @@ void main() {
     });
 
     test(
-      'builds limited overviews for new sessions with one timestamp',
+      'builds limited overviews with a fresh timestamp for each session type',
       () async {
         final exerciseIds = <int>[];
         for (var index = 0; index < 12; index++) {
@@ -132,7 +133,7 @@ void main() {
         expect(sentenceOverview.hasActiveSession, isFalse);
         expect(sentenceOverview.newExerciseCount, 0);
         expect(sentenceOverview.reviewExerciseCount, 0);
-        expect(clockCalls, 1);
+        expect(clockCalls, 2);
         expect(() => overviews.add(wordOverview), throwsUnsupportedError);
       },
     );

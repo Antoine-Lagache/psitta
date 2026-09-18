@@ -119,7 +119,6 @@ class SessionController {
 
   /// Builds the home-screen counts for every supported session type.
   Future<List<SessionOverview>> getSessionOverviews() async {
-    final now = _now();
     final activeSessions = await _sessionRepository.getAllActiveSessionResult();
     final overviews = <SessionOverview>[];
 
@@ -130,7 +129,7 @@ class SessionController {
       );
 
       final overview = activeSession == null
-          ? await _buildNewSessionOverview(sessionType, now)
+          ? await _buildNewSessionOverview(sessionType)
           : await _buildActiveSessionOverview(sessionType, activeSession);
       overviews.add(overview);
     }
@@ -174,9 +173,12 @@ class SessionController {
 
   Future<SessionOverview> _buildNewSessionOverview(
     SessionType sessionType,
-    DateTime now,
   ) async {
     final exerciseType = _exerciseTypeFor(sessionType);
+
+    // Never cache a wall-clock value across an unrelated await: read it
+    // immediately before the operation whose temporal boundary it defines.
+    final now = _now();
     final reviewExerciseCount = await _exerciseRepository.countDueExercises(
       now,
       exerciseType,
@@ -193,6 +195,8 @@ class SessionController {
     );
   }
 
+  /// Temporary MVP selection rule, not a Domain-level type correspondence.
+  /// A session type may later accept several exercise types or other criteria.
   String _exerciseTypeFor(SessionType sessionType) {
     return switch (sessionType) {
       SessionType.wordSession => 'word',
