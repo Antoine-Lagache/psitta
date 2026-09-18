@@ -11,8 +11,8 @@ and SRS rules needed by a developer entering the project.
 
 - [Overview](architecture/overview.md) — layers, dependency directions, and
   application bootstrap.
-- [UI](architecture/ui_layer/ui.md) — the implemented content-rendering
-  pipeline and its current limits.
+- [UI](architecture/ui_layer/ui.md) — application startup, the placeholder
+  home screen, content rendering, and current limits.
 - [Application](architecture/application_layer/application.md) — controllers,
   application models, and session use cases.
 - [Domain](architecture/domain_layer/domain.md) — the business model and its

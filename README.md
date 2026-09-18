@@ -38,17 +38,17 @@ The application follows a four-layer architecture. Each layer has a single, well
 ```
 
 ### UI
-Flutter screens: Home, Sessions, Statistics, Settings. Contains presentation logic only — no direct access to Domain objects or database code.
+Flutter application shell with loading and retryable startup states, a temporary Home screen, and content rendering support. Feature screens and navigation are in progress. UI code contains presentation logic only and does not directly access Domain objects or database code.
 
 ### Application / Controllers
-Orchestrates application workflows: session lifecycle, navigation coordination, and statistics aggregation. Controllers are long-lived and shared across screens.
+Orchestrates application workflows: session lifecycle, content loading, persistence coordination, and statistics aggregation. Controllers are long-lived and shared across screens.
 
 ### Domain
 Pure business logic, fully framework-independent:
 
-- Learning content: `Word`, `Sentence`
-- Learning sessions: `Session`
+- Learning sessions and results: `Session`, `SessionResult`
 - Exercise abstractions: `abstract Exercise`, `WordExercise`, `SentenceExercise`
+- Sentence progression: `SentenceGroup`, `SentenceInstance`
 - SRS scheduling logic
 
 This layer has zero dependencies on Flutter or SQLite and can be tested in isolation.
@@ -65,10 +65,11 @@ Full architectural documentation is available in [`docs/architecture/`](docs/ind
 The SRS model is formally documented and covers modeling assumptions, scheduling hypotheses, mathematical formulation, and system invariants.
 
 - [`docs/maths_and_srs/maths_srs.md`](docs/maths_and_srs/maths_srs.md) — mathematical model and scheduling logic
-- [`docs/maths_and_srs/hypotheses_et_info_srs.md`](docs/maths_and_srs/hypotheses_et_info_srs.md) — modeling hypotheses and design decisions
+- [`docs/maths_and_srs/hypotheses_and_mvp_scopes.md`](docs/maths_and_srs/hypotheses_and_mvp_scopes.md) — modeling hypotheses and design decisions
 - [`docs/maths_and_srs/invariant.md`](docs/maths_and_srs/invariant.md) - formal invariants
 
-The implementation is progressively aligned with this formal specification.
+The implemented model and its current MVP assumptions are described by this
+formal specification.
 
 ---
 
@@ -84,9 +85,9 @@ The project is under active development. Here is a transparent breakdown of prog
 | Domain layer — implementation | ✅ Complete |
 | Persistence layer | ✅ Complete |
 | Application / Controllers | ✅ Complete |
-| UI | 🔄 0% complete |
+| UI | 🔄 Bootstrap complete; feature screens in progress |
 
-The current focus is completing the Domain layer implementation and ensuring full conformance with the formal SRS specification. The codebase is being incrementally refactored to strictly conform to the defined architecture.
+The current focus is implementing the first MVP screens and connecting them to the existing application controllers while preserving the documented layer boundaries.
 
 
 ---
@@ -104,7 +105,7 @@ flutter pub get
 flutter run
 ```
 
-Domain logic and SRS unit tests can be run independently once the domain layer implementation is complete:
+Run the test suite with:
 
 ```bash
 flutter test

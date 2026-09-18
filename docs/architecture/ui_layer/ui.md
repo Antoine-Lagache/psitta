@@ -4,8 +4,37 @@
 
 ## Purpose
 
-The implemented UI code is a content-rendering pipeline. It turns application
-`Content` models into one Flutter widget for the requested exercise side.
+The UI layer contains the Flutter application shell, its asynchronous startup
+states, and the content-rendering pipeline. Feature screens are still at an
+early stage.
+
+```mermaid
+flowchart TD
+    MAIN["main"] --> APP["PsittaApp"]
+    APP --> BOOTSTRAP["PsittaBootstrap"]
+    BOOTSTRAP --> STARTUP["StartupScreen"]
+    BOOTSTRAP --> HOME["HomeScreen"]
+```
+
+## Application startup
+
+`main` starts `PsittaApp`, which owns the root `MaterialApp` and application
+theme. `PsittaBootstrap` then creates `AppDependencies` asynchronously and
+represents three states:
+
+- loading uses `StartupScreen` while dependencies are being initialized;
+- failure shows the initialization error and offers a retry;
+- success currently displays the placeholder `HomeScreen`.
+
+The bootstrap state owns the dependency container and disposes it with the
+widget. A retry returns to the loading state and performs a fresh
+initialization. `HomeScreen` does not receive the dependencies yet; connecting
+it to application controllers is part of the next UI work.
+
+## Content rendering
+
+The rendering pipeline turns application `Content` models into one Flutter
+widget for the requested exercise side:
 
 ```mermaid
 flowchart TD
@@ -55,9 +84,11 @@ error.
 
 ## Current scope
 
-The repository does not currently implement screens, navigation, exercise
-input controls, or state-management bindings. Those elements remain part of the
-future MVP interface.
+The repository currently implements startup states and a placeholder home
+screen, but no feature navigation, session controls, statistics screen, or
+settings screen. The home screen is not connected to controllers, and the
+content-rendering pipeline is not yet hosted by a complete learning-session
+screen.
 
 The presentation layer may depend on application models and controllers. It
 must not access DAOs, repositories, SQLite rows, or domain mutation methods

@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:psitta/application/controllers/content_controller.dart';
 import 'package:psitta/application/models/content/content.dart';
+import 'package:psitta/application/models/session/session_overview.dart';
 import 'package:psitta/application/models/session/start_session_result.dart';
 import 'package:psitta/application/models/session/submit_answer_result.dart';
 import 'package:psitta/domain/answer/exercise_answer.dart';
@@ -53,10 +56,7 @@ class SessionController {
         return StartSessionResult.activeSessionAlreadyExists;
       }
 
-      final exerciseType = switch (sessionType) {
-        SessionType.wordSession => 'word',
-        SessionType.sentenceSession => 'sentence',
-      };
+      final exerciseType = _exerciseTypeFor(sessionType);
 
       final dueExercises = await _exerciseRepository.getDueExercises(
         _now(),
@@ -97,20 +97,13 @@ class SessionController {
       }
 
       final persistedSessions = await _sessionRepository.getAllActiveSessionResult();
-      final matchingSessions =
-          persistedSessions
-              .where((session) => session.sessionType == sessionType)
-              .toList()
-            ..sort(_compareMostRecentFirst);
+      final activeSession = _mostRecentSessionOfType(persistedSessions, sessionType);
 
-      if (matchingSessions.isEmpty) {
+      if (activeSession == null) {
         return false;
       }
 
-      final session = await _sessionRepository.getActiveSession(
-        matchingSessions.first,
-        config,
-      );
+      final session = await _sessionRepository.getActiveSession(activeSession, config);
       session.resumeSession(_now());
       _startTimingSegment();
       _activeSession = session;
@@ -118,13 +111,84 @@ class SessionController {
     });
   }
 
-  /// Returns the number of unfinished sessions matching [sessionType].
-  Future<int> numberActiveSession(SessionType sessionType) async {
-    final sessionResultList = await _sessionRepository.getAllActiveSessionResult();
+  /// Builds the home-screen counts for every supported session type.
+  Future<List<SessionOverview>> getSessionOverviews() async {
+    final activeSessions = await _sessionRepository.getAllActiveSessionResult();
+    final overviews = <SessionOverview>[];
 
-    return sessionResultList
-        .where((session) => session.sessionType == sessionType)
-        .length;
+    for (final sessionType in SessionType.values) {
+      final activeSession = _mostRecentSessionOfType(activeSessions, sessionType);
+
+      final overview = activeSession == null
+          ? await _buildNewSessionOverview(sessionType)
+          : await _buildActiveSessionOverview(sessionType, activeSession);
+      overviews.add(overview);
+    }
+
+    return List.unmodifiable(overviews);
+  }
+
+  Future<SessionOverview> _buildActiveSessionOverview(
+    SessionType sessionType,
+    SessionResult activeSession,
+  ) async {
+    final sessionResultId = activeSession.id;
+    if (sessionResultId == null) {
+      throw StateError('An active persisted session must have an id');
+    }
+
+    final counts = await _sessionRepository.countActiveSessionExercisesByStatus(
+      sessionResultId,
+    );
+    var reviewExerciseCount = 0;
+
+    for (final entry in counts.entries) {
+      switch (entry.key) {
+        case ExerciseStatus.newExercise || ExerciseStatus.completed:
+          break;
+        case ExerciseStatus.toReview ||
+            ExerciseStatus.learning ||
+            ExerciseStatus.relearning ||
+            ExerciseStatus.consolidating:
+          reviewExerciseCount += entry.value;
+      }
+    }
+
+    return SessionOverview(
+      sessionType: sessionType,
+      newExerciseCount: counts[ExerciseStatus.newExercise] ?? 0,
+      reviewExerciseCount: reviewExerciseCount,
+      hasActiveSession: true,
+    );
+  }
+
+  Future<SessionOverview> _buildNewSessionOverview(SessionType sessionType) async {
+    final exerciseType = _exerciseTypeFor(sessionType);
+
+    // Never cache a wall-clock value across an unrelated await: read it
+    // immediately before the operation whose temporal boundary it defines.
+    final now = _now();
+    final reviewExerciseCount = await _exerciseRepository.countDueExercises(
+      now,
+      exerciseType,
+    );
+    final newExerciseCount = await _exerciseRepository.countNewExercises(exerciseType);
+
+    return SessionOverview(
+      sessionType: sessionType,
+      newExerciseCount: min(newExerciseCount, config.newCount),
+      reviewExerciseCount: min(reviewExerciseCount, config.reviewCount),
+      hasActiveSession: false,
+    );
+  }
+
+  /// Temporary MVP selection rule, not a Domain-level type correspondence.
+  /// A session type may later accept several exercise types or other criteria.
+  String _exerciseTypeFor(SessionType sessionType) {
+    return switch (sessionType) {
+      SessionType.wordSession => 'word',
+      SessionType.sentenceSession => 'sentence',
+    };
   }
 
   /// Loads the content selected by the active session.
@@ -269,6 +333,17 @@ class SessionController {
 
   static Duration _readDefaultMonotonicClock() {
     return _defaultMonotonicClock.elapsed;
+  }
+
+  static SessionResult? _mostRecentSessionOfType(
+    List<SessionResult> sessions,
+    SessionType sessionType,
+  ) {
+    final matchingSessions =
+        sessions.where((session) => session.sessionType == sessionType).toList()
+          ..sort(_compareMostRecentFirst);
+
+    return matchingSessions.isEmpty ? null : matchingSessions.first;
   }
 
   static int _compareMostRecentFirst(SessionResult left, SessionResult right) {

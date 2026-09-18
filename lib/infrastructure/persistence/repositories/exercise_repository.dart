@@ -80,6 +80,14 @@ class ExerciseRepository {
     return exercises;
   }
 
+  Future<int> countDueExercises(DateTime now, String? type) {
+    return _exerciseDao.countDueExercises(now.microsecondsSinceEpoch, type);
+  }
+
+  Future<int> countNewExercises(String? type) {
+    return _exerciseDao.countNewExercises(type);
+  }
+
   /// Atomically stores scheduling, sentence progress, and pending history.
   Future<void> save(Exercise exercise) async {
     await database.writeTransaction((txn) => saveInTransaction(txn, exercise));

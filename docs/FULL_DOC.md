@@ -45,6 +45,7 @@ flowchart TD
 `SessionController` owns at most one active `Session`. It implements the
 application workflow for:
 
+- building the session overview displayed before a session starts or resumes;
 - loading due and new exercises of the requested session type;
 - starting or resuming a session;
 - loading the content selected by the current exercise;
@@ -76,10 +77,36 @@ The Application layer owns models intended for presentation:
 - `Content`, `Field`, `FieldDefinition`, and `FieldValue` describe ordered
   renderable content;
 - `Media` identifies a local media resource;
+- `SessionOverview` exposes the number of new and review exercises available
+  for one session type, and whether that session has already started;
 - `SessionStatistics` and `ExerciseStatistics` expose calculated aggregates.
 
 These models are not learning entities. The Domain only manipulates the content
 identifier selected by an exercise.
+
+---
+
+## Session overview
+
+`SessionController.getSessionOverviews()` returns one `SessionOverview` for
+every `SessionType`. The meaning of its counters depends on
+`hasActiveSession`:
+
+| Session state | `newExerciseCount` | `reviewExerciseCount` |
+|---|---|---|
+| Not started | Exercises with no history, capped by `SRSConfig.newCount` | Exercises due at the query time, capped by `SRSConfig.reviewCount` |
+| Active | Snapshot exercises in `newExercise` status | Snapshot exercises in `toReview`, `learning`, `relearning`, or `consolidating` status |
+
+Completed snapshot exercises are excluded. When several unfinished persisted
+results exist for one type, the controller uses the most recent one, matching
+the session-resume behaviour.
+
+The current mapping from `SessionType` to one persisted `ExerciseType` is an
+MVP application concern, not a Domain invariant. A future session type may
+accept several exercise types or use different selection conditions. The
+current time is also read immediately before the due-exercise query, after any
+preceding asynchronous work, so the selection is based on the freshest
+available timestamp.
 
 ---
 
@@ -99,8 +126,8 @@ reconstructs a new Domain `Session` from persisted progression and the snapshot.
 ## Lifecycle and boundaries
 
 Controllers are constructed once by `AppDependencies` and are intended to be
-shared by the future screens. A Domain `Session`, by contrast, exists only while
-a learning session is active.
+shared by application screens. A Domain `Session`, by contrast, exists only
+while a learning session is active.
 
 - The UI calls controllers rather than repositories.
 - Controllers decide when to load and persist data, but learning transitions
@@ -587,9 +614,10 @@ flowchart TD
 
 ### [UI](ui_layer/ui.md)
 
-The UI renders application content and will eventually expose the user
-interactions. The current implementation contains the content-rendering
-pipeline, but no screens or navigation.
+The UI owns the Flutter application shell, asynchronous dependency bootstrap,
+a placeholder home screen, and the content-rendering pipeline. Feature
+navigation and complete learning, statistics, and settings screens are not yet
+implemented.
 
 ### [Application](application_layer/application.md)
 
@@ -638,9 +666,12 @@ current MVP boundaries; repository interfaces have not been introduced.
 constructs the repositories, controllers, and content renderer, and owns the
 database lifetime.
 
-The current `main.dart` only validates this initialisation and then disposes the
-dependencies. Once the Flutter interface is connected, the same dependency
-container must remain alive for the application lifetime.
+`main.dart` starts `PsittaApp`, whose root `MaterialApp` displays
+`PsittaBootstrap`. The bootstrap creates `AppDependencies`, displays loading or
+retryable failure states during initialization, and keeps the container alive
+while the ready UI is mounted. It disposes the container with the widget. The
+ready state currently leads to a placeholder `HomeScreen` that has not yet been
+wired to the controllers.
 
 ````
 
@@ -886,8 +917,8 @@ flowchart LR
 
 | Repository | Main responsibility |
 |---|---|
-| `ExerciseRepository` | Create, load, select, save, delete, and reset word or sentence exercise aggregates |
-| `SessionRepository` | Store results and resume snapshots, rebuild unfinished sessions, and coordinate answer transactions |
+| `ExerciseRepository` | Create, load, select, count, save, delete, and reset word or sentence exercise aggregates |
+| `SessionRepository` | Store results and resume snapshots, count their exercise statuses, rebuild unfinished sessions, and coordinate answer transactions |
 | `ExerciseHistoryRepository` | Read submitted-answer history with exercise and half-open date filters |
 | `ContentRepository` | Create, load, update, and delete application content and its ordered field values |
 | `MediaRepository` | Resolve media metadata by SHA-256 |
@@ -903,6 +934,11 @@ review and may be filtered by the persisted `word` or `sentence` type.
 identifier. When loaded normally, history existence determines the initial
 session status: `newExercise` or `toReview`.
 
+`countDueExercises` and `countNewExercises` use the same eligibility predicates
+without loading complete aggregates. They return unbounded storage counts; the
+Application layer applies the configured session limits when building a
+`SessionOverview`.
+
 Saving an exercise updates its SRS state, sentence states when applicable, and
 all buffered history entries. `resetProgress` restores a new SRS state, removes
 history, and resets per-sentence progress.
@@ -915,6 +951,10 @@ history, and resets per-sentence progress.
 - `update` replaces an unfinished result and its snapshots when pausing;
 - `getActiveSession` reconstructs a session from persistent exercise state and
   resume-specific status;
+- `getAllActiveSessionResult` returns results that still own a resumable
+  exercise snapshot;
+- `countActiveSessionExercisesByStatus` counts the current snapshot exercises
+  grouped by `ExerciseStatus`;
 - `saveAnswerProgress` atomically stores the answered exercise, history,
   session result, and new snapshot set;
 - `completeSession` stores the final result and removes active snapshots;
@@ -922,6 +962,12 @@ history, and resets per-sentence progress.
 
 The repository receives an existing `ExerciseRepository` so answer persistence
 can reuse `saveInTransaction` without nesting independent transactions.
+
+The status-count DAO returns `SessionExerciseStatusCountPersistence` values
+containing only the persisted integer status code and its count. The repository
+converts those codes to `ExerciseStatus` before returning the result to the
+Application layer. This keeps DAOs and persistence query models independent of
+Domain enums.
 
 ## Content and sentence structure
 
@@ -960,8 +1006,37 @@ exist.
 
 ## Purpose
 
-The implemented UI code is a content-rendering pipeline. It turns application
-`Content` models into one Flutter widget for the requested exercise side.
+The UI layer contains the Flutter application shell, its asynchronous startup
+states, and the content-rendering pipeline. Feature screens are still at an
+early stage.
+
+```mermaid
+flowchart TD
+    MAIN["main"] --> APP["PsittaApp"]
+    APP --> BOOTSTRAP["PsittaBootstrap"]
+    BOOTSTRAP --> STARTUP["StartupScreen"]
+    BOOTSTRAP --> HOME["HomeScreen"]
+```
+
+## Application startup
+
+`main` starts `PsittaApp`, which owns the root `MaterialApp` and application
+theme. `PsittaBootstrap` then creates `AppDependencies` asynchronously and
+represents three states:
+
+- loading uses `StartupScreen` while dependencies are being initialized;
+- failure shows the initialization error and offers a retry;
+- success currently displays the placeholder `HomeScreen`.
+
+The bootstrap state owns the dependency container and disposes it with the
+widget. A retry returns to the loading state and performs a fresh
+initialization. `HomeScreen` does not receive the dependencies yet; connecting
+it to application controllers is part of the next UI work.
+
+## Content rendering
+
+The rendering pipeline turns application `Content` models into one Flutter
+widget for the requested exercise side:
 
 ```mermaid
 flowchart TD
@@ -1011,9 +1086,11 @@ error.
 
 ## Current scope
 
-The repository does not currently implement screens, navigation, exercise
-input controls, or state-management bindings. Those elements remain part of the
-future MVP interface.
+The repository currently implements startup states and a placeholder home
+screen, but no feature navigation, session controls, statistics screen, or
+settings screen. The home screen is not connected to controllers, and the
+content-rendering pipeline is not yet hosted by a complete learning-session
+screen.
 
 The presentation layer may depend on application models and controllers. It
 must not access DAOs, repositories, SQLite rows, or domain mutation methods
@@ -1039,8 +1116,8 @@ and SRS rules needed by a developer entering the project.
 
 - [Overview](architecture/overview.md) — layers, dependency directions, and
   application bootstrap.
-- [UI](architecture/ui_layer/ui.md) — the implemented content-rendering
-  pipeline and its current limits.
+- [UI](architecture/ui_layer/ui.md) — application startup, the placeholder
+  home screen, content rendering, and current limits.
 - [Application](architecture/application_layer/application.md) — controllers,
   application models, and session use cases.
 - [Domain](architecture/domain_layer/domain.md) — the business model and its
