@@ -110,7 +110,9 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
         error: error,
         onRetry: _retryInitialization,
       ),
-      StartupReady() => const HomeScreen(),
+      StartupReady(:final dependencies) => HomeScreen(
+        sessionController: dependencies.sessionController,
+      ),
     };
   }
 }
