@@ -27,9 +27,10 @@ flowchart TD
 
 ### [UI](ui_layer/ui.md)
 
-The UI renders application content and will eventually expose the user
-interactions. The current implementation contains the content-rendering
-pipeline, but no screens or navigation.
+The UI owns the Flutter application shell, asynchronous dependency bootstrap,
+a placeholder home screen, and the content-rendering pipeline. Feature
+navigation and complete learning, statistics, and settings screens are not yet
+implemented.
 
 ### [Application](application_layer/application.md)
 
@@ -78,6 +79,9 @@ current MVP boundaries; repository interfaces have not been introduced.
 constructs the repositories, controllers, and content renderer, and owns the
 database lifetime.
 
-The current `main.dart` only validates this initialisation and then disposes the
-dependencies. Once the Flutter interface is connected, the same dependency
-container must remain alive for the application lifetime.
+`main.dart` starts `PsittaApp`, whose root `MaterialApp` displays
+`PsittaBootstrap`. The bootstrap creates `AppDependencies`, displays loading or
+retryable failure states during initialization, and keeps the container alive
+while the ready UI is mounted. It disposes the container with the widget. The
+ready state currently leads to a placeholder `HomeScreen` that has not yet been
+wired to the controllers.

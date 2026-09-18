@@ -20,8 +20,8 @@ flowchart LR
 
 | Repository | Main responsibility |
 |---|---|
-| `ExerciseRepository` | Create, load, select, save, delete, and reset word or sentence exercise aggregates |
-| `SessionRepository` | Store results and resume snapshots, rebuild unfinished sessions, and coordinate answer transactions |
+| `ExerciseRepository` | Create, load, select, count, save, delete, and reset word or sentence exercise aggregates |
+| `SessionRepository` | Store results and resume snapshots, count their exercise statuses, rebuild unfinished sessions, and coordinate answer transactions |
 | `ExerciseHistoryRepository` | Read submitted-answer history with exercise and half-open date filters |
 | `ContentRepository` | Create, load, update, and delete application content and its ordered field values |
 | `MediaRepository` | Resolve media metadata by SHA-256 |
@@ -37,6 +37,11 @@ review and may be filtered by the persisted `word` or `sentence` type.
 identifier. When loaded normally, history existence determines the initial
 session status: `newExercise` or `toReview`.
 
+`countDueExercises` and `countNewExercises` use the same eligibility predicates
+without loading complete aggregates. They return unbounded storage counts; the
+Application layer applies the configured session limits when building a
+`SessionOverview`.
+
 Saving an exercise updates its SRS state, sentence states when applicable, and
 all buffered history entries. `resetProgress` restores a new SRS state, removes
 history, and resets per-sentence progress.
@@ -49,6 +54,10 @@ history, and resets per-sentence progress.
 - `update` replaces an unfinished result and its snapshots when pausing;
 - `getActiveSession` reconstructs a session from persistent exercise state and
   resume-specific status;
+- `getAllActiveSessionResult` returns results that still own a resumable
+  exercise snapshot;
+- `countActiveSessionExercisesByStatus` counts the current snapshot exercises
+  grouped by `ExerciseStatus`;
 - `saveAnswerProgress` atomically stores the answered exercise, history,
   session result, and new snapshot set;
 - `completeSession` stores the final result and removes active snapshots;
@@ -56,6 +65,12 @@ history, and resets per-sentence progress.
 
 The repository receives an existing `ExerciseRepository` so answer persistence
 can reuse `saveInTransaction` without nesting independent transactions.
+
+The status-count DAO returns `SessionExerciseStatusCountPersistence` values
+containing only the persisted integer status code and its count. The repository
+converts those codes to `ExerciseStatus` before returning the result to the
+Application layer. This keeps DAOs and persistence query models independent of
+Domain enums.
 
 ## Content and sentence structure
 
