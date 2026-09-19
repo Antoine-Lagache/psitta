@@ -2,21 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/models/session/session_overview.dart';
-import 'package:psitta/ui/screens/home/session_overview_card.dart';
+import 'package:psitta/ui/screens/home/home_content.dart';
 
 /// Displays the available learning sessions and their current exercise counts.
 class HomeScreen extends StatefulWidget {
   final SessionController sessionController;
 
-  /// Delegates navigation without making the home screen own session routes.
-  /// It remains optional until the learning screen is implemented.
-  final ValueChanged<SessionOverview>? onSessionSelected;
-
-  const HomeScreen({
-    required this.sessionController,
-    this.onSessionSelected,
-    super.key,
-  });
+  const HomeScreen({required this.sessionController, super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -31,29 +23,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _sessionOverviews = widget.sessionController.getSessionOverviews();
   }
 
-  @override
-  void didUpdateWidget(covariant HomeScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.sessionController != widget.sessionController) {
-      _sessionOverviews = widget.sessionController.getSessionOverviews();
-    }
-  }
-
-  void _retryLoading() {
+  Future<void> _reload() {
+    final loading = widget.sessionController.getSessionOverviews();
     setState(() {
-      _sessionOverviews = widget.sessionController.getSessionOverviews();
+      _sessionOverviews = loading;
     });
+    return loading;
   }
 
-  void _selectSession(SessionOverview overview) {
-    final onSessionSelected = widget.onSessionSelected;
-
-    if (onSessionSelected != null) {
-      onSessionSelected(overview);
-      return;
-    }
-
+  void _selectSession(SessionOverview _) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('The learning screen will be available soon.'),
@@ -63,19 +41,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Psitta',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-      ),
-      body: SafeArea(
-        top: false,
-        child: FutureBuilder<List<SessionOverview>>(
-          future: _sessionOverviews,
-          builder: _buildContent,
-        ),
+    return SafeArea(
+      child: FutureBuilder<List<SessionOverview>>(
+        future: _sessionOverviews,
+        builder: _buildContent,
       ),
     );
   }
@@ -92,49 +61,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return _buildLoadError(snapshot.error!);
     }
 
-    return _buildSessionList(snapshot.requireData);
-  }
-
-  Widget _buildSessionList(List<SessionOverview> overviews) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        _retryLoading();
-        await _sessionOverviews;
-      },
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-            children: [
-              Text(
-                'Choose a session',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Review what is due or start learning something new.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: const Color(0xFF616161),
-                ),
-              ),
-              const SizedBox(height: 28),
-              for (var index = 0; index < overviews.length; index++) ...[
-                SessionOverviewCard(
-                  overview: overviews[index],
-                  onPressed: () => _selectSession(overviews[index]),
-                ),
-                if (index < overviews.length - 1) const SizedBox(height: 16),
-              ],
-            ],
-          ),
-        ),
-      ),
+    return HomeContent(
+      overviews: snapshot.requireData,
+      onRefresh: _reload,
+      onSessionSelected: _selectSession,
     );
   }
 
@@ -157,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(error.toString(), textAlign: TextAlign.center),
             ],
             const SizedBox(height: 20),
-            FilledButton(onPressed: _retryLoading, child: const Text('Retry')),
+            FilledButton(onPressed: _reload, child: const Text('Retry')),
           ],
         ),
       ),

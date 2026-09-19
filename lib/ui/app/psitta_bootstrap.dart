@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:psitta/app_dependencies.dart';
 import 'package:psitta/ui/app/bootstrap/startup_screen.dart';
 import 'package:psitta/ui/app/bootstrap/startup_state.dart';
-import 'package:psitta/ui/screens/home/home_screen.dart';
+import 'package:psitta/ui/screens/main/main_screen.dart';
 
 /// Creates the dependencies owned by the application bootstrap.
 /// Each call must create a fresh instance and clean up resources on failure.
@@ -110,7 +110,7 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
         error: error,
         onRetry: _retryInitialization,
       ),
-      StartupReady(:final dependencies) => HomeScreen(
+      StartupReady(:final dependencies) => MainScreen(
         sessionController: dependencies.sessionController,
       ),
     };

@@ -16,9 +16,8 @@ class SessionOverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final presentation = _presentationFor(overview.sessionType);
-    final canStart =
-        overview.hasActiveSession ||
-        overview.newExerciseCount + overview.reviewExerciseCount > 0;
+    final hasAvailableExercises =
+        overview.newExerciseCount > 0 || overview.reviewExerciseCount > 0;
 
     return Card(
       child: Padding(
@@ -84,7 +83,9 @@ class SessionOverviewCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: canStart ? onPressed : null,
+                onPressed: overview.hasActiveSession || hasAvailableExercises
+                    ? onPressed
+                    : null,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
