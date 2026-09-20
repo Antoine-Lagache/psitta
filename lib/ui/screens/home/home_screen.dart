@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/models/session/session_overview.dart';
+import 'package:psitta/ui/presentation/load_error_content.dart';
 import 'package:psitta/ui/screens/home/home_content.dart';
 
 /// Displays the available learning sessions and their current exercise counts.
@@ -58,39 +58,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (snapshot.hasError) {
-      return _buildLoadError(snapshot.error!);
+      return LoadErrorContent(
+        message: 'The sessions could not be loaded.',
+        error: snapshot.error!,
+        onRetry: _reload,
+      );
     }
 
     return HomeContent(
       overviews: snapshot.requireData,
       onRefresh: _reload,
       onSessionSelected: _selectSession,
-    );
-  }
-
-  Widget _buildLoadError(Object error) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 40),
-            const SizedBox(height: 16),
-            Text(
-              'The sessions could not be loaded.',
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            if (kDebugMode) ...[
-              const SizedBox(height: 8),
-              Text(error.toString(), textAlign: TextAlign.center),
-            ],
-            const SizedBox(height: 20),
-            FilledButton(onPressed: _reload, child: const Text('Retry')),
-          ],
-        ),
-      ),
     );
   }
 }

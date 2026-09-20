@@ -7,26 +7,28 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.settings_outlined, size: 48),
-              const SizedBox(height: 16),
-              Text(
-                'Settings',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Settings will be available in a future update.',
-                textAlign: TextAlign.center,
-              ),
-            ],
+      child: Center(child: _buildPlaceholder(context)),
+    );
+  }
+
+  Widget _buildPlaceholder(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.settings_outlined, size: 48),
+          const SizedBox(height: 16),
+          Text(
+            'Settings',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-        ),
+          const SizedBox(height: 8),
+          const Text(
+            'Settings will be available in a future update.',
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

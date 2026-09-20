@@ -19,40 +19,56 @@ class HomeContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 32, 20, 32),
-            children: [
-              Text(
-                'Choose a session',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Review what is due or start learning something new.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: const Color(0xFF616161),
-                ),
-              ),
-              const SizedBox(height: 28),
-              for (var index = 0; index < overviews.length; index++) ...[
-                SessionOverviewCard(
-                  overview: overviews[index],
-                  onPressed: () => onSessionSelected(overviews[index]),
-                ),
-                if (index < overviews.length - 1) const SizedBox(height: 16),
-              ],
-            ],
-          ),
+      child: _buildScrollableContent(context),
+    );
+  }
+
+  Widget _buildScrollableContent(BuildContext context) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 32, 20, 32),
+          children: [
+            ..._buildHeader(context),
+            const SizedBox(height: 28),
+            ..._buildSessionCards(),
+          ],
         ),
       ),
     );
+  }
+
+  List<Widget> _buildHeader(BuildContext context) {
+    return [
+      Text(
+        'Choose a session',
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: Colors.black,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'Review what is due or start learning something new.',
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: const Color(0xFF616161),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildSessionCards() {
+    return [
+      for (var index = 0; index < overviews.length; index++) ...[
+        SessionOverviewCard(
+          overview: overviews[index],
+          onPressed: () => onSessionSelected(overviews[index]),
+        ),
+        if (index < overviews.length - 1) const SizedBox(height: 16),
+      ],
+    ];
   }
 }

@@ -2,18 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Builds the monochrome Material theme used by the MVP.
 ThemeData buildAppTheme() {
-  final colorScheme = ColorScheme.fromSeed(
-    seedColor: Colors.black,
-    brightness: Brightness.light,
-  ).copyWith(
-    error: const Color(0xFF424242),
-    onError: Colors.white,
-    errorContainer: const Color(0xFFE0E0E0),
-    onErrorContainer: Colors.black,
-  );
-
   return ThemeData(
-    colorScheme: colorScheme,
+    colorScheme: _buildColorScheme(),
     scaffoldBackgroundColor: const Color(0xFFF7F7F7),
     appBarTheme: const AppBarTheme(
       backgroundColor: Color(0xFFF7F7F7),
@@ -30,5 +20,18 @@ ThemeData buildAppTheme() {
       ),
     ),
     useMaterial3: true,
+  );
+}
+
+ColorScheme _buildColorScheme() {
+  return ColorScheme.fromSeed(
+    seedColor: Colors.black,
+    brightness: Brightness.light,
+    dynamicSchemeVariant: DynamicSchemeVariant.monochrome,
+  ).copyWith(
+    error: const Color(0xFF424242),
+    onError: Colors.white,
+    errorContainer: const Color(0xFFE0E0E0),
+    onErrorContainer: Colors.black,
   );
 }
