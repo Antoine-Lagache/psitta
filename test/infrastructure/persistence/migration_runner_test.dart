@@ -76,11 +76,7 @@ void main() {
           'next_review',
         ],
         'word_exercise': ['exercise_id', 'content_id'],
-        'sentence_exercise': [
-          'exercise_id',
-          'sentence_group_id',
-          'training_count',
-        ],
+        'sentence_exercise': ['exercise_id', 'sentence_group_id', 'training_count'],
         'sentence_instance': ['id', 'sentence_group_id', 'content_id'],
         'sentence_state': [
           'sentence_instance_id',

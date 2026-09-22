@@ -33,9 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _selectSession(SessionOverview _) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('The learning screen will be available soon.'),
-      ),
+      const SnackBar(content: Text('The learning screen will be available soon.')),
     );
   }
 

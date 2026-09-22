@@ -62,9 +62,9 @@ class StatisticsContent extends StatelessWidget {
       const SizedBox(height: 8),
       Text(
         'Your all-time learning activity.',
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          color: const Color(0xFF616161),
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF616161)),
       ),
     ];
   }
@@ -91,18 +91,12 @@ class StatisticsContent extends StatelessWidget {
 
   List<_Metric> get _overviewMetrics {
     return [
-      (
-        label: 'Sessions completed',
-        value: '${sessionStatistics.numberOfSessions}',
-      ),
+      (label: 'Sessions completed', value: '${sessionStatistics.numberOfSessions}'),
       (
         label: 'Completed session time',
         value: _formatDuration(sessionStatistics.totalTimeSpent),
       ),
-      (
-        label: 'Answers recorded',
-        value: '${exerciseStatistics.totalNumberAnswers}',
-      ),
+      (label: 'Answers recorded', value: '${exerciseStatistics.totalNumberAnswers}'),
       (
         label: 'Exercises completed',
         value: '${sessionStatistics.numberOfExercisesCompleted}',
@@ -184,9 +178,9 @@ class StatisticsContent extends StatelessWidget {
         Expanded(child: Text(entry.label)),
         Text(
           '${entry.value}',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     );
@@ -195,9 +189,9 @@ class StatisticsContent extends StatelessWidget {
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
     );
   }
 
@@ -252,9 +246,9 @@ class _StatisticMetric extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             metric.label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF616161),
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
           ),
         ],
       ),

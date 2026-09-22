@@ -18,8 +18,7 @@ void main() {
     expect(
       find.byWidgetPredicate(
         (widget) =>
-            widget is SelectableText &&
-            widget.data?.contains('missing column') == true,
+            widget is SelectableText && widget.data?.contains('missing column') == true,
       ),
       findsOne,
     );

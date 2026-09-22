@@ -5,10 +5,7 @@ import 'package:psitta/application/models/statistics/session_statistics.dart';
 import 'package:psitta/ui/presentation/load_error_content.dart';
 import 'package:psitta/ui/screens/statistics/statistics_content.dart';
 
-typedef _StatisticsData = ({
-  ExerciseStatistics exercises,
-  SessionStatistics sessions,
-});
+typedef _StatisticsData = ({ExerciseStatistics exercises, SessionStatistics sessions});
 
 /// Loads and displays the all-time statistics available in the MVP.
 class StatisticsScreen extends StatefulWidget {
@@ -51,17 +48,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: FutureBuilder<_StatisticsData>(
-        future: _statistics,
-        builder: _buildContent,
-      ),
+      child: FutureBuilder<_StatisticsData>(future: _statistics, builder: _buildContent),
     );
   }
 
-  Widget _buildContent(
-    BuildContext context,
-    AsyncSnapshot<_StatisticsData> snapshot,
-  ) {
+  Widget _buildContent(BuildContext context, AsyncSnapshot<_StatisticsData> snapshot) {
     if (snapshot.connectionState != ConnectionState.done) {
       return const Center(child: CircularProgressIndicator());
     }

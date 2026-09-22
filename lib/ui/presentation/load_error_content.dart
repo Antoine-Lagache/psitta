@@ -19,10 +19,7 @@ class LoadErrorContent extends StatelessWidget {
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: _buildChildren(context),
-        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: _buildChildren(context)),
       ),
     );
   }
