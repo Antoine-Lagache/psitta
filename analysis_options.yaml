@@ -9,7 +9,6 @@ analyzer:
     # Allow TODOs without warning spam (intentional design notes)
     flutter_style_todos: ignore
   exclude:
-    - lib/archive/**/*.dart
     - build/**
     - android/**
     - web/**

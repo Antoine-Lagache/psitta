@@ -7,7 +7,6 @@ import 'dart:math';
 ///
 /// Exclusions:
 /// - lib/playground/
-/// - lib/archive/
 void main() {
   final libDir = Directory('lib');
 
@@ -81,7 +80,7 @@ TreeNode buildTree(Directory dir) {
 }
 
 bool _shouldIgnore(String path) {
-  return path.contains('lib/playground') || path.contains('lib/archive');
+  return path.contains('lib/playground');
 }
 
 /// Flattens the line counts used to align the rendered tree.
