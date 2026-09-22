@@ -7,14 +7,20 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 /// Owns an isolated, file-backed SQLite database for one persistence test.
 final class PersistenceTestDatabase {
   final Directory directory;
-  final sqlite.SqliteDatabase database;
+  final String path;
+  sqlite.SqliteDatabase database;
 
-  PersistenceTestDatabase._({required this.directory, required this.database});
+  PersistenceTestDatabase._({
+    required this.directory,
+    required this.path,
+    required this.database,
+  });
 
   static Future<PersistenceTestDatabase> create({bool migrate = true}) async {
     final directory = await Directory.systemTemp.createTemp('psitta_test_');
+    final path = '${directory.path}/test.db';
     final database = sqlite.SqliteDatabase.withFactory(
-      PsittaSqliteOpenFactory(path: '${directory.path}/test.db'),
+      PsittaSqliteOpenFactory(path: path),
     );
 
     try {
@@ -22,10 +28,34 @@ final class PersistenceTestDatabase {
       if (migrate) {
         await createMigrationRunner().migrate(database);
       }
-      return PersistenceTestDatabase._(directory: directory, database: database);
+      return PersistenceTestDatabase._(
+        directory: directory,
+        path: path,
+        database: database,
+      );
     } on Object {
       await database.close();
       await directory.delete(recursive: true);
+      rethrow;
+    }
+  }
+
+  /// Reopens the same database file to exercise persisted state and setup.
+  Future<void> reopen({bool migrate = true}) async {
+    await database.close();
+
+    final reopened = sqlite.SqliteDatabase.withFactory(
+      PsittaSqliteOpenFactory(path: path),
+    );
+
+    try {
+      await reopened.initialize();
+      if (migrate) {
+        await createMigrationRunner().migrate(reopened);
+      }
+      database = reopened;
+    } on Object {
+      await reopened.close();
       rethrow;
     }
   }

@@ -2,7 +2,9 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'database_migration.dart';
 
-/// Creates every table required by the initial MVP data model.
+/// Creates every table required by the unreleased MVP data model.
+///
+/// Existing development databases must be recreated whenever this changes.
 class V1InitialSchema implements DatabaseMigration {
   @override
   int get version => 1;
@@ -191,8 +193,8 @@ class V1InitialSchema implements DatabaseMigration {
         session_type_index INTEGER NOT NULL,
 
         number_unique_exercises_completed INTEGER NOT NULL,
-        total_time_spent_us INTEGER NOT NULL DEFAULT 0
-          CHECK (total_time_spent_us >= 0),
+        total_time_spent_microseconds INTEGER NOT NULL DEFAULT 0
+          CHECK (total_time_spent_microseconds >= 0),
 
         started_at TEXT,
         end_at TEXT

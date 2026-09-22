@@ -18,7 +18,7 @@ void main() {
   tearDown(() => testDatabase.dispose());
 
   group('MigrationRunner', () {
-    test('creates the complete initial schema and records its version', () async {
+    test('creates the complete current schema and records its version', () async {
       await createMigrationRunner().migrate(database);
 
       final version = await database.get('PRAGMA user_version;');
@@ -55,6 +55,97 @@ void main() {
       );
     });
 
+    test('creates every column required by the persistence layer', () async {
+      await createMigrationRunner().migrate(database);
+
+      const expectedColumns = {
+        'exercise': ['id', 'type'],
+        'content': ['id'],
+        'field_definition': ['id', 'value_type', 'side'],
+        'media': ['id', 'path', 'mime_type', 'size', 'sha256'],
+        'sentence_group': ['id'],
+        'srs_state': [
+          'exercise_id',
+          'ease_factor',
+          'interval',
+          'kfactor',
+          'w',
+          'rbar',
+          'learning_step_index',
+          'last_review',
+          'next_review',
+        ],
+        'word_exercise': ['exercise_id', 'content_id'],
+        'sentence_exercise': [
+          'exercise_id',
+          'sentence_group_id',
+          'training_count',
+        ],
+        'sentence_instance': ['id', 'sentence_group_id', 'content_id'],
+        'sentence_state': [
+          'sentence_instance_id',
+          'shown_count',
+          'accumulated_score',
+          'is_in_learning',
+        ],
+        'exercise_history': [
+          'id',
+          'exercise_id',
+          'sentence_instance_id',
+          'grade',
+          'answered_at',
+          'status',
+        ],
+        'field_value': [
+          'id',
+          'content_id',
+          'field_definition_id',
+          'text_value',
+          'media_id',
+          'display_order',
+        ],
+        'session_result': [
+          'id',
+          'session_type_index',
+          'number_unique_exercises_completed',
+          'total_time_spent_microseconds',
+          'started_at',
+          'end_at',
+        ],
+        'session_result_status_count': [
+          'id_session_result',
+          'status_index',
+          'number_exercise_completed',
+        ],
+        'active_session_exercise': [
+          'session_result_id',
+          'exercise_id',
+          'status_index',
+          'training_count',
+        ],
+      };
+
+      for (final MapEntry(:key, :value) in expectedColumns.entries) {
+        expect(await _columnNames(database, key), value, reason: 'Table $key');
+      }
+    });
+
+    test('preserves schema and data after reopening the connection', () async {
+      await createMigrationRunner().migrate(database);
+      await database.execute('INSERT INTO content DEFAULT VALUES');
+
+      await testDatabase.reopen();
+      database = testDatabase.database;
+
+      final version = await database.get('PRAGMA user_version;');
+      final contentRows = await database.get('SELECT COUNT(*) AS count FROM content');
+      final foreignKeys = await database.get('PRAGMA foreign_keys;');
+
+      expect(version['user_version'], 1);
+      expect(contentRows['count'], 1);
+      expect(foreignKeys['foreign_keys'], 1);
+    });
+
     test('sorts pending migrations and does not reapply them', () async {
       final appliedVersions = <int>[];
       final runner = MigrationRunner(
@@ -88,6 +179,13 @@ void main() {
       expect(version['user_version'], 0);
       expect(tableRows, isEmpty);
     });
+  });
+}
+
+Future<List<String>> _columnNames(sqlite.SqliteDatabase database, String table) async {
+  return database.readTransaction((transaction) async {
+    final columns = await transaction.getAll('PRAGMA table_info($table);');
+    return columns.map((column) => column['name'] as String).toList();
   });
 }
 

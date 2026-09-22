@@ -22,7 +22,7 @@ class SessionResultDao {
         INSERT INTO session_result (
           session_type_index,
           number_unique_exercises_completed,
-          total_time_spent_us,
+          total_time_spent_microseconds,
           started_at,
           end_at
         )
@@ -65,7 +65,7 @@ class SessionResultDao {
           id,
           session_type_index,
           number_unique_exercises_completed,
-          total_time_spent_us,
+          total_time_spent_microseconds,
           started_at,
           end_at
         FROM session_result
@@ -124,7 +124,7 @@ class SessionResultDao {
           id,
           session_type_index,
           number_unique_exercises_completed,
-          total_time_spent_us,
+          total_time_spent_microseconds,
           started_at,
           end_at
         FROM session_result
@@ -171,7 +171,7 @@ class SessionResultDao {
         SET
           session_type_index = ?,
           number_unique_exercises_completed = ?,
-          total_time_spent_us = ?,
+          total_time_spent_microseconds = ?,
           started_at = ?,
           end_at = ?
         WHERE id = ?

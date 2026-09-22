@@ -31,14 +31,14 @@ class LoadErrorContent extends StatelessWidget {
     return [
       const Icon(Icons.error_outline, size: 40),
       const SizedBox(height: 16),
-      Text(
+      SelectableText(
         message,
         style: Theme.of(context).textTheme.titleMedium,
         textAlign: TextAlign.center,
       ),
       if (kDebugMode) ...[
         const SizedBox(height: 8),
-        Text(error.toString(), textAlign: TextAlign.center),
+        SelectableText(error.toString(), textAlign: TextAlign.center),
       ],
       const SizedBox(height: 20),
       FilledButton(onPressed: onRetry, child: const Text('Retry')),
