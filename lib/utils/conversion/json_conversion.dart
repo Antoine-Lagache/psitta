@@ -6,7 +6,8 @@ Map<String, dynamic> safeJsonDecodeMap(String? jsonText) {
   try {
     final decoded = jsonDecode(jsonText) as Map<String, dynamic>;
     return decoded;
-  } catch (_) {
+  } on Object {
+    // This boundary helper deliberately collapses every conversion failure.
     return <String, dynamic>{};
   }
 }
@@ -17,7 +18,8 @@ List<dynamic> safeJsonDecodeList(String? jsonText) {
   try {
     final decoded = jsonDecode(jsonText) as List<dynamic>;
     return decoded;
-  } catch (_) {
+  } on Object {
+    // This boundary helper deliberately collapses every conversion failure.
     return <dynamic>[];
   }
 }
@@ -26,7 +28,8 @@ List<dynamic> safeJsonDecodeList(String? jsonText) {
 String? safeJsonEncode(Object? value) {
   try {
     return jsonEncode(value);
-  } catch (_) {
+  } on Object {
+    // This boundary helper deliberately collapses every conversion failure.
     return null;
   }
 }

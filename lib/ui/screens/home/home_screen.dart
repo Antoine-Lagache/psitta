@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/models/session/session_overview.dart';
+import 'package:psitta/ui/presentation/content/content_renderer.dart';
 import 'package:psitta/ui/presentation/load_error_content.dart';
 import 'package:psitta/ui/screens/home/home_content.dart';
+import 'package:psitta/ui/screens/learning/learning_screen.dart';
 
 /// Displays the available learning sessions and their current exercise counts.
 class HomeScreen extends StatefulWidget {
   final SessionController sessionController;
+  final ContentRenderer contentRenderer;
 
-  const HomeScreen({required this.sessionController, super.key});
+  const HomeScreen({
+    required this.sessionController,
+    required this.contentRenderer,
+    super.key,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -16,6 +23,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late Future<List<SessionOverview>> _sessionOverviews;
+  bool _openingSession = false;
 
   @override
   void initState() {
@@ -31,10 +39,29 @@ class _HomeScreenState extends State<HomeScreen> {
     return loading;
   }
 
-  void _selectSession(SessionOverview _) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('The learning screen will be available soon.')),
-    );
+  Future<void> _selectSession(SessionOverview overview) async {
+    if (_openingSession) {
+      return;
+    }
+    _openingSession = true;
+
+    try {
+      await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (context) => LearningScreen(
+            sessionController: widget.sessionController,
+            contentRenderer: widget.contentRenderer,
+            sessionType: overview.sessionType,
+            resumeSession: overview.hasActiveSession,
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        _openingSession = false;
+        await _reload();
+      }
+    }
   }
 
   @override

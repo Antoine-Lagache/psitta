@@ -279,6 +279,21 @@ void main() {
       );
     });
 
+    test('timestamps an answer when it is submitted', () async {
+      final exerciseId = await createWordExercise();
+      final controller = createController();
+      await controller.startNewSession(SessionType.wordSession);
+
+      final submittedAt = now.add(const Duration(minutes: 2));
+      now = submittedAt;
+      await controller.submitAnswer(Grade.again);
+
+      final history = await ExerciseHistoryRepository(
+        database,
+      ).getList(exerciseId: exerciseId);
+      expect(history.single.answeredAt.toUtc(), submittedAt);
+    });
+
     test('accumulates segments across a pause and resume', () async {
       await createWordExercise();
       final firstController = createController();
