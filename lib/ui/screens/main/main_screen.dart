@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
+import 'package:psitta/ui/presentation/content/content_renderer.dart';
 import 'package:psitta/ui/screens/home/home_screen.dart';
 import 'package:psitta/ui/screens/settings/settings_screen.dart';
 import 'package:psitta/ui/screens/statistics/statistics_screen.dart';
@@ -9,10 +10,12 @@ import 'package:psitta/ui/screens/statistics/statistics_screen.dart';
 class MainScreen extends StatefulWidget {
   final SessionController sessionController;
   final StatisticController statisticController;
+  final ContentRenderer contentRenderer;
 
   const MainScreen({
     required this.sessionController,
     required this.statisticController,
+    required this.contentRenderer,
     super.key,
   });
 
@@ -28,7 +31,10 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _screens = [
-      HomeScreen(sessionController: widget.sessionController),
+      HomeScreen(
+        sessionController: widget.sessionController,
+        contentRenderer: widget.contentRenderer,
+      ),
       StatisticsScreen(statisticController: widget.statisticController),
       const SettingsScreen(),
     ];
