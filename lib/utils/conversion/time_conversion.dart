@@ -5,7 +5,7 @@ DateTime? safeParseDate(String? value) {
   if (value == null || value.isEmpty) return null;
   try {
     return DateTime.parse(value).toLocal();
-  } catch (_) {
+  } on FormatException {
     return null;
   }
 }

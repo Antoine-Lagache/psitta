@@ -6,7 +6,9 @@ Map<String, dynamic> safeJsonDecodeMap(String? jsonText) {
   try {
     final decoded = jsonDecode(jsonText) as Map<String, dynamic>;
     return decoded;
-  } catch (_) {
+  } on FormatException {
+    return <String, dynamic>{};
+  } on TypeError {
     return <String, dynamic>{};
   }
 }
@@ -17,7 +19,9 @@ List<dynamic> safeJsonDecodeList(String? jsonText) {
   try {
     final decoded = jsonDecode(jsonText) as List<dynamic>;
     return decoded;
-  } catch (_) {
+  } on FormatException {
+    return <dynamic>[];
+  } on TypeError {
     return <dynamic>[];
   }
 }
@@ -26,7 +30,7 @@ List<dynamic> safeJsonDecodeList(String? jsonText) {
 String? safeJsonEncode(Object? value) {
   try {
     return jsonEncode(value);
-  } catch (_) {
+  } on JsonUnsupportedObjectError {
     return null;
   }
 }
