@@ -98,7 +98,8 @@ class LearningContent extends StatelessWidget {
       spacing: 10,
       runSpacing: 10,
       children: [
-        for (final grade in allowedGrades) _buildGradeButton(grade),
+        for (final grade in allowedGrades)
+          _buildGradeButton(grade),
       ],
     );
   }
