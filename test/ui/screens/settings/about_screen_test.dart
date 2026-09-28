@@ -55,7 +55,8 @@ void main() {
     expect(find.text('Unable to open link'), findsOne);
     expect(
       find.byWidgetPredicate(
-        (widget) => widget is SelectableText &&
+        (widget) =>
+            widget is SelectableText &&
             widget.data?.contains('https://psitta.net') == true,
       ),
       findsOne,
@@ -78,7 +79,8 @@ void main() {
 
     expect(
       find.byWidgetPredicate(
-        (widget) => widget is SelectableText &&
+        (widget) =>
+            widget is SelectableText &&
             widget.data?.contains('launcher unavailable') == true,
       ),
       findsOne,
