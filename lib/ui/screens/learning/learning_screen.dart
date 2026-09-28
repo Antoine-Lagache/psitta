@@ -11,14 +11,7 @@ import 'package:psitta/ui/presentation/content/content_renderer.dart';
 import 'package:psitta/ui/presentation/load_error_content.dart';
 import 'package:psitta/ui/screens/learning/learning_content.dart';
 
-enum _LearningStatus {
-  loading,
-  exercise,
-  completed,
-  ended,
-  unavailable,
-  failure,
-}
+enum _LearningStatus { loading, exercise, completed, ended, unavailable, failure }
 
 /// Runs one learning session and presents its current exercise.
 class LearningScreen extends StatefulWidget {

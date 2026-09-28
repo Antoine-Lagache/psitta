@@ -288,10 +288,10 @@ void main() {
       now = submittedAt;
       await controller.submitAnswer(Grade.again);
 
-      final history = await ExerciseHistoryRepository(database).getList(
-        exerciseId: exerciseId,
-      );
-      expect(history.single.answeredAt, submittedAt);
+      final history = await ExerciseHistoryRepository(
+        database,
+      ).getList(exerciseId: exerciseId);
+      expect(history.single.answeredAt.toUtc(), submittedAt);
     });
 
     test('accumulates segments across a pause and resume', () async {
