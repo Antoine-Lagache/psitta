@@ -40,11 +40,7 @@ class LearningContent extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 720),
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-          children: [
-            _buildCard(context),
-            const SizedBox(height: 20),
-            _buildActions(),
-          ],
+          children: [_buildCard(context), const SizedBox(height: 20), _buildActions()],
         ),
       ),
     );
@@ -97,10 +93,7 @@ class LearningContent extends StatelessWidget {
       alignment: WrapAlignment.center,
       spacing: 10,
       runSpacing: 10,
-      children: [
-        for (final grade in allowedGrades)
-          _buildGradeButton(grade),
-      ],
+      children: [for (final grade in allowedGrades) _buildGradeButton(grade)],
     );
   }
 
