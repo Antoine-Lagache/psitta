@@ -4,7 +4,8 @@ double safeToDouble(dynamic value, {double fallback = 0.0}) {
   if (value is num) return value.toDouble();
   try {
     return double.parse(value.toString());
-  } on FormatException {
+  } on Object {
+    // Dynamic values may fail before parsing, notably inside `toString()`.
     return fallback;
   }
 }
@@ -15,7 +16,8 @@ int safeToInt(dynamic value, {int fallback = 0}) {
   if (value is int) return value;
   try {
     return int.parse(value.toString());
-  } on FormatException {
+  } on Object {
+    // Dynamic values may fail before parsing, notably inside `toString()`.
     return fallback;
   }
 }

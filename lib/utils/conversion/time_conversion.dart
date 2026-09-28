@@ -5,7 +5,8 @@ DateTime? safeParseDate(String? value) {
   if (value == null || value.isEmpty) return null;
   try {
     return DateTime.parse(value).toLocal();
-  } on FormatException {
+  } on Object {
+    // Persisted input is treated as invalid regardless of the parser failure.
     return null;
   }
 }
