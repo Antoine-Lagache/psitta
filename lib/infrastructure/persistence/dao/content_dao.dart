@@ -10,25 +10,32 @@ class ContentDao {
 
   /// Inserts a content aggregate and returns only the new content identifier.
   Future<int> insert(ContentPersistence content) {
+    return database.writeTransaction((txn) => insertInTransaction(txn, content));
+  }
+
+  /// Inserts complete content inside a transaction coordinated by the caller.
+  Future<int> insertInTransaction(
+    sqlite.SqliteWriteContext txn,
+    ContentPersistence content,
+  ) async {
     if (content.id != null) {
       throw ArgumentError('Cannot insert an entity that already has an id');
     }
 
-    return database.writeTransaction((txn) async {
-      final contentResult = await txn.execute('''
+    final contentResult = await txn.execute('''
         INSERT INTO content DEFAULT VALUES
         RETURNING id
         ''');
 
-      final contentId = contentResult.first['id'] as int;
+    final contentId = contentResult.first['id'] as int;
 
-      for (final fieldValue in content.fieldValues) {
-        final media = fieldValue.media;
-        int? mediaId = media?.id;
+    for (final fieldValue in content.fieldValues) {
+      final media = fieldValue.media;
+      int? mediaId = media?.id;
 
-        if (media != null && media.id == null) {
-          final mediaResult = await txn.execute(
-            '''
+      if (media != null && media.id == null) {
+        final mediaResult = await txn.execute(
+          '''
             INSERT INTO media (
               path,
               mime_type,
@@ -38,14 +45,14 @@ class ContentDao {
             VALUES (?, ?, ?, ?)
             RETURNING id
             ''',
-            [media.path, media.mimeType, media.size, media.sha256],
-          );
+          [media.path, media.mimeType, media.size, media.sha256],
+        );
 
-          mediaId = mediaResult.first['id'] as int;
-        }
+        mediaId = mediaResult.first['id'] as int;
+      }
 
-        await txn.execute(
-          '''
+      await txn.execute(
+        '''
           INSERT INTO field_value (
             content_id,
             field_definition_id,
@@ -55,18 +62,17 @@ class ContentDao {
           )
           VALUES (?, ?, ?, ?, ?)
           ''',
-          [
-            contentId,
-            fieldValue.fieldDefinitionId,
-            fieldValue.textValue,
-            mediaId,
-            fieldValue.displayOrder,
-          ],
-        );
-      }
+        [
+          contentId,
+          fieldValue.fieldDefinitionId,
+          fieldValue.textValue,
+          mediaId,
+          fieldValue.displayOrder,
+        ],
+      );
+    }
 
-      return contentId;
-    });
+    return contentId;
   }
 
   Future<ContentPersistence?> getById(int id) {

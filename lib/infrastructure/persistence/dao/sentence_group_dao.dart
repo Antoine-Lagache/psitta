@@ -9,21 +9,30 @@ class SentenceGroupDao {
   SentenceGroupDao(this.database);
 
   Future<int> insertSentenceGroup(SentenceGroupPersistence sentenceGroup) {
+    return database.writeTransaction(
+      (txn) => insertSentenceGroupInTransaction(txn, sentenceGroup),
+    );
+  }
+
+  /// Inserts a complete group inside a transaction coordinated by the caller.
+  Future<int> insertSentenceGroupInTransaction(
+    sqlite.SqliteWriteContext txn,
+    SentenceGroupPersistence sentenceGroup,
+  ) async {
     if (sentenceGroup.id != null) {
       throw ArgumentError('Cannot insert an entity that already has an id');
     }
 
-    return database.writeTransaction((txn) async {
-      final sentenceGroupResult = await txn.execute('''
+    final sentenceGroupResult = await txn.execute('''
         INSERT INTO sentence_group DEFAULT VALUES
         RETURNING id
       ''');
 
-      final int sentenceGroupId = sentenceGroupResult.first['id'];
+    final int sentenceGroupId = sentenceGroupResult.first['id'];
 
-      for (final instance in sentenceGroup.sentenceInstances) {
-        final sentenceInstanceResult = await txn.execute(
-          '''
+    for (final instance in sentenceGroup.sentenceInstances) {
+      final sentenceInstanceResult = await txn.execute(
+        '''
           INSERT INTO sentence_instance (
             sentence_group_id,
             content_id
@@ -31,14 +40,14 @@ class SentenceGroupDao {
           VALUES  (?,?)
           RETURNING id
         ''',
-          [sentenceGroupId, instance.contentId],
-        );
+        [sentenceGroupId, instance.contentId],
+      );
 
-        final int sentenceInstanceId = sentenceInstanceResult.first['id'];
+      final int sentenceInstanceId = sentenceInstanceResult.first['id'];
 
-        final SentenceStatePersistence sentenceState = instance.sentenceState;
-        await txn.execute(
-          '''
+      final SentenceStatePersistence sentenceState = instance.sentenceState;
+      await txn.execute(
+        '''
           INSERT INTO sentence_state (
             sentence_instance_id,
             shown_count,
@@ -47,16 +56,15 @@ class SentenceGroupDao {
           )
           VALUES (?, ?, ?, ?)
         ''',
-          [
-            sentenceInstanceId,
-            sentenceState.shownCount,
-            sentenceState.accumulatedScore,
-            sentenceState.isInLearning ? 1 : 0,
-          ],
-        );
-      }
-      return sentenceGroupId;
-    });
+        [
+          sentenceInstanceId,
+          sentenceState.shownCount,
+          sentenceState.accumulatedScore,
+          sentenceState.isInLearning ? 1 : 0,
+        ],
+      );
+    }
+    return sentenceGroupId;
   }
 
   Future<int> insertSentenceInstance(

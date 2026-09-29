@@ -9,13 +9,22 @@ class FieldDefinitionDao {
   FieldDefinitionDao(this.database);
 
   Future<int> insert(FieldDefinitionPersistence fieldDefinition) {
+    return database.writeTransaction(
+      (txn) => insertInTransaction(txn, fieldDefinition),
+    );
+  }
+
+  /// Inserts a definition inside a transaction coordinated by the caller.
+  Future<int> insertInTransaction(
+    sqlite.SqliteWriteContext txn,
+    FieldDefinitionPersistence fieldDefinition,
+  ) async {
     if (fieldDefinition.id != null) {
       throw ArgumentError('Cannot insert an entity that already has an id');
     }
 
-    return database.writeTransaction((txn) async {
-      final fieldDefinitionResult = await txn.execute(
-        '''
+    final fieldDefinitionResult = await txn.execute(
+      '''
           INSERT INTO field_definition (
             value_type,
             side
@@ -23,11 +32,10 @@ class FieldDefinitionDao {
           VALUES(?, ?)
           RETURNING id
         ''',
-        [fieldDefinition.valueType, fieldDefinition.side],
-      );
+      [fieldDefinition.valueType, fieldDefinition.side],
+    );
 
-      return fieldDefinitionResult.first['id'] as int;
-    });
+    return fieldDefinitionResult.first['id'] as int;
   }
 
   Future<FieldDefinitionPersistence?> getById(int id) {
