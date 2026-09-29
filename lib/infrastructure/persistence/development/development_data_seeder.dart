@@ -13,7 +13,6 @@ import 'package:psitta/infrastructure/persistence/mappers/exercise/sentence_exer
 import 'package:psitta/infrastructure/persistence/mappers/exercise/word_exercise_mapper.dart';
 import 'package:psitta/infrastructure/persistence/mappers/sentence_mapper.dart';
 import 'package:psitta/infrastructure/persistence/models/content/content_persistence.dart';
-import 'package:psitta/infrastructure/persistence/models/content/media_persistence.dart';
 import 'package:psitta/infrastructure/persistence/models/field_definition/field_definition_persistence.dart';
 import 'package:psitta/infrastructure/persistence/models/sentence/sentence_group_persistence.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
