@@ -113,10 +113,7 @@ Future<List<Content>> _loadWordContents(
   return contents;
 }
 
-Iterable<Field> _fieldsOfType(
-  Iterable<Content> contents,
-  FieldValueType valueType,
-) {
+Iterable<Field> _fieldsOfType(Iterable<Content> contents, FieldValueType valueType) {
   return contents
       .expand((content) => content.fields)
       .where((field) => field.definition.valueType == valueType);

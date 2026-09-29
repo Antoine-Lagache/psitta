@@ -9,9 +9,7 @@ class FieldDefinitionDao {
   FieldDefinitionDao(this.database);
 
   Future<int> insert(FieldDefinitionPersistence fieldDefinition) {
-    return database.writeTransaction(
-      (txn) => insertInTransaction(txn, fieldDefinition),
-    );
+    return database.writeTransaction((txn) => insertInTransaction(txn, fieldDefinition));
   }
 
   /// Inserts a definition inside a transaction coordinated by the caller.
