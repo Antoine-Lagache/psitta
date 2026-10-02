@@ -18,6 +18,7 @@ flowchart TD
     APP["Application"] --> REPOSITORIES["Repositories"]
     REPOSITORIES --> DAOS["DAOs"]
     REPOSITORIES --> MAPPERS["Mappers"]
+    SEEDER["Debug data seeder"] --> DAOS
     DAOS --> DB[(SQLite)]
     MAPPERS <--> MODELS["Domain and Application models"]
 ```
@@ -58,6 +59,26 @@ configuration, schema migrations, and access to the shared
 `sqlite_async.SqliteDatabase` instance.
 
 See [SQLite database](database.md).
+
+### Development data
+
+`DevelopmentDataSeeder` populates an empty database with synthetic word and
+sentence exercises that exercise plain text, escaped special characters, HTML,
+line breaks, a local image, resolved `media://` HTML, and local WAV playback.
+It exists to validate the rendering and learning flows without coupling tests
+to Japanese production content.
+
+`AppDependencies.initialize` invokes it only in `kDebugMode`, after the schema
+has been opened and migrated and before controllers are constructed. It first
+checks for any exercise and does nothing when one exists. A second check inside
+the write transaction prevents duplicate insertion if two seed attempts race.
+Database rows are inserted atomically; generated media files are created before
+that transaction and are not rolled back with SQLite.
+
+Release builds do not run this seeder. A fresh release database therefore has
+no exercises until a production corpus is installed; an existing database is
+never cleared by this rule. Installing that corpus is deliberately still a
+separate release concern.
 
 ---
 
@@ -106,6 +127,7 @@ the Flutter web target.
 infrastructure/persistence/
 ├── database/
 ├── dao/
+├── development/
 ├── mappers/
 ├── models/
 └── repositories/

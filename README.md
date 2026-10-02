@@ -38,7 +38,10 @@ The application follows a four-layer architecture. Each layer has a single, well
 ```
 
 ### UI
-Flutter application shell with loading and retryable startup states, a temporary Home screen, and content rendering support. Feature screens and navigation are in progress. UI code contains presentation logic only and does not directly access Domain objects or database code.
+Flutter application shell with retryable startup states, Home, Learning,
+Statistics, Settings, and About screens, and typed content rendering for text,
+HTML, images, audio, and video. UI code contains presentation logic only and
+does not directly access Domain objects or database code.
 
 ### Application / Controllers
 Orchestrates application workflows: session lifecycle, content loading, persistence coordination, and statistics aggregation. Controllers are long-lived and shared across screens.
@@ -56,7 +59,7 @@ This layer has zero dependencies on Flutter or SQLite and can be tested in isola
 ### Persistence
 Data access through the repository pattern. Responsible for SQL queries, database ↔ domain mapping, and storage optimizations. All storage concerns are strictly confined to this layer.
 
-Full architectural documentation is available in [`docs/architecture/`](docs/index.md).
+Full architectural documentation is available in [`docs/`](docs/index.md).
 
 ---
 
@@ -85,16 +88,21 @@ The project is under active development. Here is a transparent breakdown of prog
 | Domain layer — implementation | ✅ Complete |
 | Persistence layer | ✅ Complete |
 | Application / Controllers | ✅ Complete |
-| UI | 🔄 Bootstrap complete; feature screens in progress |
+| UI | ✅ MVP screens and learning workflow complete |
+| Production learning content | 🔄 Japanese corpus and release import pending |
 
-The current focus is implementing the first MVP screens and connecting them to the existing application controllers while preserving the documented layer boundaries.
+The functional MVP shell is complete. The current focus is preparing the
+Japanese production corpus, validating it end to end, and completing release
+configuration and documentation.
 
 
 ---
 
 ## Getting Started
 
-> ⚠️ This project is currently a **work in progress**. Core architectural pieces are present, but several features are still being built or stabilized.
+> ⚠️ The debug build creates synthetic exercises when its database is empty.
+> Release builds do not currently install a production corpus, so a fresh
+> release database contains no exercises.
 
 **Prerequisites:** Flutter SDK 3.x, Dart 3.x
 
@@ -105,9 +113,31 @@ flutter pub get
 flutter run
 ```
 
-Run the test suite with:
+On Debian- or Ubuntu-based Linux systems, native audio compilation may require:
 
 ```bash
+sudo apt install libasound2-dev
+```
+
+The repository currently contains Flutter platform projects for Android,
+Linux, and Web. Persistence uses native SQLite and does not support Web. Other
+native platforms require their Flutter platform projects and native builds to
+be added and verified before they can be claimed as supported.
+
+### Development data
+
+In debug mode, `DevelopmentDataSeeder` inserts synthetic word and sentence
+exercises only when the `exercise` table is empty. They cover escaped text,
+HTML, line breaks, images, internal media references, audio, and sentence
+training. Existing databases are deliberately left unchanged. To exercise a
+modified seed from scratch, clear the application data or delete `psitta.db`
+from the platform application-support directory before restarting.
+
+Run the same checks as CI with:
+
+```bash
+dart format lib test tools
+flutter analyze
 flutter test
 ```
 

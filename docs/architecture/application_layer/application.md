@@ -51,7 +51,9 @@ resolver.
 
 `StatisticController` builds statistics from persisted session results and
 answer history. It exposes session-level and exercise-level aggregates, with
-optional half-open date ranges.
+optional half-open date ranges. Session aggregates include completed results
+only; answer aggregates use every persisted history entry, including answers
+recorded before an early end or pause.
 
 ---
 
@@ -103,8 +105,15 @@ state. After each answer, the Domain is updated first and `SessionRepository`
 stores the resulting exercise, history, and session result atomically. It also
 refreshes the resume snapshot, or removes it when the session has finished.
 
+`submitAnswer` creates the submitted-answer timestamp immediately before the
+Domain transition. The UI may hold a selected grade as pending presentation
+state, but no answer or timestamp exists in the Application layer until this
+method is called.
+
 Pausing releases the in-memory session after updating its snapshot. Resuming
 reconstructs a new Domain `Session` from persisted progression and the snapshot.
+Ending early persists a completed result and removes the snapshot while leaving
+unanswered exercises unfinished.
 
 ---
 

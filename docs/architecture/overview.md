@@ -28,9 +28,9 @@ flowchart TD
 ### [UI](ui_layer/ui.md)
 
 The UI owns the Flutter application shell, asynchronous dependency bootstrap,
-a placeholder home screen, and the content-rendering pipeline. Feature
-navigation and complete learning, statistics, and settings screens are not yet
-implemented.
+main navigation, Home, Learning, Statistics, Settings, and About screens, and
+the content-rendering pipeline. It keeps transient presentation state such as
+the selected tab, the visible card side, and a selected but unconfirmed grade.
 
 ### [Application](application_layer/application.md)
 
@@ -76,12 +76,14 @@ current MVP boundaries; repository interfaces have not been introduced.
 ## Application composition
 
 `AppDependencies` is the composition root. It opens and migrates the database,
-constructs the repositories, controllers, and content renderer, and owns the
-database lifetime.
+optionally seeds an empty debug database with synthetic exercises, constructs
+the repositories, controllers, and content renderer, and owns the database
+lifetime. Development seeding is guarded by `kDebugMode`; release builds do
+not currently install learning content.
 
 `main.dart` starts `PsittaApp`, whose root `MaterialApp` displays
 `PsittaBootstrap`. The bootstrap creates `AppDependencies`, displays loading or
 retryable failure states during initialization, and keeps the container alive
 while the ready UI is mounted. It disposes the container with the widget. The
-ready state currently leads to a placeholder `HomeScreen` that has not yet been
-wired to the controllers.
+ready state builds `MainScreen`, which shares the long-lived session and
+statistics controllers and content renderer with its feature screens.

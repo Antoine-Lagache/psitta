@@ -85,3 +85,8 @@ allowing a later call to reopen the database.
 The only registered migration is currently `V1InitialSchema` with version 1.
 Future schema changes must be added as new ordered migrations rather than by
 editing databases that may already exist.
+
+Development data is not part of the migration. After `open()` completes,
+`AppDependencies` may seed an empty database in debug mode. Keeping sample or
+production content outside schema migration preserves the distinction between
+database structure and application data.
