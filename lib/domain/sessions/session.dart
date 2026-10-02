@@ -23,6 +23,9 @@ class Session {
 
   int getCurrentContentId() => currentExercise.getContentId();
 
+  bool get currentExerciseHasPreviewInterval =>
+      currentExercise.hasMeaningfulPreviewInterval;
+
   List<ExerciseResume> getResumeList() => _scheduler.getResumeList();
 
   Session({

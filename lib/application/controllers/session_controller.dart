@@ -206,6 +206,10 @@ class SessionController {
     return _requireActiveSession().getCurrentExerciseAllowedGrade();
   }
 
+  bool get currentExerciseHasPreviewInterval {
+    return _requireActiveSession().currentExerciseHasPreviewInterval;
+  }
+
   /// Previews every allowed grade using the same reference timestamp.
   Map<Grade, Duration> getCurrentExercisePreviewIntervals() {
     final session = _requireActiveSession();

@@ -189,6 +189,7 @@ void main() {
           StartSessionResult.started,
         );
         expect(controller.hasActiveSession, isTrue);
+        expect(controller.currentExerciseHasPreviewInterval, isTrue);
         expect((await controller.getCurrentExerciseContent()).id, isNotNull);
 
         clockCalls = 0;

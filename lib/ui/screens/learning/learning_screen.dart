@@ -40,6 +40,7 @@ class _LearningScreenState extends State<LearningScreen> {
   String _unavailableMessage = 'This session is no longer available.';
   List<Grade> _allowedGrades = const [];
   Map<Grade, Duration> _previewIntervals = const {};
+  bool _showPreviewIntervals = true;
   bool _showingAnswer = false;
 
   // The answer is persisted by the next, pause, or end action once confirmed.
@@ -117,6 +118,7 @@ class _LearningScreenState extends State<LearningScreen> {
       selectedGrade: _selectedGrade,
       allowedGrades: _allowedGrades,
       previewIntervals: _previewIntervals,
+      showPreviewIntervals: _showPreviewIntervals,
       onRevealAnswer: _revealAnswer,
       onGradeSelected: _selectGrade,
       onToggleSide: _toggleSide,
@@ -200,7 +202,10 @@ class _LearningScreenState extends State<LearningScreen> {
     final front = await widget.contentRenderer.render(content, FieldSide.front);
     final back = await widget.contentRenderer.render(content, FieldSide.back);
     final grades = widget.sessionController.getCurrentExerciseAllowedGrade();
-    final intervals = widget.sessionController.getCurrentExercisePreviewIntervals();
+    final showIntervals = widget.sessionController.currentExerciseHasPreviewInterval;
+    final intervals = showIntervals
+        ? widget.sessionController.getCurrentExercisePreviewIntervals()
+        : const <Grade, Duration>{};
 
     if (!mounted) {
       return;
@@ -210,6 +215,7 @@ class _LearningScreenState extends State<LearningScreen> {
       _back = back;
       _allowedGrades = grades;
       _previewIntervals = intervals;
+      _showPreviewIntervals = showIntervals;
       _showingAnswer = false;
       _selectedGrade = null;
       _operationInProgress = false;
