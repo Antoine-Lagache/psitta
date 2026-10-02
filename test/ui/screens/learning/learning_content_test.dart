@@ -10,6 +10,7 @@ void main() {
     required ValueChanged<Grade> onGradeSelected,
     Grade? selectedGrade,
     bool interactionEnabled = true,
+    bool showPreviewIntervals = true,
     VoidCallback? onToggleSide,
     VoidCallback? onCancelAnswer,
     VoidCallback? onNextExercise,
@@ -27,6 +28,7 @@ void main() {
             Grade.again: Duration.zero,
             Grade.good: Duration(days: 2),
           },
+          showPreviewIntervals: showPreviewIntervals,
           onRevealAnswer: onRevealAnswer,
           onGradeSelected: onGradeSelected,
           onToggleSide: onToggleSide ?? () {},
@@ -114,6 +116,22 @@ void main() {
     expect(sideToggled, isTrue);
     expect(answerCancelled, isTrue);
     expect(nextRequested, isTrue);
+  });
+
+  testWidgets('hides intervals when the answer does not update the SRS', (tester) async {
+    await tester.pumpWidget(
+      buildContent(
+        showingAnswer: true,
+        showPreviewIntervals: false,
+        onRevealAnswer: () {},
+        onGradeSelected: (_) {},
+      ),
+    );
+
+    expect(find.text('Again'), findsOneWidget);
+    expect(find.text('Good'), findsOneWidget);
+    expect(find.text('Now'), findsNothing);
+    expect(find.text('2d'), findsNothing);
   });
 
   testWidgets('disables the available action while an operation is running', (

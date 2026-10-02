@@ -10,6 +10,7 @@ class LearningContent extends StatelessWidget {
   final Grade? selectedGrade;
   final List<Grade> allowedGrades;
   final Map<Grade, Duration> previewIntervals;
+  final bool showPreviewIntervals;
   final VoidCallback onRevealAnswer;
   final ValueChanged<Grade> onGradeSelected;
   final VoidCallback onToggleSide;
@@ -24,6 +25,7 @@ class LearningContent extends StatelessWidget {
     required this.selectedGrade,
     required this.allowedGrades,
     required this.previewIntervals,
+    required this.showPreviewIntervals,
     required this.onRevealAnswer,
     required this.onGradeSelected,
     required this.onToggleSide,
@@ -136,11 +138,6 @@ class LearningContent extends StatelessWidget {
   }
 
   Widget _buildGradeButton(Grade grade) {
-    final interval = previewIntervals[grade];
-    if (interval == null) {
-      throw StateError('Missing preview interval for ${grade.name}');
-    }
-
     return OutlinedButton(
       onPressed: interactionEnabled ? () => onGradeSelected(grade) : null,
       child: Padding(
@@ -149,12 +146,19 @@ class LearningContent extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(_gradeLabel(grade)),
-            const SizedBox(height: 2),
-            Text(_formatInterval(interval)),
+            if (showPreviewIntervals) ...[
+              const SizedBox(height: 2),
+              Text(_formatInterval(_previewIntervalFor(grade))),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  Duration _previewIntervalFor(Grade grade) {
+    return previewIntervals[grade] ??
+        (throw StateError('Missing preview interval for ${grade.name}'));
   }
 
   String _gradeLabel(Grade grade) {

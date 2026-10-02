@@ -70,7 +70,7 @@ class FieldRenderer {
       throw StateError('Expected MediaFieldValue for an audio field.');
     }
 
-    return '<audio src="${Uri.file(value.media.path)}"></audio>';
+    return '<audio controls src="${Uri.file(value.media.path)}"></audio>';
   }
 
   String _renderVideo(Field field) {
@@ -80,6 +80,6 @@ class FieldRenderer {
       throw StateError('Expected MediaFieldValue for a video field.');
     }
 
-    return '<video src="${Uri.file(value.media.path)}"></video>';
+    return '<video controls src="${Uri.file(value.media.path)}"></video>';
   }
 }

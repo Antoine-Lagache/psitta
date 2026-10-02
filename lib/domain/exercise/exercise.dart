@@ -64,11 +64,17 @@ abstract class Exercise {
 
   /// Returns the interval produced by [answer] without mutating this exercise.
   Duration previewInterval(PreviewExerciseAnswer answer, SRSConfig config) {
+    if (!hasMeaningfulPreviewInterval) {
+      throw StateError('This exercise phase does not update the SRS interval');
+    }
     if (!isGradeAllowed(answer.grade)) {
       throw StateError('The grade is not allowed by this exercise');
     }
     return srsState.previewInterval(answer, config);
   }
+
+  /// Whether answering the exercise currently updates its SRS interval.
+  bool get hasMeaningfulPreviewInterval => true;
 
   /// Returns whether this exercise type accepts [grade].
   bool isGradeAllowed(Grade grade) {

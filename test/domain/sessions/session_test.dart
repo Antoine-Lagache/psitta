@@ -74,6 +74,33 @@ void main() {
       expect(exercise.newHistoryEntry, isEmpty);
     });
 
+    test('does not expose an SRS interval during sentence consolidation', () {
+      final exercise = SentenceExercise(
+        sentences: SentenceGroup(
+          id: 1,
+          sentences: [SentenceInstance(id: 1, contentId: 1, state: SentenceState())],
+        ),
+        trainingCountMax: 1,
+        id: 1,
+        status: ExerciseStatus.consolidating,
+        srsState: SRSState(),
+      );
+      final session = Session(
+        exercises: [exercise],
+        sessionType: SessionType.sentenceSession,
+        config: SRSConfig(),
+      );
+      final now = DateTime.utc(2026, 9, 14, 10);
+      session.beginSession(now);
+
+      expect(session.currentExerciseHasPreviewInterval, isFalse);
+      expect(
+        () =>
+            session.getPreviewInterval(PreviewExerciseAnswer(grade: Grade.good, at: now)),
+        throwsStateError,
+      );
+    });
+
     test('accumulates only non-negative measured durations', () {
       final exercise = SentenceExercise(
         sentences: SentenceGroup(

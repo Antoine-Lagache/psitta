@@ -64,6 +64,9 @@ class SentenceExercise extends Exercise {
   }
 
   @override
+  bool get hasMeaningfulPreviewInterval => status != ExerciseStatus.consolidating;
+
+  @override
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
     if (status == ExerciseStatus.completed) {
       throw StateError('Cannot answer a completed exercise');

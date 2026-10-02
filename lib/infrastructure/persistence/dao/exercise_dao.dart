@@ -10,25 +10,31 @@ class ExerciseDao {
   // Public operations
 
   Future<int> insert(ExercisePersistence exercise) {
+    return database.writeTransaction((txn) => insertInTransaction(txn, exercise));
+  }
+
+  /// Inserts a complete exercise inside a transaction coordinated by the caller.
+  Future<int> insertInTransaction(
+    sqlite.SqliteWriteContext txn,
+    ExercisePersistence exercise,
+  ) async {
     if (exercise.id != null) {
       throw ArgumentError('Cannot insert an entity that already has an id');
     }
 
-    return database.writeTransaction((txn) async {
-      final exerciseId = await _insertExercise(txn, exercise);
+    final exerciseId = await _insertExercise(txn, exercise);
 
-      await _insertSrsState(txn, exerciseId, exercise.srsState);
+    await _insertSrsState(txn, exerciseId, exercise.srsState);
 
-      switch (exercise) {
-        case WordExercisePersistence():
-          await _insertWordExercise(txn, exerciseId, exercise);
+    switch (exercise) {
+      case WordExercisePersistence():
+        await _insertWordExercise(txn, exerciseId, exercise);
 
-        case SentenceExercisePersistence():
-          await _insertSentenceExercise(txn, exerciseId, exercise);
-      }
+      case SentenceExercisePersistence():
+        await _insertSentenceExercise(txn, exerciseId, exercise);
+    }
 
-      return exerciseId;
-    });
+    return exerciseId;
   }
 
   Future<ExercisePersistence?> getById(int id) {
