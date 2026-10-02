@@ -78,9 +78,7 @@ void main() {
       final exercise = SentenceExercise(
         sentences: SentenceGroup(
           id: 1,
-          sentences: [
-            SentenceInstance(id: 1, contentId: 1, state: SentenceState()),
-          ],
+          sentences: [SentenceInstance(id: 1, contentId: 1, state: SentenceState())],
         ),
         trainingCountMax: 1,
         id: 1,
@@ -97,9 +95,8 @@ void main() {
 
       expect(session.currentExerciseHasPreviewInterval, isFalse);
       expect(
-        () => session.getPreviewInterval(
-          PreviewExerciseAnswer(grade: Grade.good, at: now),
-        ),
+        () =>
+            session.getPreviewInterval(PreviewExerciseAnswer(grade: Grade.good, at: now)),
         throwsStateError,
       );
     });

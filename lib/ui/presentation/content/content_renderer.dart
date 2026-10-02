@@ -15,10 +15,8 @@ class ContentRenderer {
   final FieldRenderer _fieldRenderer;
   final AudioControlBuilder _audioControlBuilder;
 
-  ContentRenderer(
-    this._fieldRenderer, {
-    AudioControlBuilder? audioControlBuilder,
-  }) : _audioControlBuilder = audioControlBuilder ?? _buildAudioControl;
+  ContentRenderer(this._fieldRenderer, {AudioControlBuilder? audioControlBuilder})
+    : _audioControlBuilder = audioControlBuilder ?? _buildAudioControl;
 
   /// Renders the fields visible on [side] into a single HTML widget.
   Future<Widget> render(Content content, FieldSide side) async {
@@ -41,7 +39,8 @@ class ContentRenderer {
       return null;
     }
 
-    final source = element.attributes['src'] ??
+    final source =
+        element.attributes['src'] ??
         element.querySelector('source[src]')?.attributes['src'];
     if (source == null || source.isEmpty) {
       return const SizedBox.shrink();

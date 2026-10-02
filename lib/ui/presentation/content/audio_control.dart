@@ -24,14 +24,12 @@ class _AudioControlState extends State<AudioControl> {
 
   bool get _isLoading {
     final state = _playerState?.processingState;
-    return state == ProcessingState.loading ||
-        state == ProcessingState.buffering;
+    return state == ProcessingState.loading || state == ProcessingState.buffering;
   }
 
   bool get _isPlaying => _playerState?.playing ?? false;
 
-  bool get _isCompleted =>
-      _playerState?.processingState == ProcessingState.completed;
+  bool get _isCompleted => _playerState?.processingState == ProcessingState.completed;
 
   @override
   void initState() {
@@ -136,10 +134,7 @@ class _AudioControlState extends State<AudioControl> {
 
   Widget _buildProgressSlider() {
     final totalMilliseconds = _duration.inMilliseconds;
-    final positionMilliseconds = _position.inMilliseconds.clamp(
-      0,
-      totalMilliseconds,
-    );
+    final positionMilliseconds = _position.inMilliseconds.clamp(0, totalMilliseconds);
 
     return SizedBox(
       width: 160,

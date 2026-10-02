@@ -118,9 +118,7 @@ void main() {
     expect(nextRequested, isTrue);
   });
 
-  testWidgets('hides intervals when the answer does not update the SRS', (
-    tester,
-  ) async {
+  testWidgets('hides intervals when the answer does not update the SRS', (tester) async {
     await tester.pumpWidget(
       buildContent(
         showingAnswer: true,
