@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 
 /// Displays playback controls for one local or remote audio resource.
 class AudioControl extends StatefulWidget {
@@ -14,100 +14,180 @@ class AudioControl extends StatefulWidget {
 }
 
 class _AudioControlState extends State<AudioControl> {
-  final AudioPlayer _player = AudioPlayer();
-  final List<StreamSubscription<Object?>> _subscriptions = [];
+  static Future<void>? _engineInitialization;
+
+  final SoLoud _engine = SoLoud.instance;
+
+  AudioSource? _audioSource;
+  SoundHandle? _soundHandle;
+  StreamSubscription<StreamSoundEvent>? _soundEventsSubscription;
+  Timer? _positionTimer;
 
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
-  PlayerState? _playerState;
+  bool _isLoading = true;
+  bool _isPlaying = false;
   Object? _error;
-
-  bool get _isLoading {
-    final state = _playerState?.processingState;
-    return state == ProcessingState.loading || state == ProcessingState.buffering;
-  }
-
-  bool get _isPlaying => _playerState?.playing ?? false;
-
-  bool get _isCompleted => _playerState?.processingState == ProcessingState.completed;
 
   @override
   void initState() {
     super.initState();
-    _listenToPlayer();
     unawaited(_loadAudio());
-  }
-
-  void _listenToPlayer() {
-    _subscriptions.addAll([
-      _player.positionStream.listen((position) => _updatePosition(position)),
-      _player.durationStream.listen((duration) => _updateDuration(duration)),
-      _player.playerStateStream.listen((state) => _updatePlayerState(state)),
-    ]);
   }
 
   Future<void> _loadAudio() async {
     try {
-      await _player.setAudioSource(AudioSource.uri(widget.source));
+      await _ensureEngineInitialized();
+      final source = await _loadSource();
+      final handle = await _engine.play(source, paused: true);
+      if (!mounted) {
+        await _engine.stop(handle);
+        await _engine.disposeSource(source);
+        return;
+      }
+      _listenToSource(source);
+      _updateLoadedState(source, handle);
     } on Object catch (error) {
       _showError(error);
     }
+  }
+
+  Future<void> _ensureEngineInitialized() async {
+    if (_engine.isInitialized) return;
+
+    final initialization = _engineInitialization ??= _engine.init();
+    try {
+      await initialization;
+    } on Object {
+      _engineInitialization = null;
+      rethrow;
+    }
+  }
+
+  Future<AudioSource> _loadSource() {
+    if (widget.source.scheme == 'file') {
+      return _engine.loadFile(widget.source.toFilePath());
+    }
+    return _engine.loadUrl(widget.source.toString());
+  }
+
+  void _listenToSource(AudioSource source) {
+    _soundEventsSubscription = source.soundEvents.listen((event) {
+      if (event.handle == _soundHandle &&
+          event.event == SoundEventType.handleIsNoMoreValid) {
+        _handlePlaybackCompleted();
+      }
+    });
+  }
+
+  void _updateLoadedState(AudioSource source, SoundHandle handle) {
+    setState(() {
+      _audioSource = source;
+      _soundHandle = handle;
+      _duration = _engine.getLength(source);
+      _isLoading = false;
+    });
   }
 
   Future<void> _togglePlayback() async {
     try {
       if (_isPlaying) {
-        await _player.pause();
-        return;
+        _pause();
+      } else {
+        await _play();
       }
-      if (_isCompleted) {
-        await _player.seek(Duration.zero);
-      }
-      await _player.play();
     } on Object catch (error) {
       _showError(error);
     }
   }
 
-  Future<void> _seek(double milliseconds) async {
+  Future<void> _play() async {
+    final source = _audioSource;
+    if (source == null) return;
+
+    var handle = _soundHandle;
+    if (handle == null || !_engine.getIsValidVoiceHandle(handle)) {
+      handle = await _engine.play(source, paused: true);
+      _soundHandle = handle;
+      _position = Duration.zero;
+    }
+    _engine.setPause(handle, false);
+    _startPositionUpdates();
+    setState(() => _isPlaying = true);
+  }
+
+  void _pause() {
+    final handle = _soundHandle;
+    if (handle == null) return;
+    _engine.setPause(handle, true);
+    _positionTimer?.cancel();
+    setState(() => _isPlaying = false);
+  }
+
+  void _startPositionUpdates() {
+    _positionTimer?.cancel();
+    _positionTimer = Timer.periodic(
+      const Duration(milliseconds: 200),
+      (_) => _refreshPosition(),
+    );
+  }
+
+  void _refreshPosition() {
+    final handle = _soundHandle;
+    if (!mounted || handle == null) return;
+    if (!_engine.getIsValidVoiceHandle(handle)) return;
+    setState(() => _position = _engine.getPosition(handle));
+  }
+
+  void _handlePlaybackCompleted() {
+    _positionTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _position = _duration;
+      _isPlaying = false;
+      _soundHandle = null;
+    });
+  }
+
+  void _seek(double milliseconds) {
     try {
-      await _player.seek(Duration(milliseconds: milliseconds.round()));
+      final handle = _soundHandle;
+      if (handle == null) return;
+      final position = Duration(milliseconds: milliseconds.round());
+      _engine.seek(handle, position);
+      setState(() => _position = position);
     } on Object catch (error) {
       _showError(error);
     }
   }
 
   void _showError(Object error) {
-    if (mounted) {
-      setState(() => _error = error);
-    }
-  }
-
-  void _updatePosition(Duration position) {
-    if (mounted) {
-      setState(() => _position = position);
-    }
-  }
-
-  void _updateDuration(Duration? duration) {
-    if (mounted) {
-      setState(() => _duration = duration ?? Duration.zero);
-    }
-  }
-
-  void _updatePlayerState(PlayerState state) {
-    if (mounted) {
-      setState(() => _playerState = state);
-    }
+    if (!mounted) return;
+    setState(() {
+      _error = error;
+      _isLoading = false;
+      _isPlaying = false;
+    });
   }
 
   @override
   void dispose() {
-    for (final subscription in _subscriptions) {
-      unawaited(subscription.cancel());
-    }
-    unawaited(_player.dispose());
+    _positionTimer?.cancel();
+    unawaited(_soundEventsSubscription?.cancel());
+    unawaited(_releaseAudio());
     super.dispose();
+  }
+
+  Future<void> _releaseAudio() async {
+    final handle = _soundHandle;
+    final source = _audioSource;
+    if (!_engine.isInitialized) return;
+    if (handle != null && _engine.getIsValidVoiceHandle(handle)) {
+      await _engine.stop(handle);
+    }
+    if (source != null) {
+      await _engine.disposeSource(source);
+    }
   }
 
   @override
@@ -157,7 +237,7 @@ class _AudioControlState extends State<AudioControl> {
       );
     }
     return IconButton.outlined(
-      onPressed: _playerState == null ? null : _togglePlayback,
+      onPressed: _audioSource == null ? null : _togglePlayback,
       tooltip: _isPlaying ? 'Pause audio' : 'Play audio',
       icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
     );
