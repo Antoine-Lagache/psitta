@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "kind": "psitta_v0_1_html_exercises",
+  "source_sha256": "f4752f406357650d91b40a1a8dc53d3017c9e76376453a2cc1075560bfb419bd",
+  "counts": {
+    "word_exercises": 1297,
+    "sentence_exercises": 1428,
+    "sentence_instances": 2629
+  },
+  "files": {
+    "word_exercises.jsonl.gz": {
+      "sha256": "2a2209cc0f2550654f4e69b96f2d7c502c77a7e547435747435a2eb6dc7b7300",
+      "jsonl_sha256": "3660b6292adb338903d29a10415bbcf0e220451799417c6b149d83033ac9332f"
+    },
+    "sentence_exercises.jsonl.gz": {
+      "sha256": "a25ee0e5072b715d29f3b80f65b067ffbae92049cc7faba1a4b8bfa4d999cbce",
+      "jsonl_sha256": "3dc25b7231ce8fc29b8391126a5033b77bc638f7153d680f29c7fa90ce8fa9df"
+    },
+    "preview.html": {
+      "sha256": "2dd93c660e2ed2977ec2a7c376aefdb4a2b5e3b61acb5dedc5f994ea276795f4"
+    }
+  }
+}

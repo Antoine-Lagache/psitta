@@ -140,6 +140,7 @@ class SentenceGroupDao {
         JOIN sentence_state ss
           ON ss.sentence_instance_id = si.id
         WHERE si.sentence_group_id = ?
+        ORDER BY si.id ASC
       ''',
       [id],
     );

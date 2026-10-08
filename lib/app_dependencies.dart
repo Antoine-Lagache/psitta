@@ -1,9 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:psitta/application/controllers/content_controller.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
 import 'package:psitta/infrastructure/persistence/database/sqlite_database.dart';
-import 'package:psitta/infrastructure/persistence/development/development_data_seeder.dart';
+import 'package:psitta/infrastructure/persistence/release/release_content_importer.dart';
 import 'package:psitta/infrastructure/persistence/repositories/content_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_history_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
@@ -51,9 +50,7 @@ class AppDependencies {
     final database = SqliteDatabase();
     await database.open();
     try {
-      if (kDebugMode) {
-        await DevelopmentDataSeeder(database.database).seedIfEmpty();
-      }
+      await ReleaseContentImporter(database.database).importIfEmpty();
       return AppDependencies._(database);
     } on Object {
       await database.close();

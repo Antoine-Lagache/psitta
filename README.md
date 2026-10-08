@@ -89,20 +89,19 @@ The project is under active development. Here is a transparent breakdown of prog
 | Persistence layer | ✅ Complete |
 | Application / Controllers | ✅ Complete |
 | UI | ✅ MVP screens and learning workflow complete |
-| Production learning content | 🔄 Japanese corpus and release import pending |
+| Production learning content | ✅ Frozen v0.1 corpus imported on first launch |
 
-The functional MVP shell is complete. The current focus is preparing the
-Japanese production corpus, validating it end to end, and completing release
-configuration and documentation.
+The functional MVP shell and its first Japanese corpus are integrated. The
+current focus is reviewing that corpus in the app before the v0.1 release.
 
 
 ---
 
 ## Getting Started
 
-> ⚠️ The debug build creates synthetic exercises when its database is empty.
-> Release builds do not currently install a production corpus, so a fresh
-> release database contains no exercises.
+On first launch, the app creates `psitta.db`, applies the SQLite schema and
+imports the bundled v0.1 exercises before opening the main screen. This works
+in debug and release builds. A later launch retains the database and progress.
 
 **Prerequisites:** Flutter SDK 3.x, Dart 3.x
 
@@ -124,14 +123,35 @@ Linux, and Web. Persistence uses native SQLite and does not support Web. Other
 native platforms require their Flutter platform projects and native builds to
 be added and verified before they can be claimed as supported.
 
-### Development data
+### Bundled exercises and installation
 
-In debug mode, `DevelopmentDataSeeder` inserts synthetic word and sentence
-exercises only when the `exercise` table is empty. They cover escaped text,
-HTML, line breaks, images, internal media references, audio, and sentence
-training. Existing databases are deliberately left unchanged. To exercise a
-modified seed from scratch, clear the application data or delete `psitta.db`
-from the platform application-support directory before restarting.
+`assets/content/v0_1/` contains the frozen HTML corpus copied from
+`psitta-content` (`chatgpt/editorial-review`, commit
+`92ecfebde93fe4f16c473ecb8f08f45c69afd1a1`):
+
+| File | Contents |
+|---|---|
+| `manifest.json` | Format version, source checksum, counts and compressed/decoded checksums |
+| `word_exercises.jsonl.gz` | 1,297 ordered word exercises, each with separate `front_html` and `back_html` |
+| `sentence_exercises.jsonl.gz` | 1,428 ordered groups containing 2,629 sentence instances, each with its own front and back |
+
+`ReleaseContentImporter` verifies both files against the manifest, then writes
+2,725 exercises and 3,926 content records in one transaction. A failed import
+rolls back completely and the startup screen offers a retry. The corpus is
+installed only when the exercise table is empty, so existing user progress is
+not overwritten. The import creates two HTML field definitions (front/back),
+sentence groups, instance states and initial SRS states. Word exercise IDs
+follow the word order; sentence exercise IDs follow the group order. The
+learning session may shuffle its selected exercises.
+
+Existing development installations with synthetic exercises keep their data;
+to test a clean install, clear application data or remove `psitta.db` from the
+application-support directory. `DevelopmentDataSeeder` remains available to
+test media rendering explicitly, but is no longer called on normal startup.
+
+The import is a one-time installation of v0.1. Updating a populated database
+to a revised corpus will need a versioned content migration that preserves
+learning progress.
 
 Run the same checks as CI with:
 

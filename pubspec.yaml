@@ -65,6 +65,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/content/v0_1/manifest.json
+    - assets/content/v0_1/word_exercises.jsonl.gz
+    - assets/content/v0_1/sentence_exercises.jsonl.gz
 
   # To add assets to your application, add an assets section, like this:
   # assets:
