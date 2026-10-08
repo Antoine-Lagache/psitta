@@ -71,7 +71,9 @@ final class PersistenceTestDatabase {
 
   Future<int> countRows(String table) {
     return database.readTransaction((transaction) async {
-      final rows = await transaction.getAll('SELECT COUNT(*) AS count FROM $table');
+      final rows = await transaction.getAll(
+        'SELECT COUNT(*) AS count FROM $table',
+      );
       return rows.single['count'] as int;
     });
   }

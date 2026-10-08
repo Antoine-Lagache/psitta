@@ -30,7 +30,9 @@ void main() {
 
   group('ExerciseRepository', () {
     test('enables foreign-key enforcement', () async {
-      final foreignKeysEnabled = await database.writeTransaction((transaction) async {
+      final foreignKeysEnabled = await database.writeTransaction((
+        transaction,
+      ) async {
         final result = await transaction.getAll('PRAGMA foreign_keys');
         return result.single['foreign_keys'];
       });
@@ -74,7 +76,10 @@ void main() {
         contentId,
       );
 
-      final exerciseId = await repository.createSentenceExercise(sentenceGroupId, 1);
+      final exerciseId = await repository.createSentenceExercise(
+        sentenceGroupId,
+        1,
+      );
 
       expect(exerciseId, greaterThan(0));
 
@@ -87,7 +92,10 @@ void main() {
       expect(sentenceExercise.trainingCountMax, 1);
       expect(sentenceExercise.trainingCount, 1);
       expect(sentenceExercise.sentences.sentences, hasLength(1));
-      expect(sentenceExercise.sentences.sentences.single.id, sentenceInstanceId);
+      expect(
+        sentenceExercise.sentences.sentences.single.id,
+        sentenceInstanceId,
+      );
       expect(sentenceExercise.sentences.sentences.single.contentId, contentId);
     });
 
@@ -96,7 +104,10 @@ void main() {
       final sentenceGroupRepository = SentenceGroupRepository(database);
       final sentenceGroupId = await sentenceGroupRepository.createGroup();
       await sentenceGroupRepository.createInstance(sentenceGroupId, contentId);
-      final exerciseId = await repository.createSentenceExercise(sentenceGroupId, 1);
+      final exerciseId = await repository.createSentenceExercise(
+        sentenceGroupId,
+        1,
+      );
 
       await expectLater(
         sentenceGroupRepository.deleteSentenceGroup(sentenceGroupId),
@@ -139,53 +150,76 @@ void main() {
         [exerciseId],
       );
 
-      final exercises = await repository.getDueExercises(DateTime.now(), 10, 'word');
+      final exercises = await repository.getDueExercises(
+        DateTime.now(),
+        10,
+        'word',
+      );
 
       expect(exercises, hasLength(1));
       expect(exercises.first.id, exerciseId);
     });
 
-    test('countNewExercises counts exercises with no history by type', () async {
-      final firstContentId = await testDatabase.insertContent();
-      final secondContentId = await testDatabase.insertContent();
-      final wordExerciseId = await repository.createWordExercise(firstContentId);
+    test(
+      'countNewExercises counts exercises with no history by type',
+      () async {
+        final firstContentId = await testDatabase.insertContent();
+        final secondContentId = await testDatabase.insertContent();
+        final wordExerciseId = await repository.createWordExercise(
+          firstContentId,
+        );
 
-      final sentenceGroupRepository = SentenceGroupRepository(database);
-      final sentenceGroupId = await sentenceGroupRepository.createGroup();
-      await sentenceGroupRepository.createInstance(sentenceGroupId, secondContentId);
-      await repository.createSentenceExercise(sentenceGroupId, 1);
+        final sentenceGroupRepository = SentenceGroupRepository(database);
+        final sentenceGroupId = await sentenceGroupRepository.createGroup();
+        await sentenceGroupRepository.createInstance(
+          sentenceGroupId,
+          secondContentId,
+        );
+        await repository.createSentenceExercise(sentenceGroupId, 1);
 
-      final reviewedWord = await repository.getById(wordExerciseId) as WordExercise;
-      reviewedWord.newHistoryEntry.add(
-        ExerciseHistoryEntry(
-          exerciseId: wordExerciseId,
-          grade: Grade.good,
-          answeredAt: DateTime.utc(2026, 9, 18),
-          status: ExerciseStatus.newExercise,
-        ),
-      );
-      await repository.save(reviewedWord);
+        final reviewedWord =
+            await repository.getById(wordExerciseId) as WordExercise;
+        reviewedWord.newHistoryEntry.add(
+          ExerciseHistoryEntry(
+            exerciseId: wordExerciseId,
+            grade: Grade.good,
+            answeredAt: DateTime.utc(2026, 9, 18),
+            status: ExerciseStatus.newExercise,
+          ),
+        );
+        await repository.save(reviewedWord);
 
-      expect(await repository.countNewExercises('word'), 0);
-      expect(await repository.countNewExercises('sentence'), 1);
-      expect(await repository.countNewExercises(null), 1);
-    });
+        expect(await repository.countNewExercises('word'), 0);
+        expect(await repository.countNewExercises('sentence'), 1);
+        expect(await repository.countNewExercises(null), 1);
+      },
+    );
 
-    test('countDueExercises filters by type and includes the exact boundary', () async {
-      final now = DateTime.utc(2026, 9, 18, 12);
-      final firstContentId = await testDatabase.insertContent();
-      final secondContentId = await testDatabase.insertContent();
-      final thirdContentId = await testDatabase.insertContent();
-      final dueWordId = await repository.createWordExercise(firstContentId);
-      final futureWordId = await repository.createWordExercise(secondContentId);
+    test(
+      'countDueExercises filters by type and includes the exact boundary',
+      () async {
+        final now = DateTime.utc(2026, 9, 18, 12);
+        final firstContentId = await testDatabase.insertContent();
+        final secondContentId = await testDatabase.insertContent();
+        final thirdContentId = await testDatabase.insertContent();
+        final dueWordId = await repository.createWordExercise(firstContentId);
+        final futureWordId = await repository.createWordExercise(
+          secondContentId,
+        );
 
-      final sentenceGroupRepository = SentenceGroupRepository(database);
-      final sentenceGroupId = await sentenceGroupRepository.createGroup();
-      await sentenceGroupRepository.createInstance(sentenceGroupId, thirdContentId);
-      final dueSentenceId = await repository.createSentenceExercise(sentenceGroupId, 1);
+        final sentenceGroupRepository = SentenceGroupRepository(database);
+        final sentenceGroupId = await sentenceGroupRepository.createGroup();
+        await sentenceGroupRepository.createInstance(
+          sentenceGroupId,
+          thirdContentId,
+        );
+        final dueSentenceId = await repository.createSentenceExercise(
+          sentenceGroupId,
+          1,
+        );
 
-      await database.execute(
-        '''
+        await database.execute(
+          '''
         UPDATE srs_state
         SET next_review = CASE exercise_id
           WHEN ? THEN ?
@@ -194,23 +228,24 @@ void main() {
         END
         WHERE exercise_id IN (?, ?, ?)
         ''',
-        [
-          dueWordId,
-          now.microsecondsSinceEpoch,
-          futureWordId,
-          now.add(const Duration(microseconds: 1)).microsecondsSinceEpoch,
-          dueSentenceId,
-          now.subtract(const Duration(days: 1)).microsecondsSinceEpoch,
-          dueWordId,
-          futureWordId,
-          dueSentenceId,
-        ],
-      );
+          [
+            dueWordId,
+            now.microsecondsSinceEpoch,
+            futureWordId,
+            now.add(const Duration(microseconds: 1)).microsecondsSinceEpoch,
+            dueSentenceId,
+            now.subtract(const Duration(days: 1)).microsecondsSinceEpoch,
+            dueWordId,
+            futureWordId,
+            dueSentenceId,
+          ],
+        );
 
-      expect(await repository.countDueExercises(now, 'word'), 1);
-      expect(await repository.countDueExercises(now, 'sentence'), 1);
-      expect(await repository.countDueExercises(now, null), 2);
-    });
+        expect(await repository.countDueExercises(now, 'word'), 1);
+        expect(await repository.countDueExercises(now, 'sentence'), 1);
+        expect(await repository.countDueExercises(now, null), 2);
+      },
+    );
 
     test('save round-trips every word SRS field', () async {
       final contentId = await testDatabase.insertContent();
@@ -236,7 +271,10 @@ void main() {
       expect(savedExercise, isNotNull);
       expect(savedExercise!.id, exerciseId);
       expect(savedExercise.srsState.easeFactor, 2.1);
-      expect(savedExercise.srsState.interval, const Duration(days: 7, minutes: 3));
+      expect(
+        savedExercise.srsState.interval,
+        const Duration(days: 7, minutes: 3),
+      );
       expect(savedExercise.srsState.kFactor, 0.25);
       expect(savedExercise.srsState.w, 0.2);
       expect(savedExercise.srsState.rbar, 0.4);
@@ -244,52 +282,59 @@ void main() {
       expect(savedExercise.srsState.learningStepIndex, -1);
     });
 
-    test('answer persistence rolls back when the session update fails', () async {
-      final contentId = await testDatabase.insertContent();
-      final exerciseId = await repository.createWordExercise(contentId);
-      final exercise = (await repository.getById(exerciseId))!;
-      final sessionRepository = SessionRepository(
-        database,
-        exerciseRepository: repository,
-      );
-      final session = Session(
-        exercises: [exercise],
-        sessionType: SessionType.wordSession,
-        config: SRSConfig(),
-      );
-      final answeredAt = DateTime(2026, 9, 4, 12);
+    test(
+      'answer persistence rolls back when the session update fails',
+      () async {
+        final contentId = await testDatabase.insertContent();
+        final exerciseId = await repository.createWordExercise(contentId);
+        final exercise = (await repository.getById(exerciseId))!;
+        final sessionRepository = SessionRepository(
+          database,
+          exerciseRepository: repository,
+        );
+        final session = Session(
+          exercises: [exercise],
+          sessionType: SessionType.wordSession,
+          config: SRSConfig(),
+        );
+        final answeredAt = DateTime(2026, 9, 4, 12);
 
-      session.beginSession(answeredAt);
-      final persistedSessionId = await sessionRepository.save(session);
-      session.intermediateResult.id = persistedSessionId;
-      final answeredExercise = session.currentExercise;
-      session.submitAnswer(
-        SubmittedExerciseAnswer(grade: Grade.again, answeredAt: answeredAt),
-      );
+        session.beginSession(answeredAt);
+        final persistedSessionId = await sessionRepository.save(session);
+        session.intermediateResult.id = persistedSessionId;
+        final answeredExercise = session.currentExercise;
+        session.submitAnswer(
+          SubmittedExerciseAnswer(grade: Grade.again, answeredAt: answeredAt),
+        );
 
-      session.intermediateResult.id = -1;
-      await expectLater(
-        sessionRepository.saveAnswerProgress(session, answeredExercise),
-        throwsA(anything),
-      );
+        session.intermediateResult.id = -1;
+        await expectLater(
+          sessionRepository.saveAnswerProgress(session, answeredExercise),
+          throwsA(anything),
+        );
 
-      final persistedExercise = await repository.getById(exerciseId);
-      expect(persistedExercise!.srsState.lastReview, isNull);
-      expect(answeredExercise.newHistoryEntry, hasLength(1));
-      expect(
-        await ExerciseHistoryRepository(database).getList(exerciseId: exerciseId),
-        isEmpty,
-      );
+        final persistedExercise = await repository.getById(exerciseId);
+        expect(persistedExercise!.srsState.lastReview, isNull);
+        expect(answeredExercise.newHistoryEntry, hasLength(1));
+        expect(
+          await ExerciseHistoryRepository(database)
+              .getList(exerciseId: exerciseId),
+          isEmpty,
+        );
 
-      final activeSnapshots = await database.readTransaction(
-        (transaction) => transaction.getAll(
-          'SELECT status_index FROM active_session_exercise WHERE session_result_id = ?',
-          [persistedSessionId],
-        ),
-      );
-      expect(activeSnapshots, hasLength(1));
-      expect(activeSnapshots.single['status_index'], ExerciseStatus.newExercise.code);
-    });
+        final activeSnapshots = await database.readTransaction(
+          (transaction) => transaction.getAll(
+            'SELECT status_index FROM active_session_exercise WHERE session_result_id = ?',
+            [persistedSessionId],
+          ),
+        );
+        expect(activeSnapshots, hasLength(1));
+        expect(
+          activeSnapshots.single['status_index'],
+          ExerciseStatus.newExercise.code,
+        );
+      },
+    );
 
     test('delete removes an exercise', () async {
       final contentId = await testDatabase.insertContent();
@@ -305,52 +350,56 @@ void main() {
       expect(await testDatabase.countRows('word_exercise'), 0);
     });
 
-    test('resetProgress removes history and restores initial word state', () async {
-      final contentId = await testDatabase.insertContent();
+    test(
+      'resetProgress removes history and restores initial word state',
+      () async {
+        final contentId = await testDatabase.insertContent();
 
-      final exerciseId = await repository.createWordExercise(contentId);
+        final exerciseId = await repository.createWordExercise(contentId);
 
-      final exercise = await repository.getById(exerciseId);
-      final wordExercise = exercise as WordExercise;
+        final exercise = await repository.getById(exerciseId);
+        final wordExercise = exercise as WordExercise;
 
-      wordExercise.newHistoryEntry.add(
-        ExerciseHistoryEntry(
-          exerciseId: exerciseId,
-          grade: Grade.good,
-          answeredAt: DateTime.utc(2026, 9, 4, 12),
-          status: ExerciseStatus.newExercise,
-        ),
-      );
-      wordExercise.srsState = SRSState(
-        easeFactor: 1.8,
-        interval: const Duration(days: 12),
-        kFactor: 0.2,
-        w: 0.3,
-        rbar: 0.5,
-        lastReview: DateTime.utc(2026, 9, 4, 12),
-        learningStepIndex: -1,
-      );
-      await repository.save(wordExercise);
+        wordExercise.newHistoryEntry.add(
+          ExerciseHistoryEntry(
+            exerciseId: exerciseId,
+            grade: Grade.good,
+            answeredAt: DateTime.utc(2026, 9, 4, 12),
+            status: ExerciseStatus.newExercise,
+          ),
+        );
+        wordExercise.srsState = SRSState(
+          easeFactor: 1.8,
+          interval: const Duration(days: 12),
+          kFactor: 0.2,
+          w: 0.3,
+          rbar: 0.5,
+          lastReview: DateTime.utc(2026, 9, 4, 12),
+          learningStepIndex: -1,
+        );
+        await repository.save(wordExercise);
 
-      await repository.resetProgress(exerciseId);
+        await repository.resetProgress(exerciseId);
 
-      final resetExercise = await repository.getById(exerciseId);
+        final resetExercise = await repository.getById(exerciseId);
 
-      expect(resetExercise, isNotNull);
-      expect(resetExercise!.id, exerciseId);
-      expect(resetExercise.status, ExerciseStatus.newExercise);
-      expect(resetExercise.srsState.easeFactor, 2.5);
-      expect(resetExercise.srsState.interval, const Duration(days: 1));
-      expect(resetExercise.srsState.kFactor, 0.1);
-      expect(resetExercise.srsState.w, 0.0);
-      expect(resetExercise.srsState.rbar, 0.0);
-      expect(resetExercise.srsState.lastReview, isNull);
-      expect(resetExercise.srsState.learningStepIndex, 0);
-      expect(
-        await ExerciseHistoryRepository(database).getList(exerciseId: exerciseId),
-        isEmpty,
-      );
-    });
+        expect(resetExercise, isNotNull);
+        expect(resetExercise!.id, exerciseId);
+        expect(resetExercise.status, ExerciseStatus.newExercise);
+        expect(resetExercise.srsState.easeFactor, 2.5);
+        expect(resetExercise.srsState.interval, const Duration(days: 1));
+        expect(resetExercise.srsState.kFactor, 0.1);
+        expect(resetExercise.srsState.w, 0.0);
+        expect(resetExercise.srsState.rbar, 0.0);
+        expect(resetExercise.srsState.lastReview, isNull);
+        expect(resetExercise.srsState.learningStepIndex, 0);
+        expect(
+          await ExerciseHistoryRepository(database)
+              .getList(exerciseId: exerciseId),
+          isEmpty,
+        );
+      },
+    );
 
     test('save and reset round-trip sentence progress', () async {
       final contentId = await testDatabase.insertContent();
@@ -360,7 +409,10 @@ void main() {
         sentenceGroupId,
         contentId,
       );
-      final exerciseId = await repository.createSentenceExercise(sentenceGroupId, 1);
+      final exerciseId = await repository.createSentenceExercise(
+        sentenceGroupId,
+        1,
+      );
       final exercise = await repository.getById(exerciseId) as SentenceExercise;
       final sentence = exercise.sentences.sentences.single;
       final reviewedAt = DateTime.utc(2026, 9, 4, 14);
@@ -385,7 +437,8 @@ void main() {
 
       await repository.save(exercise);
 
-      final persisted = await repository.getById(exerciseId) as SentenceExercise;
+      final persisted =
+          await repository.getById(exerciseId) as SentenceExercise;
       final persistedSentence = persisted.sentences.sentences.single;
       expect(exercise.newHistoryEntry, isEmpty);
       expect(persisted.status, ExerciseStatus.toReview);
@@ -405,7 +458,8 @@ void main() {
       expect(resetSentence.state.accumulatedScore, 0.0);
       expect(resetSentence.state.isInLearning, isFalse);
       expect(
-        await ExerciseHistoryRepository(database).getList(exerciseId: exerciseId),
+        await ExerciseHistoryRepository(database)
+            .getList(exerciseId: exerciseId),
         isEmpty,
       );
     });

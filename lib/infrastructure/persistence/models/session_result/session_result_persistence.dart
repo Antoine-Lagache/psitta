@@ -32,7 +32,8 @@ class SessionResultPersistence {
     return SessionResultPersistence(
       id: resultRow['id'] as int?,
       sessionTypeIndex: resultRow['session_type_index'] as int,
-      uniqueExercisesCompleted: resultRow['number_unique_exercises_completed'] as int,
+      uniqueExercisesCompleted:
+          resultRow['number_unique_exercises_completed'] as int,
       statusCounts: statusRows.map(StatusCountPersistence.fromRow).toList(),
       totalTimeSpent: resultRow['total_time_spent_microseconds'] as int,
       startedAt: resultRow['started_at'] as String?,

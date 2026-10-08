@@ -42,7 +42,8 @@ final class DevelopmentDataSeeder {
   DevelopmentDataSeeder(
     this._database, {
     Future<Directory> Function()? mediaDirectoryProvider,
-  }) : _mediaDirectoryProvider = mediaDirectoryProvider ?? getApplicationSupportDirectory;
+  }) : _mediaDirectoryProvider =
+           mediaDirectoryProvider ?? getApplicationSupportDirectory;
 
   /// Seeds once when no exercise exists, and commits the database rows atomically.
   Future<bool> seedIfEmpty() async {
@@ -50,7 +51,8 @@ final class DevelopmentDataSeeder {
       return false;
     }
 
-    final media = await _DevelopmentMediaFactory(_mediaDirectoryProvider).create();
+    final media = await _DevelopmentMediaFactory(_mediaDirectoryProvider)
+        .create();
     return _database.writeTransaction((transaction) async {
       if (await _hasExercisesIn(transaction)) {
         return false;
@@ -70,13 +72,18 @@ final class DevelopmentDataSeeder {
     return rows.isNotEmpty;
   }
 
-  Future<void> _seed(sqlite.SqliteWriteContext transaction, _DemoMedia media) async {
+  Future<void> _seed(
+    sqlite.SqliteWriteContext transaction,
+    _DemoMedia media,
+  ) async {
     final definitions = await _insertDefinitions(transaction);
     await _insertWordExercises(transaction, definitions, media);
     await _insertSentenceExercise(transaction, definitions);
   }
 
-  Future<_DefinitionIds> _insertDefinitions(sqlite.SqliteWriteContext transaction) async {
+  Future<_DefinitionIds> _insertDefinitions(
+    sqlite.SqliteWriteContext transaction,
+  ) async {
     return (
       frontText: await _insertDefinition(transaction, 'text', 'front'),
       backText: await _insertDefinition(transaction, 'text', 'back'),
@@ -111,7 +118,10 @@ final class DevelopmentDataSeeder {
     ];
 
     for (final content in contents) {
-      final contentId = await _contentDao.insertInTransaction(transaction, content);
+      final contentId = await _contentDao.insertInTransaction(
+        transaction,
+        content,
+      );
       final exercise = WordExerciseMapper.newWordExercise(contentId);
       await _exerciseDao.insertInTransaction(transaction, exercise);
     }
@@ -144,7 +154,10 @@ final class DevelopmentDataSeeder {
     );
   }
 
-  ContentPersistence _mediaContent(_DefinitionIds definitions, _DemoMedia media) {
+  ContentPersistence _mediaContent(
+    _DefinitionIds definitions,
+    _DemoMedia media,
+  ) {
     return ContentPersistence(
       fieldValues: [
         _textField(definitions.bothText, 'Exercise 3 — local media', 0),
@@ -191,7 +204,10 @@ final class DevelopmentDataSeeder {
         SentenceMapper.newInstance(secondContentId),
       ],
     );
-    return _sentenceGroupDao.insertSentenceGroupInTransaction(transaction, group);
+    return _sentenceGroupDao.insertSentenceGroupInTransaction(
+      transaction,
+      group,
+    );
   }
 
   Future<int> _insertSentenceContent(
@@ -219,7 +235,11 @@ final class DevelopmentDataSeeder {
     );
   }
 
-  FieldValuePersistence _mediaField(int definitionId, MediaPersistence media, int order) {
+  FieldValuePersistence _mediaField(
+    int definitionId,
+    MediaPersistence media,
+    int order,
+  ) {
     return FieldValuePersistence(
       fieldDefinitionId: definitionId,
       media: media,

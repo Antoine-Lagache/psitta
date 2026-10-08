@@ -55,7 +55,11 @@ TreeNode buildTree(Directory dir) {
       final lines = entity.readAsLinesSync().length;
 
       children.add(
-        TreeNode(name: entity.uri.pathSegments.last, isDirectory: false, lines: lines),
+        TreeNode(
+          name: entity.uri.pathSegments.last,
+          isDirectory: false,
+          lines: lines,
+        ),
       );
 
       totalLines += lines;
@@ -109,7 +113,9 @@ void printTree(TreeNode node, String prefix, int width) {
           : '$brightGreen$count lines$reset ─';
     }
 
-    print('$prefix$branch$coloredCount ${child.name}${child.isDirectory ? '/' : ''}');
+    print(
+      '$prefix$branch$coloredCount ${child.name}${child.isDirectory ? '/' : ''}',
+    );
 
     if (child.isDirectory) {
       printTree(child, prefix + (isLast ? '   ' : '│  '), width);

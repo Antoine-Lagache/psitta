@@ -15,7 +15,10 @@ class SessionResultMapper {
       // ExerciseStatus codes currently match their positions in this list.
       // This mapping must become explicit if those values ever diverge.
       statusCounts: domain.numberOfAnswersByStatus.asMap().entries.map((entry) {
-        return StatusCountPersistence(statusCode: entry.key, answerCount: entry.value);
+        return StatusCountPersistence(
+          statusCode: entry.key,
+          answerCount: entry.value,
+        );
       }).toList(),
       totalTimeSpent: safeFromDuration(domain.totalTimeSpent),
       startedAt: toIsoUtc(domain.startedAt),
@@ -24,7 +27,10 @@ class SessionResultMapper {
   }
 
   static SessionResult toDomain(SessionResultPersistence persistence) {
-    final numberOfAnswersByStatus = List<int>.filled(ExerciseStatus.values.length, 0);
+    final numberOfAnswersByStatus = List<int>.filled(
+      ExerciseStatus.values.length,
+      0,
+    );
     for (final statusCount in persistence.statusCounts) {
       // Persisted status codes currently double as list indices.
       numberOfAnswersByStatus[statusCount.statusCode] = statusCount.answerCount;

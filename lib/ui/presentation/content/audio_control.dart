@@ -214,7 +214,10 @@ class _AudioControlState extends State<AudioControl> {
 
   Widget _buildProgressSlider() {
     final totalMilliseconds = _duration.inMilliseconds;
-    final positionMilliseconds = _position.inMilliseconds.clamp(0, totalMilliseconds);
+    final positionMilliseconds = _position.inMilliseconds.clamp(
+      0,
+      totalMilliseconds,
+    );
 
     return SizedBox(
       width: 160,

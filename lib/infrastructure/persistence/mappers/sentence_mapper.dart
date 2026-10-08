@@ -10,14 +10,18 @@ class SentenceMapper {
   static SentenceGroup toDomain(SentenceGroupPersistence persistence) {
     return SentenceGroup(
       id: persistence.id!,
-      sentences: persistence.sentenceInstances.map(_toDomainSentenceInstance).toList(),
+      sentences: persistence.sentenceInstances
+          .map(_toDomainSentenceInstance)
+          .toList(),
     );
   }
 
   static SentenceGroupPersistence toPersistence(SentenceGroup domain) {
     return SentenceGroupPersistence(
       id: domain.id,
-      sentenceInstances: domain.sentences.map(_toPersistenceSentenceInstance).toList(),
+      sentenceInstances: domain.sentences
+          .map(_toPersistenceSentenceInstance)
+          .toList(),
     );
   }
 
@@ -47,7 +51,9 @@ class SentenceMapper {
     );
   }
 
-  static SentenceState _toDomainSentenceState(SentenceStatePersistence persistence) {
+  static SentenceState _toDomainSentenceState(
+    SentenceStatePersistence persistence,
+  ) {
     return SentenceState(
       shownCount: persistence.shownCount,
       accumulatedScore: persistence.accumulatedScore,
@@ -55,7 +61,9 @@ class SentenceMapper {
     );
   }
 
-  static SentenceStatePersistence _toPersistenceSentenceState(SentenceState domain) {
+  static SentenceStatePersistence _toPersistenceSentenceState(
+    SentenceState domain,
+  ) {
     return SentenceStatePersistence(
       shownCount: domain.shownCount,
       accumulatedScore: domain.accumulatedScore,

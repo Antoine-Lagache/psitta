@@ -22,7 +22,11 @@ class WordExercise extends Exercise {
   @override
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
     newHistoryEntry.add(
-      ExerciseHistoryEntry.fromAnswer(answer: answer, exerciseId: id, status: status),
+      ExerciseHistoryEntry.fromAnswer(
+        answer: answer,
+        exerciseId: id,
+        status: status,
+      ),
     );
     super.applyAnswer(answer, config);
   }

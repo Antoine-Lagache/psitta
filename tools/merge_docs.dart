@@ -26,7 +26,9 @@ void main() async {
       docsDir
           .listSync(recursive: true)
           .whereType<File>()
-          .where((f) => f.path.endsWith('.md') && !f.path.endsWith('FULL_DOC.md'))
+          .where(
+            (f) => f.path.endsWith('.md') && !f.path.endsWith('FULL_DOC.md'),
+          )
           .toList()
         ..sort((a, b) => a.path.compareTo(b.path));
 

@@ -10,7 +10,10 @@ export 'package:psitta/infrastructure/persistence/models/exercise/exercise_persi
 class WordExerciseMapper {
   const WordExerciseMapper();
 
-  static WordExercise wordToDomain(WordExercisePersistence persistence, bool hasHistory) {
+  static WordExercise wordToDomain(
+    WordExercisePersistence persistence,
+    bool hasHistory,
+  ) {
     return WordExercise(
       id: persistence.id!,
       status: hasHistory ? ExerciseStatus.toReview : ExerciseStatus.newExercise,

@@ -48,7 +48,9 @@ class SqliteDatabase {
     final database = _database;
 
     if (database == null) {
-      throw StateError('Database is not opened. Call open() before accessing it.');
+      throw StateError(
+        'Database is not opened. Call open() before accessing it.',
+      );
     }
 
     return database;

@@ -10,7 +10,9 @@ class ExerciseDao {
   // Public operations
 
   Future<int> insert(ExercisePersistence exercise) {
-    return database.writeTransaction((txn) => insertInTransaction(txn, exercise));
+    return database.writeTransaction(
+      (txn) => insertInTransaction(txn, exercise),
+    );
   }
 
   /// Inserts a complete exercise inside a transaction coordinated by the caller.
@@ -72,7 +74,9 @@ class ExerciseDao {
         final exercise = await _getExercise(txn, id);
 
         if (exercise == null) {
-          throw StateError('Exercise $id disappeared while retrieving due exercises');
+          throw StateError(
+            'Exercise $id disappeared while retrieving due exercises',
+          );
         }
 
         exercises.add(exercise);
@@ -109,7 +113,9 @@ class ExerciseDao {
         final exercise = await _getExercise(txn, id);
 
         if (exercise == null) {
-          throw StateError('Exercise $id disappeared while retrieving new exercises');
+          throw StateError(
+            'Exercise $id disappeared while retrieving new exercises',
+          );
         }
 
         exercises.add(exercise);
@@ -123,7 +129,9 @@ class ExerciseDao {
   Future<int> countDueExercises(int nowInMicroseconds, String? type) {
     return database.readTransaction((txn) async {
       final typeCondition = type == null ? '' : 'AND e.type = ?';
-      final arguments = type == null ? [nowInMicroseconds] : [nowInMicroseconds, type];
+      final arguments = type == null
+          ? [nowInMicroseconds]
+          : [nowInMicroseconds, type];
 
       final rows = await txn.getAll('''
         SELECT COUNT(*) AS count
@@ -160,7 +168,10 @@ class ExerciseDao {
   }
 
   /// Updates an exercise aggregate within the caller's transaction.
-  Future<void> update(sqlite.SqliteWriteContext txn, ExercisePersistence exercise) async {
+  Future<void> update(
+    sqlite.SqliteWriteContext txn,
+    ExercisePersistence exercise,
+  ) async {
     if (exercise.id == null) {
       throw ArgumentError('Cannot update an exercise without an id');
     }
@@ -317,13 +328,20 @@ class ExerciseDao {
     )
     VALUES (?, ?, ?)
     ''',
-      [exerciseId, sentenceExercise.sentenceGroupId, sentenceExercise.trainingCountMax],
+      [
+        exerciseId,
+        sentenceExercise.sentenceGroupId,
+        sentenceExercise.trainingCountMax,
+      ],
     );
   }
 
   // Private read operations
 
-  Future<ExercisePersistence?> _getExercise(sqlite.SqliteReadContext txn, int id) async {
+  Future<ExercisePersistence?> _getExercise(
+    sqlite.SqliteReadContext txn,
+    int id,
+  ) async {
     final exerciseRow = await _getExerciseRow(txn, id);
     if (exerciseRow == null) {
       return null;
@@ -344,7 +362,11 @@ class ExerciseDao {
         if (sentenceRow == null) {
           throw StateError('Missing sentence_exercise for exercise $id');
         }
-        return SentenceExercisePersistence.fromRow(exerciseRow, sentenceRow, srsState);
+        return SentenceExercisePersistence.fromRow(
+          exerciseRow,
+          sentenceRow,
+          srsState,
+        );
 
       default:
         throw StateError('Unknown exercise type: ${exerciseRow['type']}');
@@ -446,7 +468,10 @@ class ExerciseDao {
 
   // Private update operations
 
-  void _checkExerciseType(Map<String, Object?> row, ExercisePersistence exercise) {
+  void _checkExerciseType(
+    Map<String, Object?> row,
+    ExercisePersistence exercise,
+  ) {
     if (row['type'] != exercise.type) {
       throw StateError(
         'Cannot change exercise type '
@@ -490,7 +515,11 @@ class ExerciseDao {
       training_count = ?
     WHERE exercise_id = ?
     ''',
-      [sentenceExercise.sentenceGroupId, sentenceExercise.trainingCountMax, exerciseId],
+      [
+        sentenceExercise.sentenceGroupId,
+        sentenceExercise.trainingCountMax,
+        exerciseId,
+      ],
     );
   }
 }

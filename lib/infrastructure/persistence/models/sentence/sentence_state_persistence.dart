@@ -12,11 +12,16 @@ class SentenceStatePersistence {
     required this.isInLearning,
   });
 
-  factory SentenceStatePersistence.fromRow(Map<String, Object?> sentenceStateRow) {
+  factory SentenceStatePersistence.fromRow(
+    Map<String, Object?> sentenceStateRow,
+  ) {
     return SentenceStatePersistence(
       shownCount: sentenceStateRow['shown_count'] as int,
       accumulatedScore: sentenceStateRow['accumulated_score'] as double,
-      isInLearning: safeToBool(sentenceStateRow['is_in_learning'], fallback: false),
+      isInLearning: safeToBool(
+        sentenceStateRow['is_in_learning'],
+        fallback: false,
+      ),
     );
   }
 

@@ -6,5 +6,9 @@ class ExerciseResume {
   final ExerciseStatus status;
   final int? trainingCount;
 
-  ExerciseResume({required this.exerciseId, required this.status, this.trainingCount});
+  ExerciseResume({
+    required this.exerciseId,
+    required this.status,
+    this.trainingCount,
+  });
 }

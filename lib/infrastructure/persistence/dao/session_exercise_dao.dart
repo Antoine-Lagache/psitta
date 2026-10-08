@@ -68,7 +68,9 @@ class SessionExerciseDao {
   }
 
   /// Counts the exercise snapshots of one active session by status code.
-  Future<List<SessionExerciseStatusCountPersistence>> countByStatus(int sessionResultId) {
+  Future<List<SessionExerciseStatusCountPersistence>> countByStatus(
+    int sessionResultId,
+  ) {
     return database.readTransaction((txn) async {
       final rows = await txn.getAll(
         '''
@@ -86,7 +88,10 @@ class SessionExerciseDao {
     });
   }
 
-  Future<void> deleteAll(int sessionResultId, sqlite.SqliteWriteContext txn) async {
+  Future<void> deleteAll(
+    int sessionResultId,
+    sqlite.SqliteWriteContext txn,
+  ) async {
     await txn.execute(
       '''
         DELETE FROM active_session_exercise

@@ -117,7 +117,9 @@ class SessionResultDao {
         conditions.add('end_at IS NOT NULL');
       }
 
-      final whereClause = conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
+      final whereClause = conditions.isEmpty
+          ? ''
+          : 'WHERE ${conditions.join(' AND ')}';
 
       final resultRows = await txn.getAll('''
         SELECT

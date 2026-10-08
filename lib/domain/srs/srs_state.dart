@@ -69,7 +69,11 @@ class SRSState {
     _learningStepIndex = other._learningStepIndex;
   }
 
-  Duration _reviewState(ExerciseAnswer answer, SRSConfig config, bool updateSelf) {
+  Duration _reviewState(
+    ExerciseAnswer answer,
+    SRSConfig config,
+    bool updateSelf,
+  ) {
     assert(_learningStepIndex == -1);
 
     final DateTime now = answer.at;
@@ -81,7 +85,9 @@ class SRSState {
     final double intervalDays = durationToDays(result._interval);
 
     // Apply the model's late-review correction.
-    final double deltaDays = durationToDays(now.difference(result._lastReview ?? now));
+    final double deltaDays = durationToDays(
+      now.difference(result._lastReview ?? now),
+    );
     final double lateness = max(0.0, deltaDays - intervalDays);
     final double tolerance = min(
       config.longPause.toDouble(),
@@ -141,12 +147,14 @@ class SRSState {
     );
 
     // Update the ease factor.
-    final double deltaEF = 0.1 - (5 - q) * (0.08 + (5 - q) * 0.02); // SM-2 formula
+    final double deltaEF =
+        0.1 - (5 - q) * (0.08 + (5 - q) * 0.02); // SM-2 formula
     result._easeFactor = max(result._easeFactor + deltaEF, config.efMin);
 
     // Update recall and weight estimates.
     final double lambda = config.getLambda(q);
-    result._rbar = (lambda * result._rbar) + ((1.0 - lambda) * (isSuccess ? 1.0 : 0.0));
+    result._rbar =
+        (lambda * result._rbar) + ((1.0 - lambda) * (isSuccess ? 1.0 : 0.0));
     result._rbar = result._rbar.clamp(0.0, 1.0);
     result._w = config.wMax * result._rbar;
 
@@ -158,7 +166,11 @@ class SRSState {
     return result._interval;
   }
 
-  Duration _learningState(ExerciseAnswer answer, SRSConfig config, bool updateSelf) {
+  Duration _learningState(
+    ExerciseAnswer answer,
+    SRSConfig config,
+    bool updateSelf,
+  ) {
     // A changed configuration may temporarily leave the index past its steps.
     assert(_learningStepIndex >= 0);
 
@@ -173,9 +185,11 @@ class SRSState {
         result._learningStepIndex = 0;
 
       case Grade.hard: // q=2
-        if (result._learningStepIndex > 0 && result._learningStepIndex < s.length) {
+        if (result._learningStepIndex > 0 &&
+            result._learningStepIndex < s.length) {
           result._interval = daysToduration(
-            durationToDays(s[result._learningStepIndex]) * config.hardLearningFactor,
+            durationToDays(s[result._learningStepIndex]) *
+                config.hardLearningFactor,
           );
         } else {
           result._interval = (s.length > 1)
@@ -188,11 +202,14 @@ class SRSState {
         }
 
       case Grade.medium: // q=3
-        if (result._learningStepIndex > 0 && result._learningStepIndex < s.length) {
+        if (result._learningStepIndex > 0 &&
+            result._learningStepIndex < s.length) {
           result._interval = s[result._learningStepIndex];
         } else {
           result._interval = (s.length > 1)
-              ? daysToduration((durationToDays(s[0]) + durationToDays(s[1])) / 2.0)
+              ? daysToduration(
+                  (durationToDays(s[0]) + durationToDays(s[1])) / 2.0,
+                )
               : Duration(minutes: 5, seconds: 30);
         }
 
@@ -207,7 +224,9 @@ class SRSState {
           final double arg = ((config.rstar - result._w) / (1.0 - result._w));
           final double logArg = log(arg.clamp(1e-9, 1.0 - 1e-9));
           // Reuse the default final step when no explicit learning step exists.
-          final graduationInterval = s.isNotEmpty ? s.last : const Duration(days: 1);
+          final graduationInterval = s.isNotEmpty
+              ? s.last
+              : const Duration(days: 1);
 
           result._interval = graduationInterval;
           result._kFactor = -logArg / durationToDays(result._interval);
@@ -216,10 +235,8 @@ class SRSState {
       case Grade.easy: // q=5
         result._learningStepIndex = -1;
         // Easy exits learning directly with the configured review interval.
-        final double arg = ((config.rstar - result._w) / (1.0 - result._w)).clamp(
-          1e-9,
-          1.0 - 1e-9,
-        );
+        final double arg = ((config.rstar - result._w) / (1.0 - result._w))
+            .clamp(1e-9, 1.0 - 1e-9);
         final double logArg = log(arg);
         result._kFactor = -(logArg / config.easyInterval);
         result._interval = Duration(days: config.easyInterval);

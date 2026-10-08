@@ -34,7 +34,10 @@ class MigrationRunner {
     return result['user_version'] as int;
   }
 
-  Future<void> _setVersion(sqlite.SqliteWriteContext database, int version) async {
+  Future<void> _setVersion(
+    sqlite.SqliteWriteContext database,
+    int version,
+  ) async {
     await database.execute('PRAGMA user_version = $version;');
   }
 }

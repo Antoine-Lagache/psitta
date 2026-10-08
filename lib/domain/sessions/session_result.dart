@@ -20,12 +20,22 @@ class SessionResult {
   DateTime? endAt;
   Duration totalTimeSpent;
 
-  SessionResult({this.id, required this.sessionType, this.totalTimeSpent = Duration.zero})
-    : numberOfAnswersByStatus = List<int>.filled(ExerciseStatus.values.length, 0),
-      numberOfUniqueExercisesCompleted = 0,
-      endAt = null {
+  SessionResult({
+    this.id,
+    required this.sessionType,
+    this.totalTimeSpent = Duration.zero,
+  }) : numberOfAnswersByStatus = List<int>.filled(
+         ExerciseStatus.values.length,
+         0,
+       ),
+       numberOfUniqueExercisesCompleted = 0,
+       endAt = null {
     if (totalTimeSpent.isNegative) {
-      throw ArgumentError.value(totalTimeSpent, 'totalTimeSpent', 'Must not be negative');
+      throw ArgumentError.value(
+        totalTimeSpent,
+        'totalTimeSpent',
+        'Must not be negative',
+      );
     }
   }
 }

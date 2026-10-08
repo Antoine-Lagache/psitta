@@ -8,7 +8,9 @@ class SessionExerciseStatusCountPersistence {
     required this.exerciseCount,
   });
 
-  factory SessionExerciseStatusCountPersistence.fromRow(Map<String, Object?> row) {
+  factory SessionExerciseStatusCountPersistence.fromRow(
+    Map<String, Object?> row,
+  ) {
     return SessionExerciseStatusCountPersistence(
       statusCode: row['status_index'] as int,
       exerciseCount: row['exercise_count'] as int,

@@ -5,7 +5,10 @@ import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/ui/screens/home/session_overview_card.dart';
 
 void main() {
-  Widget buildCard({required SessionOverview overview, required VoidCallback onPressed}) {
+  Widget buildCard({
+    required SessionOverview overview,
+    required VoidCallback onPressed,
+  }) {
     return MaterialApp(
       home: Scaffold(
         body: SessionOverviewCard(overview: overview, onPressed: onPressed),
@@ -63,7 +66,9 @@ void main() {
     expect(pressed, isTrue);
   });
 
-  testWidgets('disables a new session when no exercise is available', (tester) async {
+  testWidgets('disables a new session when no exercise is available', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       buildCard(
         overview: SessionOverview(

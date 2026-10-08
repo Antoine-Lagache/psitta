@@ -43,7 +43,10 @@ void main() {
         FieldValueType.text,
         FieldSide.front,
       );
-      final backDefinition = await createDefinition(FieldValueType.html, FieldSide.back);
+      final backDefinition = await createDefinition(
+        FieldValueType.html,
+        FieldSide.back,
+      );
       final content = Content(
         id: null,
         fields: [
@@ -83,11 +86,17 @@ void main() {
       expect(backField.definition.id, backDefinition.id);
       expect(backField.definition.valueType, FieldValueType.html);
       expect(backField.definition.side, FieldSide.back);
-      expect((backField.value as TextFieldValue).value, '<strong>answer</strong>');
+      expect(
+        (backField.value as TextFieldValue).value,
+        '<strong>answer</strong>',
+      );
     });
 
     test('persists media metadata and supports hash lookup', () async {
-      final definition = await createDefinition(FieldValueType.image, FieldSide.front);
+      final definition = await createDefinition(
+        FieldValueType.image,
+        FieldSide.front,
+      );
       final content = Content(
         id: null,
         fields: [
@@ -119,7 +128,8 @@ void main() {
       expect(media.size, 2048);
       expect(media.sha256, 'image-sha256');
 
-      final byHash = await MediaRepository(database).getBySHA256('image-sha256');
+      final byHash = await MediaRepository(database)
+          .getBySHA256('image-sha256');
       expect(byHash!.id, media.id);
       expect(byHash.path, media.path);
       expect(await MediaRepository(database).getBySHA256('unknown'), isNull);
@@ -165,39 +175,48 @@ void main() {
       final persisted = await repository.getById(contentId);
       expect(persisted!.fields, hasLength(1));
       expect(persisted.fields.single.definition.id, secondDefinition.id);
-      expect((persisted.fields.single.value as TextFieldValue).value, 'replacement');
+      expect(
+        (persisted.fields.single.value as TextFieldValue).value,
+        'replacement',
+      );
     });
 
-    test('insert rolls back the aggregate when a definition is missing', () async {
-      final missingDefinition = FieldDefinition(
-        id: 999,
-        valueType: FieldValueType.text,
-        side: FieldSide.front,
-      );
+    test(
+      'insert rolls back the aggregate when a definition is missing',
+      () async {
+        final missingDefinition = FieldDefinition(
+          id: 999,
+          valueType: FieldValueType.text,
+          side: FieldSide.front,
+        );
 
-      await expectLater(
-        repository.insert(
-          Content(
-            id: null,
-            fields: [
-              Field(
-                id: null,
-                definition: missingDefinition,
-                value: const TextFieldValue('invalid'),
-                displayOrder: 0,
-              ),
-            ],
+        await expectLater(
+          repository.insert(
+            Content(
+              id: null,
+              fields: [
+                Field(
+                  id: null,
+                  definition: missingDefinition,
+                  value: const TextFieldValue('invalid'),
+                  displayOrder: 0,
+                ),
+              ],
+            ),
           ),
-        ),
-        throwsA(anything),
-      );
+          throwsA(anything),
+        );
 
-      expect(await testDatabase.countRows('content'), 0);
-      expect(await testDatabase.countRows('field_value'), 0);
-    });
+        expect(await testDatabase.countRows('content'), 0);
+        expect(await testDatabase.countRows('field_value'), 0);
+      },
+    );
 
     test('delete cascades to field values', () async {
-      final definition = await createDefinition(FieldValueType.text, FieldSide.front);
+      final definition = await createDefinition(
+        FieldValueType.text,
+        FieldSide.front,
+      );
       final contentId = await repository.insert(
         Content(
           id: null,

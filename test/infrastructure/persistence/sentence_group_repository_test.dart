@@ -101,16 +101,22 @@ void main() {
       expect(await testDatabase.countRows('sentence_group'), 1);
     });
 
-    test('deleting a group cascades to instances and sentence states', () async {
-      final groupId = await repository.createGroup();
-      await repository.createInstance(groupId, await testDatabase.insertContent());
+    test(
+      'deleting a group cascades to instances and sentence states',
+      () async {
+        final groupId = await repository.createGroup();
+        await repository.createInstance(
+          groupId,
+          await testDatabase.insertContent(),
+        );
 
-      await repository.deleteSentenceGroup(groupId);
+        await repository.deleteSentenceGroup(groupId);
 
-      expect(await testDatabase.countRows('sentence_group'), 0);
-      expect(await testDatabase.countRows('sentence_instance'), 0);
-      expect(await testDatabase.countRows('sentence_state'), 0);
-    });
+        expect(await testDatabase.countRows('sentence_group'), 0);
+        expect(await testDatabase.countRows('sentence_instance'), 0);
+        expect(await testDatabase.countRows('sentence_state'), 0);
+      },
+    );
 
     test('rejects instances and moves targeting a missing group', () async {
       final contentId = await testDatabase.insertContent();

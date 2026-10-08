@@ -66,8 +66,13 @@ void main() {
     return exerciseRepository.createWordExercise(contentId);
   }
 
-  SessionOverview overviewOf(List<SessionOverview> overviews, SessionType sessionType) {
-    return overviews.singleWhere((overview) => overview.sessionType == sessionType);
+  SessionOverview overviewOf(
+    List<SessionOverview> overviews,
+    SessionType sessionType,
+  ) {
+    return overviews.singleWhere(
+      (overview) => overview.sessionType == sessionType,
+    );
   }
 
   group('SessionController', () {
@@ -116,7 +121,10 @@ void main() {
 
         final overviews = await controller.getSessionOverviews();
         final wordOverview = overviewOf(overviews, SessionType.wordSession);
-        final sentenceOverview = overviewOf(overviews, SessionType.sentenceSession);
+        final sentenceOverview = overviewOf(
+          overviews,
+          SessionType.sentenceSession,
+        );
 
         expect(overviews, hasLength(SessionType.values.length));
         expect(wordOverview.hasActiveSession, isFalse);
@@ -130,47 +138,52 @@ void main() {
       },
     );
 
-    test('builds an active overview from resumable exercise statuses', () async {
-      final statuses = [
-        ExerciseStatus.newExercise,
-        ExerciseStatus.toReview,
-        ExerciseStatus.learning,
-        ExerciseStatus.relearning,
-        ExerciseStatus.completed,
-      ];
-      final exercises = <WordExercise>[];
+    test(
+      'builds an active overview from resumable exercise statuses',
+      () async {
+        final statuses = [
+          ExerciseStatus.newExercise,
+          ExerciseStatus.toReview,
+          ExerciseStatus.learning,
+          ExerciseStatus.relearning,
+          ExerciseStatus.completed,
+        ];
+        final exercises = <WordExercise>[];
 
-      for (final status in statuses) {
-        final exerciseId = await createWordExercise();
-        final exercise = await exerciseRepository.getById(exerciseId) as WordExercise;
-        exercise.status = status;
-        if (status == ExerciseStatus.learning || status == ExerciseStatus.relearning) {
-          exercise.srsState = SRSState(
-            interval: const Duration(minutes: 1),
-            lastReview: now,
-            learningStepIndex: 0,
-          );
+        for (final status in statuses) {
+          final exerciseId = await createWordExercise();
+          final exercise =
+              await exerciseRepository.getById(exerciseId) as WordExercise;
+          exercise.status = status;
+          if (status == ExerciseStatus.learning ||
+              status == ExerciseStatus.relearning) {
+            exercise.srsState = SRSState(
+              interval: const Duration(minutes: 1),
+              lastReview: now,
+              learningStepIndex: 0,
+            );
+          }
+          exercises.add(exercise);
         }
-        exercises.add(exercise);
-      }
 
-      final session = Session(
-        exercises: exercises,
-        sessionType: SessionType.wordSession,
-        config: SRSConfig(),
-      );
-      session.beginSession(now);
-      session.intermediateResult.id = await sessionRepository.save(session);
+        final session = Session(
+          exercises: exercises,
+          sessionType: SessionType.wordSession,
+          config: SRSConfig(),
+        );
+        session.beginSession(now);
+        session.intermediateResult.id = await sessionRepository.save(session);
 
-      final wordOverview = overviewOf(
-        await createController().getSessionOverviews(),
-        SessionType.wordSession,
-      );
+        final wordOverview = overviewOf(
+          await createController().getSessionOverviews(),
+          SessionType.wordSession,
+        );
 
-      expect(wordOverview.hasActiveSession, isTrue);
-      expect(wordOverview.newExerciseCount, 1);
-      expect(wordOverview.reviewExerciseCount, 3);
-    });
+        expect(wordOverview.hasActiveSession, isTrue);
+        expect(wordOverview.newExerciseCount, 1);
+        expect(wordOverview.reviewExerciseCount, 3);
+      },
+    );
 
     test(
       'starts a session and previews every allowed grade with one timestamp',
@@ -197,41 +210,54 @@ void main() {
 
         expect(intervals.keys, unorderedEquals(Grade.values));
         expect(clockCalls, 1);
-        expect(() => intervals[Grade.again] = Duration.zero, throwsUnsupportedError);
+        expect(
+          () => intervals[Grade.again] = Duration.zero,
+          throwsUnsupportedError,
+        );
       },
     );
 
-    test('blocks a new session when one of the same type is persisted', () async {
-      await createWordExercise();
-      final firstController = createController();
-      expect(
-        await firstController.startNewSession(SessionType.wordSession),
-        StartSessionResult.started,
-      );
-      await firstController.pauseSession();
+    test(
+      'blocks a new session when one of the same type is persisted',
+      () async {
+        await createWordExercise();
+        final firstController = createController();
+        expect(
+          await firstController.startNewSession(SessionType.wordSession),
+          StartSessionResult.started,
+        );
+        await firstController.pauseSession();
 
-      final secondController = createController();
-      final result = await secondController.startNewSession(SessionType.wordSession);
+        final secondController = createController();
+        final result = await secondController.startNewSession(
+          SessionType.wordSession,
+        );
 
-      expect(result, StartSessionResult.activeSessionAlreadyExists);
-      expect(secondController.hasActiveSession, isFalse);
-    });
+        expect(result, StartSessionResult.activeSessionAlreadyExists);
+        expect(secondController.hasActiveSession, isFalse);
+      },
+    );
 
-    test('does not block a new session because another type is persisted', () async {
-      await createWordExercise();
-      final firstController = createController();
-      expect(
-        await firstController.startNewSession(SessionType.wordSession),
-        StartSessionResult.started,
-      );
-      await firstController.pauseSession();
+    test(
+      'does not block a new session because another type is persisted',
+      () async {
+        await createWordExercise();
+        final firstController = createController();
+        expect(
+          await firstController.startNewSession(SessionType.wordSession),
+          StartSessionResult.started,
+        );
+        await firstController.pauseSession();
 
-      final secondController = createController();
-      final result = await secondController.startNewSession(SessionType.sentenceSession);
+        final secondController = createController();
+        final result = await secondController.startNewSession(
+          SessionType.sentenceSession,
+        );
 
-      expect(result, StartSessionResult.noExerciseAvailable);
-      expect(secondController.hasActiveSession, isFalse);
-    });
+        expect(result, StartSessionResult.noExerciseAvailable);
+        expect(secondController.hasActiveSession, isFalse);
+      },
+    );
 
     test('does not publish a session when its initial save fails', () async {
       await createWordExercise();
@@ -253,32 +279,42 @@ void main() {
       expect(await testDatabase.countRows('session_result'), 0);
     });
 
-    test('returns whether an answer advances or completes the session', () async {
-      await createWordExercise();
-      final controller = createController();
-      await controller.startNewSession(SessionType.wordSession);
+    test(
+      'returns whether an answer advances or completes the session',
+      () async {
+        await createWordExercise();
+        final controller = createController();
+        await controller.startNewSession(SessionType.wordSession);
 
-      now = now.add(const Duration(minutes: 2));
-      elapsed += const Duration(minutes: 2);
-      expect(await controller.submitAnswer(Grade.again), SubmitAnswerResult.nextExercise);
-      expect(controller.hasActiveSession, isTrue);
-      expect(
-        (await sessionRepository.getAllActiveSessionResult()).single.totalTimeSpent,
-        const Duration(minutes: 2),
-      );
+        now = now.add(const Duration(minutes: 2));
+        elapsed += const Duration(minutes: 2);
+        expect(
+          await controller.submitAnswer(Grade.again),
+          SubmitAnswerResult.nextExercise,
+        );
+        expect(controller.hasActiveSession, isTrue);
+        expect(
+          (await sessionRepository.getAllActiveSessionResult())
+              .single
+              .totalTimeSpent,
+          const Duration(minutes: 2),
+        );
 
-      now = now.add(const Duration(minutes: 1));
-      elapsed += const Duration(minutes: 1);
-      expect(
-        await controller.submitAnswer(Grade.easy),
-        SubmitAnswerResult.sessionCompleted,
-      );
-      expect(controller.hasActiveSession, isFalse);
-      expect(
-        (await sessionRepository.getList(completedOnly: true)).single.totalTimeSpent,
-        const Duration(minutes: 3),
-      );
-    });
+        now = now.add(const Duration(minutes: 1));
+        elapsed += const Duration(minutes: 1);
+        expect(
+          await controller.submitAnswer(Grade.easy),
+          SubmitAnswerResult.sessionCompleted,
+        );
+        expect(controller.hasActiveSession, isFalse);
+        expect(
+          (await sessionRepository.getList(completedOnly: true))
+              .single
+              .totalTimeSpent,
+          const Duration(minutes: 3),
+        );
+      },
+    );
 
     test('timestamps an answer when it is submitted', () async {
       final exerciseId = await createWordExercise();
@@ -289,9 +325,8 @@ void main() {
       now = submittedAt;
       await controller.submitAnswer(Grade.again);
 
-      final history = await ExerciseHistoryRepository(
-        database,
-      ).getList(exerciseId: exerciseId);
+      final history = await ExerciseHistoryRepository(database)
+          .getList(exerciseId: exerciseId);
       expect(history.single.answeredAt.toUtc(), submittedAt);
     });
 
@@ -304,13 +339,17 @@ void main() {
       elapsed += const Duration(minutes: 5);
       await firstController.pauseSession();
 
-      var persisted = (await sessionRepository.getAllActiveSessionResult()).single;
+      var persisted =
+          (await sessionRepository.getAllActiveSessionResult()).single;
       expect(persisted.totalTimeSpent, const Duration(minutes: 5));
 
       now = now.add(const Duration(hours: 1));
       elapsed += const Duration(hours: 1);
       final secondController = createController();
-      expect(await secondController.resumeActiveSession(SessionType.wordSession), isTrue);
+      expect(
+        await secondController.resumeActiveSession(SessionType.wordSession),
+        isTrue,
+      );
 
       now = now.add(const Duration(minutes: 3));
       elapsed += const Duration(minutes: 3);
@@ -329,16 +368,19 @@ void main() {
       elapsed += const Duration(minutes: 4);
       await controller.endSession();
 
-      final completed = (await sessionRepository.getList(completedOnly: true)).single;
+      final completed = (await sessionRepository.getList(completedOnly: true))
+          .single;
       expect(completed.totalTimeSpent, const Duration(minutes: 4));
       expect(controller.hasActiveSession, isFalse);
     });
 
-    test('invalidates memory and preserves the snapshot after a write failure', () async {
-      final exerciseId = await createWordExercise();
-      final controller = createController();
-      await controller.startNewSession(SessionType.wordSession);
-      await database.execute('''
+    test(
+      'invalidates memory and preserves the snapshot after a write failure',
+      () async {
+        final exerciseId = await createWordExercise();
+        final controller = createController();
+        await controller.startNewSession(SessionType.wordSession);
+        await database.execute('''
         CREATE TRIGGER fail_srs_update
         BEFORE UPDATE ON srs_state
         BEGIN
@@ -346,28 +388,38 @@ void main() {
         END;
       ''');
 
-      now = now.add(const Duration(minutes: 1));
-      elapsed += const Duration(minutes: 1);
-      await expectLater(controller.submitAnswer(Grade.again), throwsA(anything));
+        now = now.add(const Duration(minutes: 1));
+        elapsed += const Duration(minutes: 1);
+        await expectLater(
+          controller.submitAnswer(Grade.again),
+          throwsA(anything),
+        );
 
-      expect(controller.hasActiveSession, isFalse);
-      final overview = overviewOf(
-        await controller.getSessionOverviews(),
-        SessionType.wordSession,
-      );
-      expect(overview.hasActiveSession, isTrue);
-      expect(
-        (await sessionRepository.getAllActiveSessionResult()).single.totalTimeSpent,
-        Duration.zero,
-      );
-      expect(
-        await ExerciseHistoryRepository(database).getList(exerciseId: exerciseId),
-        isEmpty,
-      );
+        expect(controller.hasActiveSession, isFalse);
+        final overview = overviewOf(
+          await controller.getSessionOverviews(),
+          SessionType.wordSession,
+        );
+        expect(overview.hasActiveSession, isTrue);
+        expect(
+          (await sessionRepository.getAllActiveSessionResult())
+              .single
+              .totalTimeSpent,
+          Duration.zero,
+        );
+        expect(
+          await ExerciseHistoryRepository(database)
+              .getList(exerciseId: exerciseId),
+          isEmpty,
+        );
 
-      await database.execute('DROP TRIGGER fail_srs_update');
-      expect(await controller.resumeActiveSession(SessionType.wordSession), isTrue);
-    });
+        await database.execute('DROP TRIGGER fail_srs_update');
+        expect(
+          await controller.resumeActiveSession(SessionType.wordSession),
+          isTrue,
+        );
+      },
+    );
 
     test('rejects a concurrent mutating operation', () async {
       final blockingRepository = _BlockingSessionRepository(
@@ -394,7 +446,10 @@ final class _BlockingSessionRepository extends SessionRepository {
   final Completer<void> entered = Completer<void>();
   final Completer<void> release = Completer<void>();
 
-  _BlockingSessionRepository(super.database, {required super.exerciseRepository});
+  _BlockingSessionRepository(
+    super.database, {
+    required super.exerciseRepository,
+  });
 
   @override
   Future<List<SessionResult>> getAllActiveSessionResult() async {

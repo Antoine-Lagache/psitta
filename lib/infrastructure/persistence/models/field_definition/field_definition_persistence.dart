@@ -4,9 +4,15 @@ class FieldDefinitionPersistence {
   final String valueType;
   final String side;
 
-  FieldDefinitionPersistence({this.id, required this.valueType, required this.side});
+  FieldDefinitionPersistence({
+    this.id,
+    required this.valueType,
+    required this.side,
+  });
 
-  factory FieldDefinitionPersistence.fromRow(Map<String, Object?> fieldDefinitionRow) {
+  factory FieldDefinitionPersistence.fromRow(
+    Map<String, Object?> fieldDefinitionRow,
+  ) {
     return FieldDefinitionPersistence(
       id: fieldDefinitionRow['id'] as int?,
       valueType: fieldDefinitionRow['value_type'] as String,

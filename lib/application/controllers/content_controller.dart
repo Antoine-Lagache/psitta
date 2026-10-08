@@ -16,5 +16,6 @@ class ContentController {
 
   Future<Content?> getContentById(int id) => _contentRepository.getById(id);
 
-  Future<Media?> getMediaBySHA256(String sha256) => _mediaRepository.getBySHA256(sha256);
+  Future<Media?> getMediaBySHA256(String sha256) =>
+      _mediaRepository.getBySHA256(sha256);
 }

@@ -43,7 +43,9 @@ class AppDependencies {
       sessionRepository: sessionRepository,
       exerciseHistoryRepository: ExerciseHistoryRepository(connection),
     );
-    contentRenderer = ContentRenderer(FieldRenderer(MediaResolver(contentController)));
+    contentRenderer = ContentRenderer(
+      FieldRenderer(MediaResolver(contentController)),
+    );
   }
 
   static Future<AppDependencies> initialize() async {

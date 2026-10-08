@@ -30,9 +30,8 @@ void main() {
 
       final firstWord = await ExerciseDao(db.database).getById(1);
       expect(firstWord, isA<WordExercisePersistence>());
-      final wordContent = await ContentDao(db.database).getById(
-        (firstWord! as WordExercisePersistence).contentId,
-      );
+      final wordContent = await ContentDao(db.database)
+          .getById((firstWord! as WordExercisePersistence).contentId);
       expect(wordContent!.fieldValues.map((field) => field.textValue), [
         contains('私'),
         contains('I; me'),
@@ -41,15 +40,15 @@ void main() {
       final firstSentence = await ExerciseDao(db.database).getById(1298);
       expect(firstSentence, isA<SentenceExercisePersistence>());
       final sentence = firstSentence! as SentenceExercisePersistence;
-      final group = await SentenceGroupDao(db.database).getById(sentence.sentenceGroupId);
+      final group = await SentenceGroupDao(db.database)
+          .getById(sentence.sentenceGroupId);
       expect(group!.sentenceInstances.length, sentence.trainingCountMax);
-      final firstInstanceContent = await ContentDao(db.database).getById(
-        group.sentenceInstances.first.contentId,
+      final firstInstanceContent = await ContentDao(db.database)
+          .getById(group.sentenceInstances.first.contentId);
+      expect(
+        firstInstanceContent!.fieldValues.map((field) => field.textValue),
+        [contains('私は先生です。'), contains('I am a teacher.')],
       );
-      expect(firstInstanceContent!.fieldValues.map((field) => field.textValue), [
-        contains('私は先生です。'),
-        contains('I am a teacher.'),
-      ]);
 
       await db.reopen();
       expect(await importRelease(), isFalse);

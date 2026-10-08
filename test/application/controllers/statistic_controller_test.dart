@@ -56,7 +56,9 @@ void main() {
 
       final unfinished = createSession(exercise);
       unfinished.beginSession(startedAt);
-      unfinished.intermediateResult.id = await sessionRepository.save(unfinished);
+      unfinished.intermediateResult.id = await sessionRepository.save(
+        unfinished,
+      );
 
       final completed = createSession(exercise);
       completed.beginSession(startedAt.add(const Duration(hours: 1)));
@@ -92,7 +94,10 @@ void main() {
       final statistics = await controller.getSessionStatistics();
 
       expect(statistics.numberOfAnswers, 1);
-      expect(statistics.getNumberOfAnswersByStatus(ExerciseStatus.newExercise), 1);
+      expect(
+        statistics.getNumberOfAnswersByStatus(ExerciseStatus.newExercise),
+        1,
+      );
       expect(statistics.numberOfExercisesCompleted, 1);
       expect(statistics.averageNumberOfAnswersPerSession, 1);
     });

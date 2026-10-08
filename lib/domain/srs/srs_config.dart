@@ -28,7 +28,14 @@ class SRSConfig {
   final int newCount;
   final int reviewCount;
 
-  static const List<double> _defaultLambdas = [0.60, 0.90, 0.80, 0.95, 0.85, 0.70];
+  static const List<double> _defaultLambdas = [
+    0.60,
+    0.90,
+    0.80,
+    0.95,
+    0.85,
+    0.70,
+  ];
 
   SRSConfig({
     this.rstar = 0.9,
@@ -56,7 +63,8 @@ class SRSConfig {
     this.reviewCount = 9999,
   }) : lambdas = List.unmodifiable(
          List.generate(6, (i) {
-           if (lambdas != null && i < lambdas.length) return lambdas[i].clamp(0.0, 1.0);
+           if (lambdas != null && i < lambdas.length)
+             return lambdas[i].clamp(0.0, 1.0);
            return _defaultLambdas[i];
          }),
        ),

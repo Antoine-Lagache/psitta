@@ -118,7 +118,9 @@ void main() {
     expect(nextRequested, isTrue);
   });
 
-  testWidgets('hides intervals when the answer does not update the SRS', (tester) async {
+  testWidgets('hides intervals when the answer does not update the SRS', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       buildContent(
         showingAnswer: true,
@@ -150,7 +152,9 @@ void main() {
     expect(button.onPressed, isNull);
   });
 
-  testWidgets('disables pending answer actions while submitting', (tester) async {
+  testWidgets('disables pending answer actions while submitting', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       buildContent(
         showingAnswer: true,

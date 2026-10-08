@@ -14,7 +14,9 @@ void main() {
       final exercise = SentenceExercise(
         sentences: SentenceGroup(
           id: 1,
-          sentences: [SentenceInstance(id: 1, contentId: 1, state: sentenceState)],
+          sentences: [
+            SentenceInstance(id: 1, contentId: 1, state: sentenceState),
+          ],
         ),
         trainingCountMax: 1,
         id: 1,
@@ -40,7 +42,9 @@ void main() {
       expect(exercise.status, ExerciseStatus.newExercise);
       expect(sentenceState.shownCount, 0);
       expect(
-        session.intermediateResult.getNumberOfAnswersByStatus(ExerciseStatus.newExercise),
+        session.intermediateResult.getNumberOfAnswersByStatus(
+          ExerciseStatus.newExercise,
+        ),
         0,
       );
     });
@@ -50,7 +54,9 @@ void main() {
       final exercise = SentenceExercise(
         sentences: SentenceGroup(
           id: 1,
-          sentences: [SentenceInstance(id: 1, contentId: 1, state: sentenceState)],
+          sentences: [
+            SentenceInstance(id: 1, contentId: 1, state: sentenceState),
+          ],
         ),
         trainingCountMax: 1,
         id: 1,
@@ -66,8 +72,9 @@ void main() {
       session.beginSession(now);
 
       expect(
-        () =>
-            session.getPreviewInterval(PreviewExerciseAnswer(grade: Grade.easy, at: now)),
+        () => session.getPreviewInterval(
+          PreviewExerciseAnswer(grade: Grade.easy, at: now),
+        ),
         throwsStateError,
       );
       expect(sentenceState.shownCount, 0);
@@ -78,7 +85,9 @@ void main() {
       final exercise = SentenceExercise(
         sentences: SentenceGroup(
           id: 1,
-          sentences: [SentenceInstance(id: 1, contentId: 1, state: SentenceState())],
+          sentences: [
+            SentenceInstance(id: 1, contentId: 1, state: SentenceState()),
+          ],
         ),
         trainingCountMax: 1,
         id: 1,
@@ -95,8 +104,9 @@ void main() {
 
       expect(session.currentExerciseHasPreviewInterval, isFalse);
       expect(
-        () =>
-            session.getPreviewInterval(PreviewExerciseAnswer(grade: Grade.good, at: now)),
+        () => session.getPreviewInterval(
+          PreviewExerciseAnswer(grade: Grade.good, at: now),
+        ),
         throwsStateError,
       );
     });
@@ -105,7 +115,9 @@ void main() {
       final exercise = SentenceExercise(
         sentences: SentenceGroup(
           id: 1,
-          sentences: [SentenceInstance(id: 1, contentId: 1, state: SentenceState())],
+          sentences: [
+            SentenceInstance(id: 1, contentId: 1, state: SentenceState()),
+          ],
         ),
         trainingCountMax: 1,
         id: 1,

@@ -51,7 +51,8 @@ abstract class Exercise {
       nextDay = nextDay.add(const Duration(days: 1));
     }
 
-    if (answer.at.add(srsState.interval).isAfter(nextDay) && !srsState.isInLearning) {
+    if (answer.at.add(srsState.interval).isAfter(nextDay) &&
+        !srsState.isInLearning) {
       status = ExerciseStatus.completed;
     } else {
       if (status == ExerciseStatus.newExercise) {

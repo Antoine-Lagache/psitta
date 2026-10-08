@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 class StartupScreen extends StatelessWidget {
   final Widget _content;
 
-  const StartupScreen._({required Widget content, super.key}) : _content = content;
+  const StartupScreen._({required Widget content, super.key})
+    : _content = content;
 
-  const StartupScreen.loading({super.key}) : _content = const CircularProgressIndicator();
+  const StartupScreen.loading({super.key})
+    : _content = const CircularProgressIndicator();
 
   factory StartupScreen.failure({
     required Object error,

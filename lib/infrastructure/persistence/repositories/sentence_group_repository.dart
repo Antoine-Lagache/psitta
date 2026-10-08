@@ -10,7 +10,8 @@ class SentenceGroupRepository {
 
   final SentenceGroupDao _sentencesDao;
 
-  SentenceGroupRepository(this.database) : _sentencesDao = SentenceGroupDao(database);
+  SentenceGroupRepository(this.database)
+    : _sentencesDao = SentenceGroupDao(database);
 
   Future<int> createGroup() async {
     final sentenceGroup = SentenceGroupPersistence(sentenceInstances: []);
@@ -23,11 +24,19 @@ class SentenceGroupRepository {
       throw StateError("Missing SentenceGroup with id $sentenceGroupId");
     }
 
-    final SentenceInstancePersistence newInstance = SentenceMapper.newInstance(contentId);
-    return await _sentencesDao.insertSentenceInstance(newInstance, sentenceGroupId);
+    final SentenceInstancePersistence newInstance = SentenceMapper.newInstance(
+      contentId,
+    );
+    return await _sentencesDao.insertSentenceInstance(
+      newInstance,
+      sentenceGroupId,
+    );
   }
 
-  Future<void> moveSentenceInstance(int sentenceInstanceId, int targetGroupId) async {
+  Future<void> moveSentenceInstance(
+    int sentenceInstanceId,
+    int targetGroupId,
+  ) async {
     final sentenceGroup = await _sentencesDao.getById(targetGroupId);
     if (sentenceGroup == null) {
       throw StateError("Missing SentenceGroup with id $targetGroupId");

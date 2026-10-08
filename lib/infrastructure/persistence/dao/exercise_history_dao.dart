@@ -120,7 +120,9 @@ class ExerciseHistoryDao {
         parameters.add(endDate);
       }
 
-      final whereClause = conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
+      final whereClause = conditions.isEmpty
+          ? ''
+          : 'WHERE ${conditions.join(' AND ')}';
 
       final rows = await txn.getAll('''
       SELECT
