@@ -63,8 +63,9 @@ class SRSConfig {
     this.reviewCount = 9999,
   }) : lambdas = List.unmodifiable(
          List.generate(6, (i) {
-           if (lambdas != null && i < lambdas.length)
+           if (lambdas != null && i < lambdas.length) {
              return lambdas[i].clamp(0.0, 1.0);
+           }
            return _defaultLambdas[i];
          }),
        ),
