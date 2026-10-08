@@ -40,6 +40,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Set up pinned Dart formatter
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.13.5
+
       - name: Check formatting
         run: |
           dart format lib test tools
