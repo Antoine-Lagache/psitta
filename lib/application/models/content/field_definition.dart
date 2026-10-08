@@ -4,11 +4,7 @@ class FieldDefinition {
   final FieldValueType valueType;
   final FieldSide side;
 
-  FieldDefinition({
-    required this.id,
-    required this.valueType,
-    required this.side,
-  });
+  FieldDefinition({required this.id, required this.valueType, required this.side});
 }
 
 enum FieldValueType {

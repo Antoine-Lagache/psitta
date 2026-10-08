@@ -42,11 +42,7 @@ class LearningContent extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 720),
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-          children: [
-            _buildCard(context),
-            const SizedBox(height: 20),
-            _buildActions(),
-          ],
+          children: [_buildCard(context), const SizedBox(height: 20), _buildActions()],
         ),
       ),
     );

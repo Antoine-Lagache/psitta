@@ -50,15 +50,9 @@ class StatisticController {
     int numberOfAnswers = 0;
     int numberOfExercisesCompleted = 0;
 
-    final numberOfSessionsBySessionType = List<int>.filled(
-      SessionType.values.length,
-      0,
-    );
+    final numberOfSessionsBySessionType = List<int>.filled(SessionType.values.length, 0);
 
-    final numberOfAnswersByStatus = List<int>.filled(
-      ExerciseStatus.values.length,
-      0,
-    );
+    final numberOfAnswersByStatus = List<int>.filled(ExerciseStatus.values.length, 0);
 
     Duration totalTimeSpent = Duration.zero;
     for (final session in sessions) {
@@ -93,14 +87,9 @@ class StatisticController {
     );
   }
 
-  ExerciseStatistics _calculateExerciseStatistics(
-    List<ExerciseHistoryEntry> history,
-  ) {
+  ExerciseStatistics _calculateExerciseStatistics(List<ExerciseHistoryEntry> history) {
     final numberOfAnswersByGrade = List<int>.filled(Grade.values.length, 0);
-    final numberOfAnswersByStatus = List<int>.filled(
-      ExerciseStatus.values.length,
-      0,
-    );
+    final numberOfAnswersByStatus = List<int>.filled(ExerciseStatus.values.length, 0);
 
     final exerciseIds = <int>{};
 

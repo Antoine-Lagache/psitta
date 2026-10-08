@@ -15,18 +15,15 @@ class ContentRenderer {
   final FieldRenderer _fieldRenderer;
   final AudioControlBuilder _audioControlBuilder;
 
-  ContentRenderer(
-    this._fieldRenderer, {
-    AudioControlBuilder? audioControlBuilder,
-  }) : _audioControlBuilder = audioControlBuilder ?? _buildAudioControl;
+  ContentRenderer(this._fieldRenderer, {AudioControlBuilder? audioControlBuilder})
+    : _audioControlBuilder = audioControlBuilder ?? _buildAudioControl;
 
   /// Renders the fields visible on [side] into a single HTML widget.
   Future<Widget> render(Content content, FieldSide side) async {
     final fields = content.fields
         .where(
           (field) =>
-              field.definition.side == side ||
-              field.definition.side == FieldSide.both,
+              field.definition.side == side || field.definition.side == FieldSide.both,
         )
         .toList();
     _sortFields(fields);

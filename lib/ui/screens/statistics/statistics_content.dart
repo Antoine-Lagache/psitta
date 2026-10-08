@@ -91,18 +91,12 @@ class StatisticsContent extends StatelessWidget {
 
   List<_Metric> get _overviewMetrics {
     return [
-      (
-        label: 'Sessions completed',
-        value: '${sessionStatistics.numberOfSessions}',
-      ),
+      (label: 'Sessions completed', value: '${sessionStatistics.numberOfSessions}'),
       (
         label: 'Completed session time',
         value: _formatDuration(sessionStatistics.totalTimeSpent),
       ),
-      (
-        label: 'Answers recorded',
-        value: '${exerciseStatistics.totalNumberAnswers}',
-      ),
+      (label: 'Answers recorded', value: '${exerciseStatistics.totalNumberAnswers}'),
       (
         label: 'Exercises completed',
         value: '${sessionStatistics.numberOfExercisesCompleted}',

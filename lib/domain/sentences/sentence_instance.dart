@@ -6,9 +6,5 @@ class SentenceInstance {
   final int contentId;
   final SentenceState state;
 
-  SentenceInstance({
-    required this.id,
-    required this.contentId,
-    required this.state,
-  });
+  SentenceInstance({required this.id, required this.contentId, required this.state});
 }

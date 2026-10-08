@@ -27,14 +27,12 @@ class SessionRepository {
   final SentenceGroupDao _sentencesDao;
   final ExerciseRepository _exerciseRepository;
 
-  SessionRepository(
-    this.database, {
-    required ExerciseRepository exerciseRepository,
-  }) : _exerciseRepository = exerciseRepository,
-       _sessionResultDao = SessionResultDao(database),
-       _sessionExerciseDao = SessionExerciseDao(database),
-       _exerciseDao = ExerciseDao(database),
-       _sentencesDao = SentenceGroupDao(database);
+  SessionRepository(this.database, {required ExerciseRepository exerciseRepository})
+    : _exerciseRepository = exerciseRepository,
+      _sessionResultDao = SessionResultDao(database),
+      _sessionExerciseDao = SessionExerciseDao(database),
+      _exerciseDao = ExerciseDao(database),
+      _sentencesDao = SentenceGroupDao(database);
 
   /// Inserts a new session result and its resumable exercise snapshot.
   Future<int> save(Session session) async {
@@ -53,11 +51,7 @@ class SessionRepository {
           .map(SessionExerciseMapper.toPersistence)
           .toList();
 
-      await _sessionExerciseDao.insertAll(
-        sessionResultId,
-        exerciseResumes,
-        txn,
-      );
+      await _sessionExerciseDao.insertAll(sessionResultId, exerciseResumes, txn);
 
       return sessionResultId;
     });
@@ -82,9 +76,7 @@ class SessionRepository {
   Future<Map<ExerciseStatus, int>> countActiveSessionExercisesByStatus(
     int sessionResultId,
   ) async {
-    final persistenceCounts = await _sessionExerciseDao.countByStatus(
-      sessionResultId,
-    );
+    final persistenceCounts = await _sessionExerciseDao.countByStatus(sessionResultId);
 
     return Map.unmodifiable({
       for (final count in persistenceCounts)
@@ -93,24 +85,17 @@ class SessionRepository {
   }
 
   /// Rebuilds an unfinished session from its result and exercise snapshots.
-  Future<Session> getActiveSession(
-    SessionResult sessionResult,
-    SRSConfig config,
-  ) async {
+  Future<Session> getActiveSession(SessionResult sessionResult, SRSConfig config) async {
     final sessionResultId = sessionResult.id!;
 
-    final sessionExercisesPercistence = await _sessionExerciseDao.getAll(
-      sessionResultId,
-    );
+    final sessionExercisesPercistence = await _sessionExerciseDao.getAll(sessionResultId);
     final sessionExercisesDomain = sessionExercisesPercistence
         .map(SessionExerciseMapper.toDomain)
         .toList();
 
     final List<Exercise> exercises = [];
     for (final ExerciseResume sessionExercise in sessionExercisesDomain) {
-      final exercisePersistence = await _exerciseDao.getById(
-        sessionExercise.exerciseId,
-      );
+      final exercisePersistence = await _exerciseDao.getById(sessionExercise.exerciseId);
       exercises.add(await _toDomain(exercisePersistence!, sessionExercise));
     }
     return Session(
@@ -164,17 +149,13 @@ class SessionRepository {
     final sessionResult = session.intermediateResult;
 
     if (sessionResult.id == null) {
-      throw ArgumentError(
-        'Cannot update a Session whose SessionResult has no id',
-      );
+      throw ArgumentError('Cannot update a Session whose SessionResult has no id');
     }
 
     final sessionResultId = sessionResult.id!;
 
     await database.writeTransaction((txn) async {
-      final sessionResultPersistence = SessionResultMapper.toPersistence(
-        sessionResult,
-      );
+      final sessionResultPersistence = SessionResultMapper.toPersistence(sessionResult);
 
       await _sessionResultDao.update(sessionResultPersistence, txn);
 
@@ -185,25 +166,16 @@ class SessionRepository {
 
       await _sessionExerciseDao.deleteAll(sessionResultId, txn);
 
-      await _sessionExerciseDao.insertAll(
-        sessionResultId,
-        exerciseResumes,
-        txn,
-      );
+      await _sessionExerciseDao.insertAll(sessionResultId, exerciseResumes, txn);
     });
   }
 
   /// Atomically stores an answered exercise and the resulting session state.
-  Future<void> saveAnswerProgress(
-    Session session,
-    Exercise answeredExercise,
-  ) async {
+  Future<void> saveAnswerProgress(Session session, Exercise answeredExercise) async {
     final sessionResult = session.intermediateResult;
 
     if (sessionResult.id == null) {
-      throw ArgumentError(
-        'Cannot update a Session whose SessionResult has no id',
-      );
+      throw ArgumentError('Cannot update a Session whose SessionResult has no id');
     }
 
     final sessionResultId = sessionResult.id!;
@@ -211,9 +183,7 @@ class SessionRepository {
     await database.writeTransaction((txn) async {
       await _exerciseRepository.saveInTransaction(txn, answeredExercise);
 
-      final sessionResultPersistence = SessionResultMapper.toPersistence(
-        sessionResult,
-      );
+      final sessionResultPersistence = SessionResultMapper.toPersistence(sessionResult);
       await _sessionResultDao.update(sessionResultPersistence, txn);
 
       await _sessionExerciseDao.deleteAll(sessionResultId, txn);
@@ -222,11 +192,7 @@ class SessionRepository {
             .getResumeList()
             .map(SessionExerciseMapper.toPersistence)
             .toList();
-        await _sessionExerciseDao.insertAll(
-          sessionResultId,
-          exerciseResumes,
-          txn,
-        );
+        await _sessionExerciseDao.insertAll(sessionResultId, exerciseResumes, txn);
       }
     });
 
@@ -241,17 +207,13 @@ class SessionRepository {
   Future<void> completeSession(Session session) {
     final sessionResult = session.intermediateResult;
     if (sessionResult.id == null) {
-      throw ArgumentError(
-        'Cannot update a Session whose SessionResult has no id',
-      );
+      throw ArgumentError('Cannot update a Session whose SessionResult has no id');
     }
 
     final sessionResultId = sessionResult.id!;
 
     return database.writeTransaction((txn) async {
-      final sessionResultPersistence = SessionResultMapper.toPersistence(
-        sessionResult,
-      );
+      final sessionResultPersistence = SessionResultMapper.toPersistence(sessionResult);
 
       await _sessionResultDao.update(sessionResultPersistence, txn);
 

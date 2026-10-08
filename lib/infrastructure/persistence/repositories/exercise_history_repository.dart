@@ -13,8 +13,7 @@ class ExerciseHistoryRepository {
 
   final ExerciseHistoryDao _historyDao;
 
-  ExerciseHistoryRepository(this.database)
-    : _historyDao = ExerciseHistoryDao(database);
+  ExerciseHistoryRepository(this.database) : _historyDao = ExerciseHistoryDao(database);
 
   /// Returns entries in a half-open date range, optionally for one exercise.
   Future<List<ExerciseHistoryEntry>> getList({

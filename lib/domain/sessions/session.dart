@@ -52,9 +52,7 @@ class Session {
     switch (sessionType) {
       case SessionType.wordSession:
         if (!_scheduler.exercises.every((a) => a is WordExercise)) {
-          throw Exception(
-            "All exercises must be WordExercise for a word session",
-          );
+          throw Exception("All exercises must be WordExercise for a word session");
         }
       case SessionType.sentenceSession:
         if (!_scheduler.exercises.every((a) => a is SentenceExercise)) {
@@ -76,8 +74,7 @@ class Session {
 
   /// Recalculates the next exercise when an unfinished session is restored.
   void resumeSession(DateTime now) {
-    if (_intermediateResult.startedAt == null ||
-        _intermediateResult.endAt != null) {
+    if (_intermediateResult.startedAt == null || _intermediateResult.endAt != null) {
       throw StateError('Only an unfinished session can be resumed');
     }
     if (now.isBefore(_intermediateResult.startedAt!)) {
@@ -97,9 +94,7 @@ class Session {
       throw StateError('No current exercise');
     }
 
-    return Grade.values
-        .where(_scheduler.currentExercise!.isGradeAllowed)
-        .toList();
+    return Grade.values.where(_scheduler.currentExercise!.isGradeAllowed).toList();
   }
 
   /// Applies [answer], updates aggregates, and selects the next exercise.
@@ -151,8 +146,7 @@ class Session {
 
   /// Adds one measured active segment to the persisted session aggregate.
   void addTimeSpent(Duration duration) {
-    if (_intermediateResult.startedAt == null ||
-        _intermediateResult.endAt != null) {
+    if (_intermediateResult.startedAt == null || _intermediateResult.endAt != null) {
       throw StateError('Time can only be added to an active session');
     }
     if (duration.isNegative) {

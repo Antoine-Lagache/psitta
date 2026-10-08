@@ -10,9 +10,7 @@ class ContentDao {
 
   /// Inserts a content aggregate and returns only the new content identifier.
   Future<int> insert(ContentPersistence content) {
-    return database.writeTransaction(
-      (txn) => insertInTransaction(txn, content),
-    );
+    return database.writeTransaction((txn) => insertInTransaction(txn, content));
   }
 
   /// Inserts complete content inside a transaction coordinated by the caller.

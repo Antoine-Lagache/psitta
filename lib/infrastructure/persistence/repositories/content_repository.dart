@@ -48,9 +48,7 @@ class ContentRepository {
       final definition = await _fieldDefinitionDao.getById(definitionId);
 
       if (definition == null) {
-        throw StateError(
-          'FieldDefinition with id $definitionId does not exist',
-        );
+        throw StateError('FieldDefinition with id $definitionId does not exist');
       }
 
       definitions[definitionId] = definition;

@@ -25,15 +25,10 @@ class ExerciseRepository {
       _sentencesDao = SentenceGroupDao(database);
 
   Future<int> createWordExercise(int contentId) async {
-    return await _exerciseDao.insert(
-      WordExerciseMapper.newWordExercise(contentId),
-    );
+    return await _exerciseDao.insert(WordExerciseMapper.newWordExercise(contentId));
   }
 
-  Future<int> createSentenceExercise(
-    int sentenceGroupId,
-    int trainingCount,
-  ) async {
+  Future<int> createSentenceExercise(int sentenceGroupId, int trainingCount) async {
     final sentenceGroup = await _sentencesDao.getById(sentenceGroupId);
     if (sentenceGroup == null) {
       throw StateError('Missing SentenceGroup with id $sentenceGroupId');
@@ -42,10 +37,7 @@ class ExerciseRepository {
       throw ArgumentError('A SentenceExercise requires at least one sentence');
     }
     return await _exerciseDao.insert(
-      SentenceExerciseMapper.newSentenceExercise(
-        sentenceGroupId,
-        trainingCount,
-      ),
+      SentenceExerciseMapper.newSentenceExercise(sentenceGroupId, trainingCount),
     );
   }
 
@@ -59,11 +51,7 @@ class ExerciseRepository {
     return _toDomain(persistence, hasHistory);
   }
 
-  Future<List<Exercise>> getDueExercises(
-    DateTime now,
-    int count,
-    String? type,
-  ) async {
+  Future<List<Exercise>> getDueExercises(DateTime now, int count, String? type) async {
     final persistenceExercises = await _exerciseDao.getDueExercises(
       now.microsecondsSinceEpoch,
       count,
@@ -81,10 +69,7 @@ class ExerciseRepository {
   }
 
   Future<List<Exercise>> getNewExercises(int count, String? type) async {
-    final persistenceExercises = await _exerciseDao.getNewExercises(
-      count,
-      type,
-    );
+    final persistenceExercises = await _exerciseDao.getNewExercises(count, type);
 
     final exercises = <Exercise>[];
 
@@ -110,10 +95,7 @@ class ExerciseRepository {
   }
 
   /// Stores an exercise inside a transaction coordinated by another repository.
-  Future<void> saveInTransaction(
-    sqlite.SqliteWriteContext txn,
-    Exercise exercise,
-  ) async {
+  Future<void> saveInTransaction(sqlite.SqliteWriteContext txn, Exercise exercise) async {
     ExercisePersistence persistence;
     switch (exercise) {
       case WordExercise word:
@@ -132,11 +114,7 @@ class ExerciseRepository {
       throw ArgumentError("Cannot update an entity that doesn't have an id");
     }
 
-    await _exerciseDao.updateSrsState(
-      txn,
-      persistence.id!,
-      persistence.srsState,
-    );
+    await _exerciseDao.updateSrsState(txn, persistence.id!, persistence.srsState);
 
     await _historyDao.insertAll(
       txn,
@@ -178,10 +156,7 @@ class ExerciseRepository {
           if (group == null) {
             throw StateError("Missing SentenceGroup for sentenceExercise");
           }
-          await _sentencesDao.update(
-            txn,
-            SentenceMapper.resetGroupProgress(group),
-          );
+          await _sentencesDao.update(txn, SentenceMapper.resetGroupProgress(group));
           break;
       }
 
@@ -190,10 +165,7 @@ class ExerciseRepository {
     });
   }
 
-  Future<Exercise> _toDomain(
-    ExercisePersistence persistence,
-    bool hasHistory,
-  ) async {
+  Future<Exercise> _toDomain(ExercisePersistence persistence, bool hasHistory) async {
     switch (persistence) {
       case WordExercisePersistence word:
         return WordExerciseMapper.wordToDomain(word, hasHistory);
@@ -212,11 +184,7 @@ class ExerciseRepository {
 
         final sentences = SentenceMapper.toDomain(sentencesPersistence);
 
-        return SentenceExerciseMapper.sentenceToDomain(
-          sentence,
-          hasHistory,
-          sentences,
-        );
+        return SentenceExerciseMapper.sentenceToDomain(sentence, hasHistory, sentences);
     }
   }
 }

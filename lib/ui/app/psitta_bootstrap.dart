@@ -50,9 +50,7 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
           exception: error,
           stack: stackTrace,
           library: 'Psitta bootstrap',
-          context: ErrorDescription(
-            'while initializing application dependencies',
-          ),
+          context: ErrorDescription('while initializing application dependencies'),
         ),
       );
 

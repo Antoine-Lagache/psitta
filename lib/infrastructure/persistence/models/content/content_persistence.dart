@@ -14,10 +14,7 @@ class ContentPersistence {
     Map<String, Object?> contentRow,
     List<FieldValuePersistence> fields,
   ) {
-    return ContentPersistence(
-      id: contentRow['id'] as int?,
-      fieldValues: fields,
-    );
+    return ContentPersistence(id: contentRow['id'] as int?, fieldValues: fields);
   }
 
   Map<String, Object?> toRow() {

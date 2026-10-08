@@ -69,9 +69,7 @@ class ContentMapper {
     );
   }
 
-  static FieldDefinitionPersistence definitionToPersistence(
-    FieldDefinition domain,
-  ) {
+  static FieldDefinitionPersistence definitionToPersistence(FieldDefinition domain) {
     return FieldDefinitionPersistence(
       id: domain.id,
       valueType: domain.valueType.name,
@@ -79,9 +77,7 @@ class ContentMapper {
     );
   }
 
-  static FieldDefinition definitionToDomain(
-    FieldDefinitionPersistence persistence,
-  ) {
+  static FieldDefinition definitionToDomain(FieldDefinitionPersistence persistence) {
     return FieldDefinition(
       id: persistence.id!,
       valueType: FieldValueType.fromString(persistence.valueType),

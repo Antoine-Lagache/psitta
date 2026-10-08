@@ -25,9 +25,7 @@ class SentenceExerciseMapper {
     );
   }
 
-  static SentenceExercisePersistence sentenceToPersistence(
-    SentenceExercise domain,
-  ) {
+  static SentenceExercisePersistence sentenceToPersistence(SentenceExercise domain) {
     return SentenceExercisePersistence(
       id: domain.id,
       srsState: SRSStateMapper.toPersistenceSrsState(domain.srsState),

@@ -28,8 +28,7 @@ class SentenceExercise extends Exercise {
     if (_sentences.sentences.isEmpty) {
       throw ArgumentError('A SentenceExercise requires at least one sentence');
     }
-    if (this.trainingCount < 0 ||
-        this.trainingCount > _sentences.sentences.length) {
+    if (this.trainingCount < 0 || this.trainingCount > _sentences.sentences.length) {
       throw ArgumentError('Training count must match the sentence group size');
     }
   }
@@ -39,11 +38,7 @@ class SentenceExercise extends Exercise {
 
   @override
   ExerciseResume getResume() {
-    return ExerciseResume(
-      exerciseId: id,
-      status: status,
-      trainingCount: trainingCount,
-    );
+    return ExerciseResume(exerciseId: id, status: status, trainingCount: trainingCount);
   }
 
   /// Deterministically selects the least-known sentence in the group.
@@ -69,8 +64,7 @@ class SentenceExercise extends Exercise {
   }
 
   @override
-  bool get hasMeaningfulPreviewInterval =>
-      status != ExerciseStatus.consolidating;
+  bool get hasMeaningfulPreviewInterval => status != ExerciseStatus.consolidating;
 
   @override
   void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {

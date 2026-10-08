@@ -89,8 +89,7 @@ class SentenceGroupDao {
 
       final int sentenceInstanceId = sentenceInstanceResult.first['id'];
 
-      final SentenceStatePersistence sentenceState =
-          sentenceInstance.sentenceState;
+      final SentenceStatePersistence sentenceState = sentenceInstance.sentenceState;
       await txn.execute(
         '''
           INSERT INTO sentence_state (
@@ -146,15 +145,13 @@ class SentenceGroupDao {
       [id],
     );
 
-    final List<SentenceInstancePersistence> sentenceInstances =
-        sentenceInstanceRows.map((row) {
-          return SentenceInstancePersistence.fromRow(row, row);
-        }).toList();
+    final List<SentenceInstancePersistence> sentenceInstances = sentenceInstanceRows.map((
+      row,
+    ) {
+      return SentenceInstancePersistence.fromRow(row, row);
+    }).toList();
 
-    return SentenceGroupPersistence.fromRow(
-      sentenceGroupRow.first,
-      sentenceInstances,
-    );
+    return SentenceGroupPersistence.fromRow(sentenceGroupRow.first, sentenceInstances);
   }
 
   Future<SentenceGroupPersistence?> getById(int id) {

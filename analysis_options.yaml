@@ -15,7 +15,7 @@ analyzer:
     - linux/**
 
 formatter:
-  page_width: 80
+  page_width: 90
 
 linter:
   rules:

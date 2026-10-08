@@ -50,10 +50,10 @@ void main() {
         final firstInstanceContent = await ContentDao(
           db.database,
         ).getById(group.sentenceInstances.first.contentId);
-        expect(
-          firstInstanceContent!.fieldValues.map((field) => field.textValue),
-          [contains('私は先生です。'), contains('I am a teacher.')],
-        );
+        expect(firstInstanceContent!.fieldValues.map((field) => field.textValue), [
+          contains('私は先生です。'),
+          contains('I am a teacher.'),
+        ]);
 
         await db.reopen();
         expect(await importRelease(), isFalse);

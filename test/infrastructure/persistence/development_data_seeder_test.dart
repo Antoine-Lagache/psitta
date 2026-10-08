@@ -45,18 +45,15 @@ void main() {
     expect(await testDatabase.countRows('media'), 2);
   });
 
-  test(
-    'does not modify a database that already contains an exercise',
-    () async {
-      final contentId = await testDatabase.insertContent();
-      await ExerciseRepository(database).createWordExercise(contentId);
+  test('does not modify a database that already contains an exercise', () async {
+    final contentId = await testDatabase.insertContent();
+    await ExerciseRepository(database).createWordExercise(contentId);
 
-      expect(await seeder.seedIfEmpty(), isFalse);
-      expect(await testDatabase.countRows('exercise'), 1);
-      expect(await testDatabase.countRows('field_definition'), 0);
-      expect(await testDatabase.countRows('media'), 0);
-    },
-  );
+    expect(await seeder.seedIfEmpty(), isFalse);
+    expect(await testDatabase.countRows('exercise'), 1);
+    expect(await testDatabase.countRows('field_definition'), 0);
+    expect(await testDatabase.countRows('media'), 0);
+  });
 
   test('rolls back every database row when seeding fails', () async {
     await database.writeTransaction((transaction) async {
@@ -83,10 +80,7 @@ void main() {
 
     final exerciseRepository = ExerciseRepository(database);
     final wordExercises = await exerciseRepository.getNewExercises(10, 'word');
-    final sentenceExercises = await exerciseRepository.getNewExercises(
-      10,
-      'sentence',
-    );
+    final sentenceExercises = await exerciseRepository.getNewExercises(10, 'sentence');
     final contents = await _loadWordContents(
       database,
       wordExercises.cast<WordExercise>(),
@@ -119,10 +113,7 @@ Future<List<Content>> _loadWordContents(
   return contents;
 }
 
-Iterable<Field> _fieldsOfType(
-  Iterable<Content> contents,
-  FieldValueType valueType,
-) {
+Iterable<Field> _fieldsOfType(Iterable<Content> contents, FieldValueType valueType) {
   return contents
       .expand((content) => content.fields)
       .where((field) => field.definition.valueType == valueType);
@@ -169,8 +160,5 @@ Future<void> _expectFieldsRender(
 
   expect(await renderer.render(plainText), contains('&lt; &gt; &amp;'));
   expect(await renderer.render(html), contains('file://'));
-  expect(
-    await renderer.render(audio),
-    startsWith('<audio controls src="file://'),
-  );
+  expect(await renderer.render(audio), startsWith('<audio controls src="file://'));
 }

@@ -51,11 +51,8 @@ class SessionController {
         return StartSessionResult.activeSessionAlreadyExists;
       }
 
-      final persistedSessions = await _sessionRepository
-          .getAllActiveSessionResult();
-      if (persistedSessions.any(
-        (session) => session.sessionType == sessionType,
-      )) {
+      final persistedSessions = await _sessionRepository.getAllActiveSessionResult();
+      if (persistedSessions.any((session) => session.sessionType == sessionType)) {
         return StartSessionResult.activeSessionAlreadyExists;
       }
 
@@ -99,21 +96,14 @@ class SessionController {
         throw StateError('A session is already active');
       }
 
-      final persistedSessions = await _sessionRepository
-          .getAllActiveSessionResult();
-      final activeSession = _mostRecentSessionOfType(
-        persistedSessions,
-        sessionType,
-      );
+      final persistedSessions = await _sessionRepository.getAllActiveSessionResult();
+      final activeSession = _mostRecentSessionOfType(persistedSessions, sessionType);
 
       if (activeSession == null) {
         return false;
       }
 
-      final session = await _sessionRepository.getActiveSession(
-        activeSession,
-        config,
-      );
+      final session = await _sessionRepository.getActiveSession(activeSession, config);
       session.resumeSession(_now());
       _startTimingSegment();
       _activeSession = session;
@@ -127,10 +117,7 @@ class SessionController {
     final overviews = <SessionOverview>[];
 
     for (final sessionType in SessionType.values) {
-      final activeSession = _mostRecentSessionOfType(
-        activeSessions,
-        sessionType,
-      );
+      final activeSession = _mostRecentSessionOfType(activeSessions, sessionType);
 
       final overview = activeSession == null
           ? await _buildNewSessionOverview(sessionType)
@@ -175,9 +162,7 @@ class SessionController {
     );
   }
 
-  Future<SessionOverview> _buildNewSessionOverview(
-    SessionType sessionType,
-  ) async {
+  Future<SessionOverview> _buildNewSessionOverview(SessionType sessionType) async {
     final exerciseType = _exerciseTypeFor(sessionType);
 
     // Never cache a wall-clock value across an unrelated await: read it
@@ -187,9 +172,7 @@ class SessionController {
       now,
       exerciseType,
     );
-    final newExerciseCount = await _exerciseRepository.countNewExercises(
-      exerciseType,
-    );
+    final newExerciseCount = await _exerciseRepository.countNewExercises(exerciseType);
 
     return SessionOverview(
       sessionType: sessionType,
@@ -255,9 +238,7 @@ class SessionController {
 
       try {
         final segmentDuration = _stopTimingSegment();
-        session.submitAnswer(
-          SubmittedExerciseAnswer(grade: grade, answeredAt: now),
-        );
+        session.submitAnswer(SubmittedExerciseAnswer(grade: grade, answeredAt: now));
         session.addTimeSpent(segmentDuration);
 
         final sessionFinished = session.isSessionFinished();
@@ -316,8 +297,7 @@ class SessionController {
   }
 
   Session _requireActiveSession() {
-    return _activeSession ??
-        (throw StateError('A session must be active first'));
+    return _activeSession ?? (throw StateError('A session must be active first'));
   }
 
   Future<T> _runExclusive<T>(Future<T> Function() operation) async {

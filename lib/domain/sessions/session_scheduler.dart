@@ -26,8 +26,7 @@ class SessionScheduler {
   /// Selects the next exercise and exposes it through [currentExercise].
   void selectNextExercise(DateTime now) {
     Exercise? learning; // Already seen and waiting for an intra-session review.
-    Exercise?
-    candidate; // New, due, or consolidating exercise ready immediately.
+    Exercise? candidate; // New, due, or consolidating exercise ready immediately.
     final shuffled = List.of(exercises)..shuffle();
     for (Exercise a in shuffled) {
       switch (a.status) {

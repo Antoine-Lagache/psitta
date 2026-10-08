@@ -11,14 +11,7 @@ import 'package:psitta/ui/presentation/content/content_renderer.dart';
 import 'package:psitta/ui/presentation/load_error_content.dart';
 import 'package:psitta/ui/screens/learning/learning_content.dart';
 
-enum _LearningStatus {
-  loading,
-  exercise,
-  completed,
-  ended,
-  unavailable,
-  failure,
-}
+enum _LearningStatus { loading, exercise, completed, ended, unavailable, failure }
 
 /// Runs one learning session and presents its current exercise.
 class LearningScreen extends StatefulWidget {
@@ -91,9 +84,7 @@ class _LearningScreenState extends State<LearningScreen> {
 
   Widget _buildBody() {
     return switch (_status) {
-      _LearningStatus.loading => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      _LearningStatus.loading => const Center(child: CircularProgressIndicator()),
       _LearningStatus.exercise => _buildExercise(),
       _LearningStatus.completed => _buildMessage(
         icon: Icons.check_circle_outline,
@@ -153,10 +144,7 @@ class _LearningScreenState extends State<LearningScreen> {
             const SizedBox(height: 8),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _returnHome,
-              child: const Text('Return home'),
-            ),
+            FilledButton(onPressed: _returnHome, child: const Text('Return home')),
           ],
         ),
       ),
@@ -186,9 +174,7 @@ class _LearningScreenState extends State<LearningScreen> {
       return resumed;
     }
 
-    final result = await widget.sessionController.startNewSession(
-      widget.sessionType,
-    );
+    final result = await widget.sessionController.startNewSession(widget.sessionType);
     switch (result) {
       case StartSessionResult.started:
         return true;
@@ -216,8 +202,7 @@ class _LearningScreenState extends State<LearningScreen> {
     final front = await widget.contentRenderer.render(content, FieldSide.front);
     final back = await widget.contentRenderer.render(content, FieldSide.back);
     final grades = widget.sessionController.getCurrentExerciseAllowedGrade();
-    final showIntervals =
-        widget.sessionController.currentExerciseHasPreviewInterval;
+    final showIntervals = widget.sessionController.currentExerciseHasPreviewInterval;
     final intervals = showIntervals
         ? widget.sessionController.getCurrentExercisePreviewIntervals()
         : const <Grade, Duration>{};

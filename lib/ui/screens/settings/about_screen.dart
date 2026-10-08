@@ -4,9 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 typedef ExternalLinkLauncher = Future<bool> Function(Uri uri);
 
 final Uri _websiteUri = Uri.parse('https://psitta.net');
-final Uri _sourceCodeUri = Uri.parse(
-  'https://github.com/Antoine-Lagache/psitta',
-);
+final Uri _sourceCodeUri = Uri.parse('https://github.com/Antoine-Lagache/psitta');
 
 /// Presents the application information and its external links.
 class AboutScreen extends StatelessWidget {

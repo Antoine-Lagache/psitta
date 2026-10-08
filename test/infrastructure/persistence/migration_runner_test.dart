@@ -18,45 +18,42 @@ void main() {
   tearDown(() => testDatabase.dispose());
 
   group('MigrationRunner', () {
-    test(
-      'creates the complete current schema and records its version',
-      () async {
-        await createMigrationRunner().migrate(database);
+    test('creates the complete current schema and records its version', () async {
+      await createMigrationRunner().migrate(database);
 
-        final version = await database.get('PRAGMA user_version;');
-        final tableRows = await database.readTransaction(
-          (transaction) => transaction.getAll('''
+      final version = await database.get('PRAGMA user_version;');
+      final tableRows = await database.readTransaction(
+        (transaction) => transaction.getAll('''
           SELECT name
           FROM sqlite_master
           WHERE type = 'table'
             AND name NOT LIKE 'sqlite_%'
           ORDER BY name
           '''),
-        );
+      );
 
-        expect(version['user_version'], 1);
-        expect(
-          tableRows.map((row) => row['name']),
-          orderedEquals([
-            'active_session_exercise',
-            'content',
-            'exercise',
-            'exercise_history',
-            'field_definition',
-            'field_value',
-            'media',
-            'sentence_exercise',
-            'sentence_group',
-            'sentence_instance',
-            'sentence_state',
-            'session_result',
-            'session_result_status_count',
-            'srs_state',
-            'word_exercise',
-          ]),
-        );
-      },
-    );
+      expect(version['user_version'], 1);
+      expect(
+        tableRows.map((row) => row['name']),
+        orderedEquals([
+          'active_session_exercise',
+          'content',
+          'exercise',
+          'exercise_history',
+          'field_definition',
+          'field_value',
+          'media',
+          'sentence_exercise',
+          'sentence_group',
+          'sentence_instance',
+          'sentence_state',
+          'session_result',
+          'session_result_status_count',
+          'srs_state',
+          'word_exercise',
+        ]),
+      );
+    });
 
     test('creates every column required by the persistence layer', () async {
       await createMigrationRunner().migrate(database);
@@ -79,11 +76,7 @@ void main() {
           'next_review',
         ],
         'word_exercise': ['exercise_id', 'content_id'],
-        'sentence_exercise': [
-          'exercise_id',
-          'sentence_group_id',
-          'training_count',
-        ],
+        'sentence_exercise': ['exercise_id', 'sentence_group_id', 'training_count'],
         'sentence_instance': ['id', 'sentence_group_id', 'content_id'],
         'sentence_state': [
           'sentence_instance_id',
@@ -141,9 +134,7 @@ void main() {
       database = testDatabase.database;
 
       final version = await database.get('PRAGMA user_version;');
-      final contentRows = await database.get(
-        'SELECT COUNT(*) AS count FROM content',
-      );
+      final contentRows = await database.get('SELECT COUNT(*) AS count FROM content');
       final foreignKeys = await database.get('PRAGMA foreign_keys;');
 
       expect(version['user_version'], 1);
@@ -187,10 +178,7 @@ void main() {
   });
 }
 
-Future<List<String>> _columnNames(
-  sqlite.SqliteDatabase database,
-  String table,
-) async {
+Future<List<String>> _columnNames(sqlite.SqliteDatabase database, String table) async {
   return database.readTransaction((transaction) async {
     final columns = await transaction.getAll('PRAGMA table_info($table);');
     return columns.map((column) => column['name'] as String).toList();
@@ -208,9 +196,7 @@ final class _RecordingMigration implements DatabaseMigration {
   @override
   Future<void> migrate(sqlite.SqliteWriteContext database) async {
     appliedVersions.add(version);
-    await database.execute(
-      'CREATE TABLE migration_$version (id INTEGER PRIMARY KEY)',
-    );
+    await database.execute('CREATE TABLE migration_$version (id INTEGER PRIMARY KEY)');
   }
 }
 
@@ -220,9 +206,7 @@ final class _FailingMigration implements DatabaseMigration {
 
   @override
   Future<void> migrate(sqlite.SqliteWriteContext database) async {
-    await database.execute(
-      'CREATE TABLE should_be_rolled_back (id INTEGER PRIMARY KEY)',
-    );
+    await database.execute('CREATE TABLE should_be_rolled_back (id INTEGER PRIMARY KEY)');
     throw StateError('Migration failed');
   }
 }

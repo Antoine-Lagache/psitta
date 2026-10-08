@@ -41,9 +41,7 @@ final class ReleaseContentImporter {
     if (await _hasExercises()) return false;
 
     final manifest = _asMap(
-      jsonDecode(
-        utf8.decode(await _loadAsset('$_assetDirectory/manifest.json')),
-      ),
+      jsonDecode(utf8.decode(await _loadAsset('$_assetDirectory/manifest.json'))),
     );
     if (manifest['schema_version'] != 1 ||
         manifest['kind'] != 'psitta_v0_1_html_exercises') {
@@ -52,10 +50,7 @@ final class ReleaseContentImporter {
     final counts = _asMap(manifest['counts']);
     final files = _asMap(manifest['files']);
     final words = await _readRows(_wordFile, _asMap(files[_wordFile]));
-    final sentences = await _readRows(
-      _sentenceFile,
-      _asMap(files[_sentenceFile]),
-    );
+    final sentences = await _readRows(_sentenceFile, _asMap(files[_sentenceFile]));
     final instanceCount = sentences.fold<int>(
       0,
       (sum, row) => sum + _asList(row['instances']).length,
@@ -63,9 +58,7 @@ final class ReleaseContentImporter {
     if (words.length != counts['word_exercises'] ||
         sentences.length != counts['sentence_exercises'] ||
         instanceCount != counts['sentence_instances']) {
-      throw const FormatException(
-        'Release content counts do not match the manifest',
-      );
+      throw const FormatException('Release content counts do not match the manifest');
     }
     _validateOrder(words, 'word_exercise', 'word');
     _validateOrder(sentences, 'sentence_exercise', 'sentence');
@@ -122,13 +115,9 @@ final class ReleaseContentImporter {
           final instance = _asMap(raw);
           final instanceId = instance['instance_id'];
           if (instanceId is! String || !seen.add(instanceId)) {
-            throw const FormatException(
-              'Invalid or repeated sentence instance ID',
-            );
+            throw const FormatException('Invalid or repeated sentence instance ID');
           }
-          instances.add(
-            SentenceMapper.newInstance(await insertContent(instance)),
-          );
+          instances.add(SentenceMapper.newInstance(await insertContent(instance)));
         }
         if (instances.isEmpty) {
           throw const FormatException('Sentence group cannot be empty');
@@ -170,17 +159,12 @@ final class ReleaseContentImporter {
         .toList();
   }
 
-  void _validateOrder(
-    List<Map<String, dynamic>> rows,
-    String kind,
-    String prefix,
-  ) {
+  void _validateOrder(List<Map<String, dynamic>> rows, String kind, String prefix) {
     for (var index = 0; index < rows.length; index++) {
       final row = rows[index];
       if (row['kind'] != kind ||
           row['order'] != index + 1 ||
-          row['exercise_id'] !=
-              '$prefix-${(index + 1).toString().padLeft(4, '0')}') {
+          row['exercise_id'] != '$prefix-${(index + 1).toString().padLeft(4, '0')}') {
         throw FormatException('Invalid $kind order at index $index');
       }
     }
