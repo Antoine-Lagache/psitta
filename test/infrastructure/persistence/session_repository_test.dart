@@ -152,8 +152,9 @@ void main() {
         expect(persistedExercise.srsState.lastReview?.toUtc(), answeredAt);
         expect(persistedExercise.srsState.learningStepIndex, 0);
 
-        final history = await ExerciseHistoryRepository(database)
-            .getList(exerciseId: exercise.id);
+        final history = await ExerciseHistoryRepository(
+          database,
+        ).getList(exerciseId: exercise.id);
         expect(history, hasLength(1));
         expect(history.single.exerciseId, exercise.id);
         expect(history.single.grade, Grade.again);
@@ -218,8 +219,9 @@ void main() {
           1,
         );
         expect(
-          await ExerciseHistoryRepository(database)
-              .getList(exerciseId: exercise.id),
+          await ExerciseHistoryRepository(
+            database,
+          ).getList(exerciseId: exercise.id),
           hasLength(1),
         );
       },

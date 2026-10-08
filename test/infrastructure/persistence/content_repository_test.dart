@@ -128,8 +128,9 @@ void main() {
       expect(media.size, 2048);
       expect(media.sha256, 'image-sha256');
 
-      final byHash = await MediaRepository(database)
-          .getBySHA256('image-sha256');
+      final byHash = await MediaRepository(
+        database,
+      ).getBySHA256('image-sha256');
       expect(byHash!.id, media.id);
       expect(byHash.path, media.path);
       expect(await MediaRepository(database).getBySHA256('unknown'), isNull);

@@ -51,8 +51,9 @@ final class DevelopmentDataSeeder {
       return false;
     }
 
-    final media = await _DevelopmentMediaFactory(_mediaDirectoryProvider)
-        .create();
+    final media = await _DevelopmentMediaFactory(
+      _mediaDirectoryProvider,
+    ).create();
     return _database.writeTransaction((transaction) async {
       if (await _hasExercisesIn(transaction)) {
         return false;

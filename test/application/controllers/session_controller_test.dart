@@ -308,9 +308,9 @@ void main() {
         );
         expect(controller.hasActiveSession, isFalse);
         expect(
-          (await sessionRepository.getList(completedOnly: true))
-              .single
-              .totalTimeSpent,
+          (await sessionRepository.getList(
+            completedOnly: true,
+          )).single.totalTimeSpent,
           const Duration(minutes: 3),
         );
       },
@@ -325,8 +325,9 @@ void main() {
       now = submittedAt;
       await controller.submitAnswer(Grade.again);
 
-      final history = await ExerciseHistoryRepository(database)
-          .getList(exerciseId: exerciseId);
+      final history = await ExerciseHistoryRepository(
+        database,
+      ).getList(exerciseId: exerciseId);
       expect(history.single.answeredAt.toUtc(), submittedAt);
     });
 
@@ -368,8 +369,9 @@ void main() {
       elapsed += const Duration(minutes: 4);
       await controller.endSession();
 
-      final completed = (await sessionRepository.getList(completedOnly: true))
-          .single;
+      final completed = (await sessionRepository.getList(
+        completedOnly: true,
+      )).single;
       expect(completed.totalTimeSpent, const Duration(minutes: 4));
       expect(controller.hasActiveSession, isFalse);
     });
@@ -408,8 +410,9 @@ void main() {
           Duration.zero,
         );
         expect(
-          await ExerciseHistoryRepository(database)
-              .getList(exerciseId: exerciseId),
+          await ExerciseHistoryRepository(
+            database,
+          ).getList(exerciseId: exerciseId),
           isEmpty,
         );
 

@@ -45,14 +45,17 @@ class HomeContent extends StatelessWidget {
     return [
       Text(
         'Choose a session',
-        style: Theme.of(context).textTheme.headlineMedium
-            ?.copyWith(fontWeight: FontWeight.w700, color: Colors.black),
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: Colors.black,
+        ),
       ),
       const SizedBox(height: 8),
       Text(
         'Review what is due or start learning something new.',
-        style: Theme.of(context).textTheme.bodyLarge
-            ?.copyWith(color: const Color(0xFF616161)),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF616161)),
       ),
     ];
   }

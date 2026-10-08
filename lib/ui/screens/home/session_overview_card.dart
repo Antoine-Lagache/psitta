@@ -70,14 +70,16 @@ class SessionOverviewCard extends StatelessWidget {
       children: [
         Text(
           presentation.title,
-          style: Theme.of(context).textTheme.titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 2),
         Text(
           presentation.description,
-          style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: const Color(0xFF616161)),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF616161)),
         ),
       ],
     );
@@ -154,14 +156,17 @@ class _SessionCount extends StatelessWidget {
         children: [
           Text(
             '$count',
-            style: Theme.of(context).textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w700, color: Colors.black),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: const Color(0xFF616161)),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF616161)),
           ),
         ],
       ),

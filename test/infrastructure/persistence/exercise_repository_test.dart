@@ -282,59 +282,57 @@ void main() {
       expect(savedExercise.srsState.learningStepIndex, -1);
     });
 
-    test(
-      'answer persistence rolls back when the session update fails',
-      () async {
-        final contentId = await testDatabase.insertContent();
-        final exerciseId = await repository.createWordExercise(contentId);
-        final exercise = (await repository.getById(exerciseId))!;
-        final sessionRepository = SessionRepository(
+    test('answer persistence rolls back when the session update fails', () async {
+      final contentId = await testDatabase.insertContent();
+      final exerciseId = await repository.createWordExercise(contentId);
+      final exercise = (await repository.getById(exerciseId))!;
+      final sessionRepository = SessionRepository(
+        database,
+        exerciseRepository: repository,
+      );
+      final session = Session(
+        exercises: [exercise],
+        sessionType: SessionType.wordSession,
+        config: SRSConfig(),
+      );
+      final answeredAt = DateTime(2026, 9, 4, 12);
+
+      session.beginSession(answeredAt);
+      final persistedSessionId = await sessionRepository.save(session);
+      session.intermediateResult.id = persistedSessionId;
+      final answeredExercise = session.currentExercise;
+      session.submitAnswer(
+        SubmittedExerciseAnswer(grade: Grade.again, answeredAt: answeredAt),
+      );
+
+      session.intermediateResult.id = -1;
+      await expectLater(
+        sessionRepository.saveAnswerProgress(session, answeredExercise),
+        throwsA(anything),
+      );
+
+      final persistedExercise = await repository.getById(exerciseId);
+      expect(persistedExercise!.srsState.lastReview, isNull);
+      expect(answeredExercise.newHistoryEntry, hasLength(1));
+      expect(
+        await ExerciseHistoryRepository(
           database,
-          exerciseRepository: repository,
-        );
-        final session = Session(
-          exercises: [exercise],
-          sessionType: SessionType.wordSession,
-          config: SRSConfig(),
-        );
-        final answeredAt = DateTime(2026, 9, 4, 12);
+        ).getList(exerciseId: exerciseId),
+        isEmpty,
+      );
 
-        session.beginSession(answeredAt);
-        final persistedSessionId = await sessionRepository.save(session);
-        session.intermediateResult.id = persistedSessionId;
-        final answeredExercise = session.currentExercise;
-        session.submitAnswer(
-          SubmittedExerciseAnswer(grade: Grade.again, answeredAt: answeredAt),
-        );
-
-        session.intermediateResult.id = -1;
-        await expectLater(
-          sessionRepository.saveAnswerProgress(session, answeredExercise),
-          throwsA(anything),
-        );
-
-        final persistedExercise = await repository.getById(exerciseId);
-        expect(persistedExercise!.srsState.lastReview, isNull);
-        expect(answeredExercise.newHistoryEntry, hasLength(1));
-        expect(
-          await ExerciseHistoryRepository(database)
-              .getList(exerciseId: exerciseId),
-          isEmpty,
-        );
-
-        final activeSnapshots = await database.readTransaction(
-          (transaction) => transaction.getAll(
-            'SELECT status_index FROM active_session_exercise WHERE session_result_id = ?',
-            [persistedSessionId],
-          ),
-        );
-        expect(activeSnapshots, hasLength(1));
-        expect(
-          activeSnapshots.single['status_index'],
-          ExerciseStatus.newExercise.code,
-        );
-      },
-    );
+      final activeSnapshots = await database.readTransaction(
+        (transaction) => transaction.getAll(
+          'SELECT status_index FROM active_session_exercise WHERE session_result_id = ?',
+          [persistedSessionId],
+        ),
+      );
+      expect(activeSnapshots, hasLength(1));
+      expect(
+        activeSnapshots.single['status_index'],
+        ExerciseStatus.newExercise.code,
+      );
+    });
 
     test('delete removes an exercise', () async {
       final contentId = await testDatabase.insertContent();
@@ -394,8 +392,9 @@ void main() {
         expect(resetExercise.srsState.lastReview, isNull);
         expect(resetExercise.srsState.learningStepIndex, 0);
         expect(
-          await ExerciseHistoryRepository(database)
-              .getList(exerciseId: exerciseId),
+          await ExerciseHistoryRepository(
+            database,
+          ).getList(exerciseId: exerciseId),
           isEmpty,
         );
       },
@@ -458,8 +457,9 @@ void main() {
       expect(resetSentence.state.accumulatedScore, 0.0);
       expect(resetSentence.state.isInLearning, isFalse);
       expect(
-        await ExerciseHistoryRepository(database)
-            .getList(exerciseId: exerciseId),
+        await ExerciseHistoryRepository(
+          database,
+        ).getList(exerciseId: exerciseId),
         isEmpty,
       );
     });
