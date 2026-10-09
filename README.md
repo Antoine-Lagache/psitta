@@ -165,4 +165,11 @@ flutter test
 
 ## License
 
-This project is licensed under the MIT License. See the [`LICENSE`](LICENSE) file for details.
+The application code is licensed under MIT; see [`LICENSE`](LICENSE).
+The bundled learning content has separate source licenses. JMdict and OpenJLPT
+use CC BY-SA 4.0, and the underlying Tatoeba sentences use CC BY 2.0 France.
+The Psitta learning-content compilation and adaptations use CC BY-SA 4.0.
+Full credits (including OpenJLPT's upstream sources), license texts and JMdict
+documentation are bundled offline under `assets/legal/` and accessible through
+**Settings → About Psitta → Sources and licenses**. See
+[content sources](docs/content_sources.md) for provenance and maintenance notes.
