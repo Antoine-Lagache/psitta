@@ -22,17 +22,15 @@ Source snapshot: Japanese and English detailed sentence exports and direct
 translation links, 2026-09-26.
 
 OpenJLPT and its upstream contributors
-OpenJLPT vocabulary lists were used to select the N5/N4 vocabulary. Its grammar
-files are also recorded among the editorial source downloads. The frozen
-displayed meanings come from JMdict and displayed sentences from Tatoeba.
+OpenJLPT vocabulary lists were used to select the N5/N4 vocabulary.
+Displayed meanings come from JMdict and displayed sentences from Tatoeba.
 License: Creative Commons Attribution-ShareAlike 4.0 International.
 https://github.com/evanclan/OpenJLPT
 Snapshot: 0d1d3410bec90bd4098a7c72de820543cb4f707c
 
 OpenJLPT credits Jonathan Waller's JLPT Resources (CC BY), JMdict and KANJIDIC2
-(EDRDG), Tatoeba, and its own contributors. Its full NOTICE is preserved under
-the OpenJLPT entry, including the separate credit for KanjiVG on its website.
-Psitta does not bundle OpenJLPT kanji data or KanjiVG stroke diagrams.
+(EDRDG), Tatoeba, and its own contributors. This credit follows OpenJLPT's
+recommended attribution. Psitta does not bundle its kanji dataset.
 https://www.tanos.co.uk/jlpt/
 JLPT levels are unofficial study-list classifications, not official exam lists.
 
@@ -48,7 +46,10 @@ Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0):
 https://creativecommons.org/licenses/by-sa/4.0/
 The underlying Tatoeba sentences remain available under CC BY 2.0 France.
 Preserve the source credits and license notices when redistributing the data.
-See the separate entries for the complete license texts and EDRDG documentation.
+The shared CC BY-SA 4.0 license and EDRDG statement follow this notice.
+JMdict documentation is bundled in assets/legal/JMDICT_DOCUMENTATION.txt
+and available at the EDRDG project URL above. The Tatoeba license is available
+at the Creative Commons URL above.
 
 Generation source: psitta-content, commit
 92ecfebde93fe4f16c473ecb8f08f45c69afd1a1.

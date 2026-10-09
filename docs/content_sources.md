@@ -8,16 +8,16 @@ CC BY-SA 4.0; the underlying Tatoeba sentences retain their CC BY 2.0 FR license
 | Source | Role in Psitta | Attribution and license |
 |---|---|---|
 | JMdict (EDRDG; James William Breen) | Word forms, readings and selected English senses | CC BY-SA 4.0; full EDRDG statement and JMdict documentation bundled |
-| Tatoeba and its contributors | Direct Japanese-English sentence pairs | CC BY 2.0 France; source notice and original French legal code bundled |
-| OpenJLPT | N5/N4 vocabulary selection; grammar files also recorded in the source downloads | CC BY-SA 4.0; exact upstream NOTICE and LICENSE preserved |
+| Tatoeba and its contributors | Direct Japanese-English sentence pairs | CC BY 2.0 France; attribution and license URL in the shared notice |
+| OpenJLPT | N5/N4 vocabulary selection; grammar files also recorded in the source downloads | CC BY-SA 4.0; upstream attribution summarized; shared full license bundled |
 | Jonathan Waller's JLPT Resources | Upstream source of OpenJLPT vocabulary/level lists | CC BY, as recorded in OpenJLPT's NOTICE; preserve credit and source link |
 
-OpenJLPT's complete NOTICE also credits KANJIDIC2, its contributors and KanjiVG
-(used on its website). Those credits are retained verbatim, without claiming
-that Psitta embeds its kanji dataset or stroke diagrams. JLPT levels are
-unofficial classifications. Downloading grammar metadata is not evidence that
-the final card text comes from that metadata: frozen display meanings come from
-JMdict, and sentence texts from Tatoeba.
+OpenJLPT's recommended short attribution is used, including its upstream
+credits (Jonathan Waller, JMdict/KANJIDIC2 and Tatoeba). Its full NOTICE is not
+required to be copied. KanjiVG is used only on OpenJLPT's website and is not
+included in Psitta: its credit and CC BY-SA 3.0 reference have been removed.
+JLPT levels are unofficial classifications. The frozen display meanings come
+from JMdict, and sentence texts from Tatoeba.
 
 ## Source records
 
@@ -27,19 +27,27 @@ OpenJLPT is pinned to `0d1d3410bec90bd4098a7c72de820543cb4f707c`.
 The generated corpus comes from `psitta-content` commit
 `92ecfebde93fe4f16c473ecb8f08f45c69afd1a1`.
 
-`OPENJLPT_NOTICE.txt` and `CC-BY-SA-4.0.txt` are exact copies of that OpenJLPT
-snapshot's NOTICE.md and LICENSE. The EDRDG statement, JMdict documentation
-and CC BY 2.0 France legal code are text extractions of their official pages,
-with source URLs and retrieval date recorded in each file. Only HTML presentation
-has been removed. License texts must not be edited to summarize their terms.
+`CC-BY-SA-4.0.txt` is an exact copy of the pinned OpenJLPT LICENSE, shared
+by JMdict, OpenJLPT and Psitta's adaptations. `EDRDG_LICENCE.txt` and
+`JMDICT_DOCUMENTATION.txt` are text extractions of the official pages, with
+source URLs and retrieval dates. They remain bundled because EDRDG explicitly
+requests documentation and license files in software packages. Their original
+text is preserved, including sections concerning other EDRDG dictionaries.
 
 ## Attribution in the application
 
-Settings → About Psitta gives a source summary and opens Flutter's license
-viewer. Its corpus entries contain all notices, complete legal texts and JMdict
-documentation. Loading is deferred until the viewer opens, so adding notices
-does not add file reads to the database-import path. No network connection is
-needed to read them. The viewer also exposes registered software-package licenses.
+Settings → About Psitta opens Flutter's license viewer. There is one corpus
+entry, containing `CONTENT_NOTICES.txt`, one copy of the shared CC BY-SA 4.0
+text and the EDRDG statement. The lengthy JMdict documentation remains packaged
+but is not appended to the license viewer; its official URL is in the notice.
+Tatoeba's attribution and CC BY 2.0 France URL remain in the shared notice;
+a separate copy of that legal code is optional (section 4(a) permits a URI).
+The duplicate Tatoeba notice and full OpenJLPT NOTICE have been removed.
+
+Software-package notices supplied by Flutter remain registered: consolidation
+of data attribution does not remove the notices required by bundled libraries.
+Assets are loaded only when the viewer opens. Included texts work offline;
+following external documentation or license URLs requires a connection.
 
 This central placement follows the EDRDG's explicit About/Sources-screen guidance
 for smartphone/tablet applications and Tatoeba's collective text-attribution

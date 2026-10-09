@@ -5,25 +5,31 @@ import 'package:psitta/ui/app/content_licenses.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('bundled corpus notices include all source credits and full licenses', () async {
+  test('corpus attribution is consolidated and retains required credits', () async {
     final entries = await loadContentLicenses(rootBundle).toList();
-    final textBySource = {
-      for (final entry in entries)
-        entry.packages.single: entry.paragraphs.map((p) => p.text).join('\n'),
-    };
+    expect(entries, hasLength(1));
+    expect(entries.single.packages, ['Psitta learning content']);
+    final text = entries.single.paragraphs.map((p) => p.text).join('\n');
 
-    expect(textBySource, hasLength(4));
-    expect(textBySource['Psitta learning content'], contains('1,297'));
-    expect(textBySource['JMdict / EDRDG'], contains('GENERAL DICTIONARY LICENCE'));
-    expect(textBySource['JMdict / EDRDG'], contains('ShareAlike'));
-    expect(textBySource['Tatoeba contributors'], contains('2.0 France'));
-    expect(textBySource['Tatoeba contributors'], contains('creativecommons.org'));
+    for (final credit in [
+      'James William BREEN',
+      'EDRDG',
+      'Tatoeba',
+      'OpenJLPT',
+      'Jonathan Waller',
+      '1,297',
+      'GENERAL DICTIONARY LICENCE',
+      'Section 3',
+    ]) {
+      expect(text, contains(credit));
+    }
+    expect(text, contains('https://creativecommons.org/licenses/by/2.0/fr/'));
+    expect(text, contains('https://creativecommons.org/licenses/by-sa/4.0/'));
+    expect(text, isNot(contains('KanjiVG')));
+    expect(text, isNot(contains('CC BY-SA 3.0')));
     expect(
-      textBySource['OpenJLPT and upstream contributors'],
-      contains('Jonathan Waller'),
+      await rootBundle.loadString('assets/legal/JMDICT_DOCUMENTATION.txt'),
+      contains('JMdict'),
     );
-    expect(textBySource['OpenJLPT and upstream contributors'], contains('KANJIDIC2'));
-    expect(textBySource['OpenJLPT and upstream contributors'], contains('KanjiVG'));
-    expect(textBySource['OpenJLPT and upstream contributors'], contains('Section 3'));
   });
 }
