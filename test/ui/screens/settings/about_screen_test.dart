@@ -14,9 +14,12 @@ void main() {
 
     expect(find.text('About Psitta'), findsOne);
     expect(find.text('Created by Antoine Lagache.'), findsOne);
+    expect(find.text('Sources and licences'), findsOne);
+    expect(find.textContaining('JMdict'), findsWidgets);
+    expect(find.textContaining('Tatoeba'), findsWidgets);
   });
 
-  testWidgets('opens the website and source code links', (tester) async {
+  testWidgets('opens app and source attribution links', (tester) async {
     final openedUris = <Uri>[];
 
     await tester.pumpWidget(
@@ -35,11 +38,23 @@ void main() {
     await tester.tap(find.text('Source code'));
     await tester.pump();
 
+    final jmdictLink = find.text('JMdict / EDRDG licence');
+    await tester.ensureVisible(jmdictLink);
+    await tester.tap(jmdictLink);
+    await tester.pump();
+
+    final tatoebaLink = find.text('Tatoeba attribution and licence');
+    await tester.ensureVisible(tatoebaLink);
+    await tester.tap(tatoebaLink);
+    await tester.pump();
+
     expect(
       openedUris,
       equals([
         Uri.parse('https://psitta.net'),
         Uri.parse('https://github.com/Antoine-Lagache/psitta'),
+        Uri.parse('https://www.edrdg.org/edrdg/licence.html'),
+        Uri.parse('https://en.wiki.tatoeba.org/articles/show/faq'),
       ]),
     );
   });
