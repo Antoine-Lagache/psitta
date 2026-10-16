@@ -114,9 +114,10 @@ queries.
 ## Settings and About
 
 Settings is intentionally a placeholder for the MVP. It links to `AboutScreen`,
-which presents application information and opens `https://psitta.net` and the
-GitHub repository in an external application. Link failures are caught and
-shown in a dialog whose message, URI, and caught exception are selectable.
+which presents application information, external links, and a Sources and
+Licences section for JMdict/EDRDG and Tatoeba. Source and licence links open in
+an external application. Link failures are caught and shown in a dialog whose
+message, URI, and caught exception are selectable.
 
 ## Content rendering
 
