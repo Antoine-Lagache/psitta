@@ -135,7 +135,11 @@ class AboutScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _showLinkError(BuildContext context, Uri uri, [Object? error]) {
+  Future<void> _showLinkError(
+    BuildContext context,
+    Uri uri, [
+    Object? error,
+  ]) {
     return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
