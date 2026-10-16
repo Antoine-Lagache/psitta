@@ -55,7 +55,10 @@ class AboutScreen extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        const Text('Created by Antoine Lagache.', textAlign: TextAlign.center),
+        const Text(
+          'Created by Antoine Lagache.',
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 32),
         _buildLinkButton(
           context: context,
