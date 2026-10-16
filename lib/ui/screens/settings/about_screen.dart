@@ -5,6 +5,10 @@ typedef ExternalLinkLauncher = Future<bool> Function(Uri uri);
 
 final Uri _websiteUri = Uri.parse('https://psitta.net');
 final Uri _sourceCodeUri = Uri.parse('https://github.com/Antoine-Lagache/psitta');
+final Uri _jmdictLicenseUri = Uri.parse('https://www.edrdg.org/edrdg/licence.html');
+final Uri _tatoebaAttributionUri = Uri.parse(
+  'https://en.wiki.tatoeba.org/articles/show/faq',
+);
 
 /// Presents the application information and its external links.
 class AboutScreen extends StatelessWidget {
@@ -61,6 +65,37 @@ class AboutScreen extends StatelessWidget {
           icon: Icons.code,
           label: 'Source code',
           uri: _sourceCodeUri,
+        ),
+        const SizedBox(height: 32),
+        Text(
+          'Sources and licences',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Vocabulary and English definitions: JMdict, maintained by the '
+          'Electronic Dictionary Research and Development Group (EDRDG), '
+          'under CC BY-SA 4.0.',
+        ),
+        const SizedBox(height: 8),
+        _buildLinkButton(
+          context: context,
+          icon: Icons.menu_book_outlined,
+          label: 'JMdict / EDRDG licence',
+          uri: _jmdictLicenseUri,
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Example sentences and translations: Tatoeba contributors, under '
+          'CC BY 2.0 FR. Sentence cards link to their Tatoeba records when '
+          'source identifiers are available.',
+        ),
+        const SizedBox(height: 8),
+        _buildLinkButton(
+          context: context,
+          icon: Icons.format_quote_outlined,
+          label: 'Tatoeba attribution and licence',
+          uri: _tatoebaAttributionUri,
         ),
       ],
     );
