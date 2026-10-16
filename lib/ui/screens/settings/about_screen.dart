@@ -4,8 +4,12 @@ import 'package:url_launcher/url_launcher.dart';
 typedef ExternalLinkLauncher = Future<bool> Function(Uri uri);
 
 final Uri _websiteUri = Uri.parse('https://psitta.net');
-final Uri _sourceCodeUri = Uri.parse('https://github.com/Antoine-Lagache/psitta');
-final Uri _jmdictLicenseUri = Uri.parse('https://www.edrdg.org/edrdg/licence.html');
+final Uri _sourceCodeUri = Uri.parse(
+  'https://github.com/Antoine-Lagache/psitta',
+);
+final Uri _jmdictLicenseUri = Uri.parse(
+  'https://www.edrdg.org/edrdg/licence.html',
+);
 final Uri _tatoebaAttributionUri = Uri.parse(
   'https://en.wiki.tatoeba.org/articles/show/faq',
 );
