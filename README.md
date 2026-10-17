@@ -127,14 +127,14 @@ be added and verified before they can be claimed as supported.
 ### Bundled exercises and installation
 
 `assets/content/v0_1/` contains the frozen HTML corpus copied from
-`psitta-content` (`chatgpt/editorial-review`, commit
-`92ecfebde93fe4f16c473ecb8f08f45c69afd1a1`):
+`psitta-content`, generated from the frozen editorial selection on 2026-10-16.
+Its exact input hash and review status are retained in the bundled manifest:
 
 | File | Contents |
 |---|---|
 | `manifest.json` | Format version, source checksum, counts and compressed/decoded checksums |
 | `word_exercises.jsonl.gz` | 1,297 ordered word exercises, each with separate `front_html` and `back_html` |
-| `sentence_exercises.jsonl.gz` | 1,428 ordered groups containing 2,629 sentence instances, each with its own front and back |
+| `sentence_exercises.jsonl.gz` | 1,357 ordered groups containing 3,452 sentence instances, each with its own front and back |
 
 `tools/build_bundled_database.dart` runs the application migrations and
 `ReleaseContentImporter` ahead of distribution, generating
@@ -144,7 +144,7 @@ CI generates them automatically. A new installation
 verifies and atomically copies this snapshot, avoiding thousands of SQL calls
 at startup. Existing databases run their pending migrations without replacement.
 The transactional importer remains a recovery path for existing empty databases.
-The snapshot contains 2,725 exercises, 3,926 content records, two HTML field
+The snapshot contains 2,654 exercises, 4,749 content records, two HTML field
 definitions (front/back), sentence groups, instance states and initial SRS states. Word exercise IDs
 follow the word order; sentence exercise IDs follow the group order. The
 learning session may shuffle its selected exercises.
@@ -153,6 +153,13 @@ Existing development installations with synthetic exercises keep their data;
 to test a clean install, clear application data or remove `psitta.db` from the
 application-support directory. `DevelopmentDataSeeder` remains available to
 test media rendering explicitly, but is no longer called on normal startup.
+
+The current export preserves the frozen word/group order and includes aligned
+furigana, JMdict labels and Tatoeba links on all sentence cards. Fifteen justified
+translation flags preserve the Tatoeba translation alongside a clearly labelled,
+unverified AI suggestion. The upstream manifest still records `release_ready: false`
+because contextual reading review is incomplete; integration does not certify
+linguistic correctness.
 
 The import is a one-time installation of v0.1. Updating a populated database
 to a revised corpus will need a versioned content migration that preserves

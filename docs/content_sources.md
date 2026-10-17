@@ -24,8 +24,21 @@ from JMdict, and sentence texts from Tatoeba.
 The acquisition record is `config/sources.lock.json` in `psitta-content`.
 The dictionary snapshot is dated 2026-10-02; Tatoeba exports are dated 2026-09-26.
 OpenJLPT is pinned to `0d1d3410bec90bd4098a7c72de820543cb4f707c`.
-The generated corpus comes from `psitta-content` commit
-`92ecfebde93fe4f16c473ecb8f08f45c69afd1a1`.
+The current generated corpus was exported from `psitta-content` on 2026-10-16,
+using `data/review/v0_1_exercises_reconstructed_draft.json` with SHA-256
+`33e1083706425ce4e539f241efceec1837197e20b5cfdc32a75e843d9fe7b808`.
+It contains 1,297 words, 1,357 groups and 3,452 sentence instances. The two
+compressed JSONL files and generator manifest are copied byte-for-byte.
+The full manifest retains input/output hashes, source-restoration and translation
+review hashes, furigana coverage, and the upstream `release_ready: false` status.
+Referenced preview/review files remain in `psitta-content`; they are not runtime
+assets. The manifest is the upstream export record, not an inventory of app assets.
+
+All sentence cards link to their Japanese and English Tatoeba source records.
+Fifteen cards preserve the original translation and add an English explanation
+and an AI-generated alternative explicitly marked as not independently verified.
+Furigana and editorial review metadata are retained without treating them as
+independent native-speaker verification.
 
 `CC-BY-SA-4.0.txt` is an exact copy of the pinned OpenJLPT LICENSE, shared
 by JMdict, OpenJLPT and Psitta's adaptations. `EDRDG_LICENCE.txt` and
@@ -51,7 +64,8 @@ following external documentation or license URLs requires a connection.
 
 This central placement follows the EDRDG's explicit About/Sources-screen guidance
 for smartphone/tablet applications and Tatoeba's collective text-attribution
-guidance. It avoids repeating notices on every exercise card.
+guidance. Full notices are centralized here; cards carry compact source labels and sentence
+source links.
 
 - EDRDG: https://www.edrdg.org/edrdg/licence.html
 - Tatoeba: https://en.wiki.tatoeba.org/articles/show/faq

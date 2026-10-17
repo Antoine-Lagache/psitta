@@ -1,23 +1,67 @@
 {
   "schema_version": 1,
   "kind": "psitta_v0_1_html_exercises",
-  "source_sha256": "f4752f406357650d91b40a1a8dc53d3017c9e76376453a2cc1075560bfb419bd",
+  "source_sha256": "33e1083706425ce4e539f241efceec1837197e20b5cfdc32a75e843d9fe7b808",
+  "source_kind": "psitta_exercise_reconstruction_draft",
+  "source_release_status": "editorial_draft_not_for_release",
+  "kana_reading": {
+    "display": "Word readings use ruby on kanji; sentence readings use ruby on kanji-bearing segments; kana-only text receives no duplicate annotation",
+    "method": "SudachiPy core reading_form over full sentences; unique linked-vocabulary readings and explicit editorial overrides take precedence; unresolved readings remain review candidates",
+    "sudachipy_version": "0.7.0",
+    "sudachidict_core_version": "20260723.1",
+    "linked_vocabulary_overrides": 120,
+    "explicit_editorial_overrides": 43,
+    "confirmed_editorial_overrides": 43,
+    "proposed_editorial_overrides": 0,
+    "explicit_editorial_overrides_sha256": "43838f263adf2e869421c41583a58051b490fca4bd0c7794bfaf63109288c3e8",
+    "coverage": {
+      "sentences_with_kanji": 3320,
+      "kana_only_sentences": 132,
+      "kanji_token_occurrences": 7364,
+      "unique_linked_readings": 5234,
+      "conflicting_linked_readings": 73,
+      "no_exact_linked_reading": 2057
+    },
+    "instances_flagged_for_review": 1712,
+    "unverified_furigana_occurrences": 2013,
+    "review_file": "kana_reading_review.json",
+    "human_reviewed": false
+  },
+  "release_ready": false,
+  "attribution": {
+    "word_source": "JMdict",
+    "sentence_source": "Tatoeba; IDs restored by exact-match audit where absent from the editorial draft",
+    "sentence_source_restorations_sha256": "0efd92745a50b9d6340da779f402931320802c3fc3927afba1d3fc39d73b8852",
+    "tatoeba_linked_instances": 3452,
+    "instances_without_source_metadata": 0
+  },
+  "translation_review": {
+    "review_file": "v0_1_translation_review.json",
+    "review_file_sha256": "235c1492d52862bce34dc21a01cc173451af9e81f78729565c02f45fc57ed2c5",
+    "reviewed_instances": 3452,
+    "review_complete": true,
+    "confirmed_mismatches": 15,
+    "suggested_translations_are_ai_generated_and_unverified": true
+  },
   "counts": {
     "word_exercises": 1297,
-    "sentence_exercises": 1428,
-    "sentence_instances": 2629
+    "sentence_exercises": 1357,
+    "sentence_instances": 3452
   },
   "files": {
     "word_exercises.jsonl.gz": {
-      "sha256": "2a2209cc0f2550654f4e69b96f2d7c502c77a7e547435747435a2eb6dc7b7300",
-      "jsonl_sha256": "3660b6292adb338903d29a10415bbcf0e220451799417c6b149d83033ac9332f"
+      "sha256": "63d5b5696ee7c35bbf205fb4dee181b28c000cff064b51f615277128b05cc917",
+      "jsonl_sha256": "070d8fcfd2d181ef7be79fb03d8ea57b6b34f8d23779a860eaf8d9425da4d488"
     },
     "sentence_exercises.jsonl.gz": {
-      "sha256": "a25ee0e5072b715d29f3b80f65b067ffbae92049cc7faba1a4b8bfa4d999cbce",
-      "jsonl_sha256": "3dc25b7231ce8fc29b8391126a5033b77bc638f7153d680f29c7fa90ce8fa9df"
+      "sha256": "27a8da8a26ad547baa4dc75b97cfd0dfb10afb4f6737486815f8c5b3d916fb86",
+      "jsonl_sha256": "651c91ec6193d5d124ad3f452cfbcf54971bd00ec14f86c46cb93e4390c53f3f"
     },
     "preview.html": {
-      "sha256": "2dd93c660e2ed2977ec2a7c376aefdb4a2b5e3b61acb5dedc5f994ea276795f4"
+      "sha256": "391edf47a59fd1ef2a15d40080b6598245ba5cb2efd7467e45ad4283310497f8"
+    },
+    "kana_reading_review.json": {
+      "sha256": "d3f62bed8938e2f7316cf984bf42284e3b2ea6b026f0022278f4ed9584f39574"
     }
   }
 }

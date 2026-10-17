@@ -21,14 +21,14 @@ void main() {
         ).importIfEmpty();
 
         expect(await importRelease(), isTrue);
-        expect(await db.countRows('exercise'), 2725);
+        expect(await db.countRows('exercise'), 2654);
         expect(await db.countRows('word_exercise'), 1297);
-        expect(await db.countRows('sentence_exercise'), 1428);
-        expect(await db.countRows('sentence_group'), 1428);
-        expect(await db.countRows('sentence_instance'), 2629);
-        expect(await db.countRows('sentence_state'), 2629);
-        expect(await db.countRows('content'), 3926);
-        expect(await db.countRows('field_value'), 7852);
+        expect(await db.countRows('sentence_exercise'), 1357);
+        expect(await db.countRows('sentence_group'), 1357);
+        expect(await db.countRows('sentence_instance'), 3452);
+        expect(await db.countRows('sentence_state'), 3452);
+        expect(await db.countRows('content'), 4749);
+        expect(await db.countRows('field_value'), 9498);
 
         final firstWord = await ExerciseDao(db.database).getById(1);
         expect(firstWord, isA<WordExercisePersistence>());
@@ -36,8 +36,8 @@ void main() {
           db.database,
         ).getById((firstWord! as WordExercisePersistence).contentId);
         expect(wordContent!.fieldValues.map((field) => field.textValue), [
-          contains('私'),
-          contains('I; me'),
+          contains('こんばんは'),
+          contains('good evening'),
         ]);
 
         final firstSentence = await ExerciseDao(db.database).getById(1298);
@@ -51,14 +51,49 @@ void main() {
           db.database,
         ).getById(group.sentenceInstances.first.contentId);
         expect(firstInstanceContent!.fieldValues.map((field) => field.textValue), [
-          contains('私は先生です。'),
-          contains('I am a teacher.'),
+          contains('こんばんは。'),
+          contains('Good evening.'),
         ]);
+
+        final sentenceBacks = await db.database.getAll(
+          "SELECT fv.text_value FROM sentence_instance si "
+          "JOIN field_value fv ON fv.content_id = si.content_id "
+          "JOIN field_definition fd ON fd.id = fv.field_definition_id "
+          "WHERE fd.side = 'back' ORDER BY si.id",
+        );
+        expect(sentenceBacks, hasLength(3452));
+        final cards = sentenceBacks.map((row) => row['text_value'] as String).toList();
+        expect(cards.every((card) => card.contains('Source: Tatoeba')), isTrue);
+        expect(
+          cards.every(
+            (card) =>
+                'https://tatoeba.org/en/sentences/show/'.allMatches(card).length == 2,
+          ),
+          isTrue,
+        );
+        final annotated = cards
+            .where((card) => card.contains('Translation mismatch'))
+            .toList();
+        expect(annotated, hasLength(15));
+        expect(
+          annotated.every(
+            (card) =>
+                card.contains('Tatoeba translation') &&
+                card.contains(
+                  'Suggested translation (AI-generated; not independently verified)',
+                ),
+          ),
+          isTrue,
+        );
+        final letterCard = annotated.singleWhere(
+          (card) => card.contains('I have been reading a book all morning.'),
+        );
+        expect(letterCard, contains('I was writing letters all morning.'));
 
         await db.reopen();
         expect(await importRelease(), isFalse);
-        expect(await db.countRows('exercise'), 2725);
-        expect(await db.countRows('field_value'), 7852);
+        expect(await db.countRows('exercise'), 2654);
+        expect(await db.countRows('field_value'), 9498);
       } finally {
         await db.dispose();
       }

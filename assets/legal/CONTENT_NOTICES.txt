@@ -36,9 +36,12 @@ JLPT levels are unofficial study-list classifications, not official exam lists.
 
 Adaptations by Antoine Lagache / Psitta
 The source material has been selected, filtered, ordered and grouped into
-1,297 word exercises and 1,428 sentence groups (2,629 Japanese-English instances).
+1,297 word exercises and 1,357 sentence groups (3,452 Japanese-English instances).
 Selected dictionary senses have been reformatted, and separate question/answer
-HTML fragments have been generated. These changes do not imply endorsement
+HTML fragments with furigana have been generated. On 15 flagged sentence cards,
+the Tatoeba translation is preserved alongside an explanation and an AI-generated
+suggestion explicitly marked as not independently verified.
+These changes do not imply endorsement
 by the source projects. Source material is provided without warranty.
 
 The Psitta learning-content compilation and adaptations are distributed under
@@ -51,8 +54,9 @@ JMdict documentation is bundled in assets/legal/JMDICT_DOCUMENTATION.txt
 and available at the EDRDG project URL above. The Tatoeba license is available
 at the Creative Commons URL above.
 
-Generation source: psitta-content, commit
-92ecfebde93fe4f16c473ecb8f08f45c69afd1a1.
+Generation source: psitta-content, frozen editorial export dated 2026-10-16.
+Input: data/review/v0_1_exercises_reconstructed_draft.json.
+Input SHA-256: 33e1083706425ce4e539f241efceec1837197e20b5cfdc32a75e843d9fe7b808.
 The manifest in assets/content/v0_1/ records the frozen input and output hashes.
 Bundled exercise files and these notices are available with the application:
 https://github.com/Antoine-Lagache/psitta
