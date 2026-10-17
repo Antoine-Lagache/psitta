@@ -27,6 +27,8 @@ and SRS rules needed by a developer entering the project.
   DAOs, mappers, and transaction boundaries.
   - [Database](architecture/persistence_layer/database.md) — database lifecycle
     and version 1 schema.
+  - [Bundled database](bundled_database.md) — generation, first-install snapshot,
+    and upgrades that preserve user progress.
   - [Repositories](architecture/persistence_layer/repositories.md) — the APIs
     exposed to the application layer.
 

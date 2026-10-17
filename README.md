@@ -89,7 +89,7 @@ The project is under active development. Here is a transparent breakdown of prog
 | Persistence layer | ✅ Complete |
 | Application / Controllers | ✅ Complete |
 | UI | ✅ MVP screens and learning workflow complete |
-| Production learning content | ✅ Frozen v0.1 corpus imported on first launch |
+| Production learning content | ✅ Frozen v0.1 corpus in a bundled SQLite snapshot |
 
 The functional MVP shell and its first Japanese corpus are integrated. The
 current focus is reviewing that corpus in the app before the v0.1 release.
@@ -99,9 +99,9 @@ current focus is reviewing that corpus in the app before the v0.1 release.
 
 ## Getting Started
 
-On first launch, the app creates `psitta.db`, applies the SQLite schema and
-imports the bundled v0.1 exercises before opening the main screen. This works
-in debug and release builds. A later launch retains the database and progress.
+On first launch, the app installs a verified, prefilled `psitta.db` snapshot
+and applies any pending schema migrations before opening the main screen. This
+works in debug and release builds. Later launches retain the database and progress.
 
 **Prerequisites:** Flutter SDK 3.x, Dart 3.x
 
@@ -109,6 +109,7 @@ in debug and release builds. A later launch retains the database and progress.
 git clone https://github.com/Antoine-Lagache/psitta.git
 cd psitta
 flutter pub get
+flutter test tools/build_bundled_database.dart
 flutter run
 ```
 
@@ -135,12 +136,16 @@ be added and verified before they can be claimed as supported.
 | `word_exercises.jsonl.gz` | 1,297 ordered word exercises, each with separate `front_html` and `back_html` |
 | `sentence_exercises.jsonl.gz` | 1,428 ordered groups containing 2,629 sentence instances, each with its own front and back |
 
-`ReleaseContentImporter` verifies both files against the manifest, then writes
-2,725 exercises and 3,926 content records in one transaction. A failed import
-rolls back completely and the startup screen offers a retry. The corpus is
-installed only when the exercise table is empty, so existing user progress is
-not overwritten. The import creates two HTML field definitions (front/back),
-sentence groups, instance states and initial SRS states. Word exercise IDs
+`tools/build_bundled_database.dart` runs the application migrations and
+`ReleaseContentImporter` ahead of distribution, generating
+`assets/database/psitta.db.gz` and its checksum manifest. Both generated files
+are ignored by Git; generate them before running tests, the app, or a build.
+CI generates them automatically. A new installation
+verifies and atomically copies this snapshot, avoiding thousands of SQL calls
+at startup. Existing databases run their pending migrations without replacement.
+The transactional importer remains a recovery path for existing empty databases.
+The snapshot contains 2,725 exercises, 3,926 content records, two HTML field
+definitions (front/back), sentence groups, instance states and initial SRS states. Word exercise IDs
 follow the word order; sentence exercise IDs follow the group order. The
 learning session may shuffle its selected exercises.
 
@@ -151,11 +156,13 @@ test media rendering explicitly, but is no longer called on normal startup.
 
 The import is a one-time installation of v0.1. Updating a populated database
 to a revised corpus will need a versioned content migration that preserves
-learning progress.
+learning progress. For the regeneration command and migration workflow, see
+[bundled database generation](docs/bundled_database.md).
 
 Run the same checks as CI with:
 
 ```bash
+flutter test tools/build_bundled_database.dart
 dart format lib test tools
 flutter analyze
 flutter test
