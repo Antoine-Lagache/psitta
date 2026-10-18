@@ -74,9 +74,10 @@ void main() {
     final japanese = runs.entries.firstWhere((e) => e.key.contains('再来月')).value;
     expect(japanese.fontFamily, 'NotoSansJP');
     expect(japanese.fontWeight, FontWeight.w500);
-    expect(japanese.fontSize, 29);
-    expect(runs['Source: Tatoeba']?.fontSize, 12);
-    expect(runs['I will go the month after next.']?.fontSize, 19);
+    // HtmlWidget resolves the system text scale into its text spans.
+    expect(japanese.fontSize, 29 * 1.5);
+    expect(runs['Source: Tatoeba']?.fontSize, 12 * 1.5);
+    expect(runs['I will go the month after next.']?.fontSize, 19 * 1.5);
     expect(runs.keys.any((text) => text.contains('さらいげつ')), isTrue);
   });
 }
