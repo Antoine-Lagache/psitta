@@ -5,6 +5,11 @@ import 'package:flutter/services.dart';
 /// Assets are read only when the user opens the licenses page.
 void registerContentLicenses() {
   LicenseRegistry.addLicense(() => loadContentLicenses(rootBundle));
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks([
+      'Noto Sans JP',
+    ], await rootBundle.loadString('assets/legal/NOTO_SANS_JP_OFL.txt'));
+  });
 }
 
 /// Shares one notice and one copy of the common license across corpus sources.

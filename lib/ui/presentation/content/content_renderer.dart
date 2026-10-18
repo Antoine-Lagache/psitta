@@ -31,7 +31,35 @@ class ContentRenderer {
     final fragments = await Future.wait(fields.map(_fieldRenderer.render));
 
     final html = fragments.join();
-    return HtmlWidget(html, customWidgetBuilder: _buildCustomWidget);
+    return HtmlWidget(
+      html,
+      textStyle: const TextStyle(fontFamilyFallback: ['NotoSansJP']),
+      customStylesBuilder: _buildReadingStyles,
+      customWidgetBuilder: _buildCustomWidget,
+    );
+  }
+
+  // v0.1 stores presentation sizes inline without semantic CSS classes. Override
+  // only the large Japanese reading blocks, including their ruby descendants.
+  // Applying this at render time also improves already-installed databases.
+  static final _japanese = RegExp(r'[\u3040-\u30ff\u3400-\u9fff]');
+  static final _fontSize = RegExp(r'(?:^|;)\s*font-size\s*:\s*(\d+)px');
+
+  Map<String, String>? _buildReadingStyles(dom.Element element) {
+    final inlineStyle = element.attributes['style'] ?? '';
+    final match = _fontSize.firstMatch(inlineStyle);
+    if (match == null || !_japanese.hasMatch(element.text)) {
+      return null;
+    }
+    final size = int.parse(match.group(1)!);
+    if (size < 24) {
+      return null;
+    }
+    return {
+      'font-family': 'NotoSansJP',
+      'font-size': '${(size * 1.2).ceil()}px',
+      'font-weight': inlineStyle.contains('font-weight:700') ? '700' : '500',
+    };
   }
 
   Widget? _buildCustomWidget(dom.Element element) {
