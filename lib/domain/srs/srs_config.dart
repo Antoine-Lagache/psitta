@@ -24,8 +24,9 @@ class SRSConfig {
   /// Offset from midnight used to decide whether an interval crosses a day.
   final Duration dayBoundary;
 
-  /// Maximum numbers of new and due exercises loaded into a session.
+  /// Maximum new words, new sentence groups, and due exercises per session.
   final int newCount;
+  final int newSentenceCount;
   final int reviewCount;
 
   static const List<double> _defaultLambdas = [0.60, 0.90, 0.80, 0.95, 0.85, 0.70];
@@ -52,7 +53,8 @@ class SRSConfig {
     this.hardLearningFactor = 0.7,
     this.easyBonus = 1.3,
     this.dayBoundary = Duration.zero,
-    this.newCount = 10,
+    this.newCount = 4,
+    this.newSentenceCount = 3,
     this.reviewCount = 9999,
   }) : lambdas = List.unmodifiable(
          List.generate(6, (i) {
