@@ -1,39 +1,17 @@
 {
   "schema_version": 1,
   "kind": "psitta_v0_1_html_exercises",
-  "source_sha256": "33e1083706425ce4e539f241efceec1837197e20b5cfdc32a75e843d9fe7b808",
-  "source_kind": "psitta_exercise_reconstruction_draft",
-  "source_release_status": "editorial_draft_not_for_release",
-  "kana_reading": {
-    "display": "Word readings use ruby on kanji; sentence readings use ruby on kanji-bearing segments; kana-only text receives no duplicate annotation",
-    "method": "SudachiPy core reading_form over full sentences; unique linked-vocabulary readings and explicit editorial overrides take precedence; unresolved readings remain review candidates",
-    "sudachipy_version": "0.7.0",
-    "sudachidict_core_version": "20260723.1",
-    "linked_vocabulary_overrides": 120,
-    "explicit_editorial_overrides": 43,
-    "confirmed_editorial_overrides": 43,
-    "proposed_editorial_overrides": 0,
-    "explicit_editorial_overrides_sha256": "43838f263adf2e869421c41583a58051b490fca4bd0c7794bfaf63109288c3e8",
-    "coverage": {
-      "sentences_with_kanji": 3320,
-      "kana_only_sentences": 132,
-      "kanji_token_occurrences": 7364,
-      "unique_linked_readings": 5234,
-      "conflicting_linked_readings": 73,
-      "no_exact_linked_reading": 2057
-    },
-    "instances_flagged_for_review": 1712,
-    "unverified_furigana_occurrences": 2013,
-    "review_file": "kana_reading_review.json",
-    "human_reviewed": false
-  },
+  "source_sha256": "020bdc1582ac2302fcac0ea14ade852a3344e5d0f04ae26f95e227064e8584bd",
+  "source_kind": "reviewed_v0_1_curriculum_order",
+  "source_release_status": "frozen_editorial_reference_v0_1_with_documented_exceptions",
   "release_ready": false,
   "attribution": {
     "word_source": "JMdict",
     "sentence_source": "Tatoeba; IDs restored by exact-match audit where absent from the editorial draft",
     "sentence_source_restorations_sha256": "0efd92745a50b9d6340da779f402931320802c3fc3927afba1d3fc39d73b8852",
     "tatoeba_linked_instances": 3452,
-    "instances_without_source_metadata": 0
+    "instances_without_source_metadata": 0,
+    "editorial_adaptations": "10 word cards explicitly credit ChatGPT for sense selection and usage notes; dictionary glosses remain JMdict"
   },
   "translation_review": {
     "review_file": "v0_1_translation_review.json",
@@ -45,23 +23,54 @@
   },
   "counts": {
     "word_exercises": 1297,
-    "sentence_exercises": 1357,
+    "sentence_exercises": 1380,
     "sentence_instances": 3452
   },
   "files": {
     "word_exercises.jsonl.gz": {
-      "sha256": "63d5b5696ee7c35bbf205fb4dee181b28c000cff064b51f615277128b05cc917",
-      "jsonl_sha256": "070d8fcfd2d181ef7be79fb03d8ea57b6b34f8d23779a860eaf8d9425da4d488"
+      "sha256": "c37c1df791d04c11abe8842979d22a263dc406900fd66921bdc48b338dc47b4c",
+      "jsonl_sha256": "d333efb365cc2d6612e0fb4e5a3abbde0357417b2316c54c87c08205da456390"
     },
     "sentence_exercises.jsonl.gz": {
-      "sha256": "27a8da8a26ad547baa4dc75b97cfd0dfb10afb4f6737486815f8c5b3d916fb86",
-      "jsonl_sha256": "651c91ec6193d5d124ad3f452cfbcf54971bd00ec14f86c46cb93e4390c53f3f"
-    },
-    "preview.html": {
-      "sha256": "391edf47a59fd1ef2a15d40080b6598245ba5cb2efd7467e45ad4283310497f8"
-    },
-    "kana_reading_review.json": {
-      "sha256": "d3f62bed8938e2f7316cf984bf42284e3b2ea6b026f0022278f4ed9584f39574"
+      "sha256": "6c7022347c4b5e2d686f1d885df0f2f60c25a855f923ee975f83d174f42ce574",
+      "jsonl_sha256": "10104647bcaf99c3c12933757f60cf1373877c57e9f2cd1673c973e8d82449b1"
     }
+  },
+  "editorial_reference": {
+    "repository": "Antoine-Lagache/psitta-content",
+    "commit": "a447a6186fe0e8c5fc1d1b3c6ea5ded42ac70367",
+    "path": "data/review/v0_1_final_4_3_curriculum_20261019.json",
+    "html_baseline_commit": "8824eaf3dc8543fb203e76bc3db10809483e1e0c",
+    "corrected_word_cards": 10,
+    "sentence_reading_corrections": 1,
+    "scheduling": "Order applied; recommended_session is metadata, not enforced by the app"
+  },
+  "kana_reading": {
+    "human_reviewed": false,
+    "method": "Preserved reviewed baseline HTML by exact source instance reference; corrected one linked 訳 reading to やく",
+    "baseline_audit": {
+      "display": "Word readings use ruby on kanji; sentence readings use ruby on kanji-bearing segments; kana-only text receives no duplicate annotation",
+      "method": "SudachiPy core reading_form over full sentences; unique linked-vocabulary readings and explicit editorial overrides take precedence; unresolved readings remain review candidates",
+      "sudachipy_version": "0.7.0",
+      "sudachidict_core_version": "20260723.1",
+      "linked_vocabulary_overrides": 120,
+      "explicit_editorial_overrides": 43,
+      "confirmed_editorial_overrides": 43,
+      "proposed_editorial_overrides": 0,
+      "explicit_editorial_overrides_sha256": "43838f263adf2e869421c41583a58051b490fca4bd0c7794bfaf63109288c3e8",
+      "coverage": {
+        "sentences_with_kanji": 3320,
+        "kana_only_sentences": 132,
+        "kanji_token_occurrences": 7364,
+        "unique_linked_readings": 5234,
+        "conflicting_linked_readings": 73,
+        "no_exact_linked_reading": 2057
+      },
+      "instances_flagged_for_review": 1712,
+      "unverified_furigana_occurrences": 2013,
+      "review_file": "kana_reading_review.json",
+      "human_reviewed": false
+    },
+    "current_coverage_recomputed": false
   }
 }

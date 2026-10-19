@@ -21,10 +21,10 @@ void main() {
         ).importIfEmpty();
 
         expect(await importRelease(), isTrue);
-        expect(await db.countRows('exercise'), 2654);
+        expect(await db.countRows('exercise'), 2677);
         expect(await db.countRows('word_exercise'), 1297);
-        expect(await db.countRows('sentence_exercise'), 1357);
-        expect(await db.countRows('sentence_group'), 1357);
+        expect(await db.countRows('sentence_exercise'), 1380);
+        expect(await db.countRows('sentence_group'), 1380);
         expect(await db.countRows('sentence_instance'), 3452);
         expect(await db.countRows('sentence_state'), 3452);
         expect(await db.countRows('content'), 4749);
@@ -36,9 +36,25 @@ void main() {
           db.database,
         ).getById((firstWord! as WordExercisePersistence).contentId);
         expect(wordContent!.fieldValues.map((field) => field.textValue), [
-          contains('こんばんは'),
-          contains('good evening'),
+          contains('バス'),
+          contains('bus'),
         ]);
+
+        final adaptedWords = await db.database.getAll(
+          "SELECT fv.text_value FROM word_exercise we "
+          "JOIN field_value fv ON fv.content_id = we.content_id "
+          "JOIN field_definition fd ON fd.id = fv.field_definition_id "
+          "WHERE fd.side = 'back' AND fv.text_value LIKE '%editorial adaptation%'",
+        );
+        expect(adaptedWords, hasLength(10));
+        expect(
+          adaptedWords.every(
+            (row) => (row['text_value'] as String).contains(
+              'Definitions: JMdict; sense selection and usage notes: ChatGPT',
+            ),
+          ),
+          isTrue,
+        );
 
         final firstSentence = await ExerciseDao(db.database).getById(1298);
         expect(firstSentence, isA<SentenceExercisePersistence>());
@@ -92,7 +108,7 @@ void main() {
 
         await db.reopen();
         expect(await importRelease(), isFalse);
-        expect(await db.countRows('exercise'), 2654);
+        expect(await db.countRows('exercise'), 2677);
         expect(await db.countRows('field_value'), 9498);
       } finally {
         await db.dispose();

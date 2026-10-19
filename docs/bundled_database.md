@@ -83,3 +83,36 @@ latency. It measures database initialization, not complete UI/media startup.
 
 Development sample seeding remains a separate explicit facility. The release
 snapshot is built exclusively from `assets/content/v0_1/`.
+
+## Final editorial reference (2026-10-19)
+
+The tracked content now contains 1,297 words and 1,380 groups (3,452 sentence
+instances). It comes from `psitta-content` commit
+`a447a6186fe0e8c5fc1d1b3c6ea5ded42ac70367`. To reproduce it:
+
+```sh
+# In a checkout of psitta-content at the commit above:
+python tools/build_v0_1_final_4_3.py
+# In Psitta (with full Git history):
+python tools/update_final_curriculum.py ../psitta-content
+flutter test tools/build_bundled_database.dart --reporter expanded
+```
+
+The adapter reuses the HTML at Psitta commit
+`8824eaf3dc8543fb203e76bc3db10809483e1e0c`, indexed by original group and instance.
+It verifies the exact final curriculum checksum and preserves every sentence
+exactly once. This retains the established typography, aligned furigana, Tatoeba
+links and 15 explicitly unverified translation suggestions. Ten lexical cards
+receive the reviewed JMdict senses with explicit ChatGPT editorial attribution.
+The word 訳 and one remaining sentence annotation change from わけ to やく.
+Baseline furigana audit counts are retained as historical metadata only.
+
+Stable source word IDs and original sentence references accompany presentation
+ranks in the export. Word links are remapped to the new ranks. The current
+importer uses HTML and list order; it does not persist those source IDs or enforce
+`recommended_session`. Consequently the editorial 4/3 schedule is a recommendation,
+not a guarantee provided by the runtime scheduler.
+
+Existing populated databases are **not** updated. To test these exercises without
+losing real progress, use a separate clean installation/profile. Clearing app data
+also installs the new corpus on next launch, but deletes local learning progress.
