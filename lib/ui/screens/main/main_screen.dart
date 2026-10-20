@@ -25,6 +25,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   late final List<Widget> _screens;
+  final _statisticsKey = GlobalKey<StatisticsScreenState>();
   int _selectedIndex = 0;
 
   @override
@@ -35,7 +36,10 @@ class _MainScreenState extends State<MainScreen> {
         sessionController: widget.sessionController,
         contentRenderer: widget.contentRenderer,
       ),
-      StatisticsScreen(statisticController: widget.statisticController),
+      StatisticsScreen(
+        key: _statisticsKey,
+        statisticController: widget.statisticController,
+      ),
       const SettingsScreen(),
     ];
   }
@@ -77,6 +81,9 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _selectScreen(int index) {
+    if (index == 1) {
+      _statisticsKey.currentState?.refresh();
+    }
     setState(() {
       _selectedIndex = index;
     });

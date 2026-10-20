@@ -14,10 +14,10 @@ class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({required this.statisticController, super.key});
 
   @override
-  State<StatisticsScreen> createState() => _StatisticsScreenState();
+  State<StatisticsScreen> createState() => StatisticsScreenState();
 }
 
-class _StatisticsScreenState extends State<StatisticsScreen> {
+class StatisticsScreenState extends State<StatisticsScreen> {
   late Future<_StatisticsData> _statistics;
 
   @override
@@ -35,6 +35,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     ).wait;
 
     return (sessions: sessions, exercises: exercises);
+  }
+
+  /// Reloads persisted statistics when the tab becomes visible again.
+  void refresh() {
+    _reload();
   }
 
   Future<void> _reload() {
