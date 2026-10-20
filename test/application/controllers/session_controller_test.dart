@@ -280,6 +280,21 @@ void main() {
       );
     });
 
+    test('counts remaining exercises separately from training', () async {
+      await createWordExercise();
+      await createWordExercise();
+      final controller = createController();
+      await controller.startNewSession(SessionType.wordSession);
+
+      expect(controller.remainingExerciseCount, 2);
+      expect(controller.remainingTrainingCount, 0);
+
+      await controller.submitAnswer(Grade.good);
+
+      expect(controller.remainingExerciseCount, 1);
+      expect(controller.remainingTrainingCount, 0);
+    });
+
     test('timestamps an answer when it is submitted', () async {
       final exerciseId = await createWordExercise();
       final controller = createController();

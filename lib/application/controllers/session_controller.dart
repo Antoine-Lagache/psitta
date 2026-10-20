@@ -6,6 +6,7 @@ import 'package:psitta/application/models/session/session_overview.dart';
 import 'package:psitta/application/models/session/start_session_result.dart';
 import 'package:psitta/application/models/session/submit_answer_result.dart';
 import 'package:psitta/domain/answer/exercise_answer.dart';
+import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
@@ -17,6 +18,23 @@ class SessionController {
 
   Session? _activeSession;
   bool get hasActiveSession => _activeSession != null;
+
+  /// Counts exercises that are not completed or in sentence training.
+  int get remainingExerciseCount {
+    final session = _requireActiveSession();
+    return ExerciseStatus.values
+        .where(
+          (status) =>
+              status != ExerciseStatus.completed &&
+              status != ExerciseStatus.consolidating,
+        )
+        .fold(0, (count, status) => count + session.countExerciseByStatus(status));
+  }
+
+  /// Counts exercises still undergoing in-session sentence training.
+  int get remainingTrainingCount {
+    return _requireActiveSession().countExerciseByStatus(ExerciseStatus.consolidating);
+  }
 
   Duration? _activeSegmentStartedAt;
 

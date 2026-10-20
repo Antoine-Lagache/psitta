@@ -110,20 +110,58 @@ class _LearningScreenState extends State<LearningScreen> {
   }
 
   Widget _buildExercise() {
-    return LearningContent(
-      front: _front!,
-      back: _back!,
-      showingAnswer: _showingAnswer,
-      interactionEnabled: !_operationInProgress,
-      selectedGrade: _selectedGrade,
-      allowedGrades: _allowedGrades,
-      previewIntervals: _previewIntervals,
-      showPreviewIntervals: _showPreviewIntervals,
-      onRevealAnswer: _revealAnswer,
-      onGradeSelected: _selectGrade,
-      onToggleSide: _toggleSide,
-      onCancelAnswer: _cancelAnswer,
-      onNextExercise: _confirmAnswerAndContinue,
+    final remainingExercises = widget.sessionController.remainingExerciseCount;
+    final remainingTraining = widget.sessionController.remainingTrainingCount;
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 20,
+            runSpacing: 8,
+            children: [
+              _buildSessionCounter('Exercises remaining', remainingExercises),
+              if (remainingTraining > 0)
+                _buildSessionCounter('Training remaining', remainingTraining),
+            ],
+          ),
+        ),
+        Expanded(
+          child: LearningContent(
+            front: _front!,
+            back: _back!,
+            showingAnswer: _showingAnswer,
+            interactionEnabled: !_operationInProgress,
+            selectedGrade: _selectedGrade,
+            allowedGrades: _allowedGrades,
+            previewIntervals: _previewIntervals,
+            showPreviewIntervals: _showPreviewIntervals,
+            onRevealAnswer: _revealAnswer,
+            onGradeSelected: _selectGrade,
+            onToggleSide: _toggleSide,
+            onCancelAnswer: _cancelAnswer,
+            onNextExercise: _confirmAnswerAndContinue,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSessionCounter(String label, int count) {
+    final textTheme = Theme.of(context).textTheme;
+    return Text.rich(
+      TextSpan(
+        text: '$label: ',
+        children: [
+          TextSpan(
+            text: '$count',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      style: textTheme.labelLarge,
     );
   }
 
