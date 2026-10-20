@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
 import 'package:psitta/application/models/statistics/exercise_statistics.dart';
