@@ -25,7 +25,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   late final List<Widget> _screens;
-  final _statisticsKey = GlobalKey<StatisticsScreenState>();
+  final _statisticsRefreshSignal = ValueNotifier(0);
   int _selectedIndex = 0;
 
   @override
@@ -37,11 +37,17 @@ class _MainScreenState extends State<MainScreen> {
         contentRenderer: widget.contentRenderer,
       ),
       StatisticsScreen(
-        key: _statisticsKey,
+        refreshSignal: _statisticsRefreshSignal,
         statisticController: widget.statisticController,
       ),
       const SettingsScreen(),
     ];
+  }
+
+  @override
+  void dispose() {
+    _statisticsRefreshSignal.dispose();
+    super.dispose();
   }
 
   @override
@@ -82,7 +88,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _selectScreen(int index) {
     if (index == 1) {
-      _statisticsKey.currentState?.refresh();
+      _statisticsRefreshSignal.value++;
     }
     setState(() {
       _selectedIndex = index;

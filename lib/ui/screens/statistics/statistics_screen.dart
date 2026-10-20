@@ -10,20 +10,45 @@ typedef _StatisticsData = ({ExerciseStatistics exercises, SessionStatistics sess
 /// Loads and displays the all-time statistics available in the MVP.
 class StatisticsScreen extends StatefulWidget {
   final StatisticController statisticController;
+  final ValueListenable<int> refreshSignal;
 
-  const StatisticsScreen({required this.statisticController, super.key});
+  const StatisticsScreen({
+    required this.statisticController,
+    required this.refreshSignal,
+    super.key,
+  });
 
   @override
-  State<StatisticsScreen> createState() => StatisticsScreenState();
+  State<StatisticsScreen> createState() => _StatisticsScreenState();
 }
 
-class StatisticsScreenState extends State<StatisticsScreen> {
+class _StatisticsScreenState extends State<StatisticsScreen> {
   late Future<_StatisticsData> _statistics;
 
   @override
   void initState() {
     super.initState();
     _statistics = _loadStatistics();
+    widget.refreshSignal.addListener(_refreshOnSignal);
+  }
+
+  @override
+  void didUpdateWidget(StatisticsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshSignal != widget.refreshSignal) {
+      oldWidget.refreshSignal.removeListener(_refreshOnSignal);
+      widget.refreshSignal.addListener(_refreshOnSignal);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.refreshSignal.removeListener(_refreshOnSignal);
+    super.dispose();
+  }
+
+  void _refreshOnSignal() {
+    _reload();
   }
 
   Future<_StatisticsData> _loadStatistics() async {
@@ -35,11 +60,6 @@ class StatisticsScreenState extends State<StatisticsScreen> {
     ).wait;
 
     return (sessions: sessions, exercises: exercises);
-  }
-
-  /// Reloads persisted statistics when the tab becomes visible again.
-  void refresh() {
-    _reload();
   }
 
   Future<void> _reload() {
