@@ -289,7 +289,7 @@ void main() {
       expect(controller.remainingExerciseCount, 2);
       expect(controller.remainingTrainingCount, 0);
 
-      await controller.submitAnswer(Grade.good);
+      await controller.submitAnswer(Grade.easy);
 
       expect(controller.remainingExerciseCount, 1);
       expect(controller.remainingTrainingCount, 0);

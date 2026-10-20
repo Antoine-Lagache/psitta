@@ -6,7 +6,6 @@ import 'package:psitta/application/models/session/session_overview.dart';
 import 'package:psitta/application/models/session/start_session_result.dart';
 import 'package:psitta/application/models/session/submit_answer_result.dart';
 import 'package:psitta/domain/answer/exercise_answer.dart';
-import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
