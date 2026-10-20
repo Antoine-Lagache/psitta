@@ -62,10 +62,7 @@ void main() {
         final group = await SentenceGroupDao(
           db.database,
         ).getById(sentence.sentenceGroupId);
-        expect(
-          sentence.trainingCountMax,
-          (group!.sentenceInstances.length - 1) ~/ 2,
-        );
+        expect(sentence.trainingCountMax, (group!.sentenceInstances.length - 1) ~/ 2);
         final firstInstanceContent = await ContentDao(
           db.database,
         ).getById(group.sentenceInstances.first.contentId);
