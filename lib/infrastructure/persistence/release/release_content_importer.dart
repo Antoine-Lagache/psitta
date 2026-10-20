@@ -128,7 +128,11 @@ final class ReleaseContentImporter {
         );
         await exerciseDao.insertInTransaction(
           txn,
-          SentenceExerciseMapper.newSentenceExercise(groupId, instances.length),
+          // Fixed extra practice count: 0, 0, 1, 1, 2, 2, 3, 3 for sizes 1..8.
+          SentenceExerciseMapper.newSentenceExercise(
+            groupId,
+            (instances.length - 1) ~/ 2,
+          ),
         );
       }
       return true;
