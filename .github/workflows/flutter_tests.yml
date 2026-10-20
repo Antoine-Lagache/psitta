@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate initial database
+        run: flutter test tools/build_bundled_database.dart --reporter expanded
+
       - name: Check formatting
         run: |
           dart format lib test tools

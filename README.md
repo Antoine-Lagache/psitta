@@ -89,20 +89,19 @@ The project is under active development. Here is a transparent breakdown of prog
 | Persistence layer | ✅ Complete |
 | Application / Controllers | ✅ Complete |
 | UI | ✅ MVP screens and learning workflow complete |
-| Production learning content | 🔄 Japanese corpus and release import pending |
+| Production learning content | ✅ Frozen v0.1 corpus in a bundled SQLite snapshot |
 
-The functional MVP shell is complete. The current focus is preparing the
-Japanese production corpus, validating it end to end, and completing release
-configuration and documentation.
+The functional MVP shell and its first Japanese corpus are integrated. The
+current focus is reviewing that corpus in the app before the v0.1 release.
 
 
 ---
 
 ## Getting Started
 
-> ⚠️ The debug build creates synthetic exercises when its database is empty.
-> Release builds do not currently install a production corpus, so a fresh
-> release database contains no exercises.
+On first launch, the app installs a verified, prefilled `psitta.db` snapshot
+and applies any pending schema migrations before opening the main screen. This
+works in debug and release builds. Later launches retain the database and progress.
 
 **Prerequisites:** Flutter SDK 3.x, Dart 3.x
 
@@ -110,6 +109,7 @@ configuration and documentation.
 git clone https://github.com/Antoine-Lagache/psitta.git
 cd psitta
 flutter pub get
+flutter test tools/build_bundled_database.dart
 flutter run
 ```
 
@@ -124,18 +124,57 @@ Linux, and Web. Persistence uses native SQLite and does not support Web. Other
 native platforms require their Flutter platform projects and native builds to
 be added and verified before they can be claimed as supported.
 
-### Development data
+### Bundled exercises and installation
 
-In debug mode, `DevelopmentDataSeeder` inserts synthetic word and sentence
-exercises only when the `exercise` table is empty. They cover escaped text,
-HTML, line breaks, images, internal media references, audio, and sentence
-training. Existing databases are deliberately left unchanged. To exercise a
-modified seed from scratch, clear the application data or delete `psitta.db`
-from the platform application-support directory before restarting.
+`assets/content/v0_1/` contains the frozen HTML corpus copied from
+`psitta-content`, generated from the frozen editorial selection on 2026-10-19.
+Its exact input hash and review status are retained in the bundled manifest:
+
+| File | Contents |
+|---|---|
+| `manifest.json` | Format version, source checksum, counts and compressed/decoded checksums |
+| `word_exercises.jsonl.gz` | 1,297 ordered word exercises, each with separate `front_html` and `back_html` |
+| `sentence_exercises.jsonl.gz` | 1,380 ordered groups containing 3,452 sentence instances, each with its own front and back |
+
+`tools/build_bundled_database.dart` runs the application migrations and
+`ReleaseContentImporter` ahead of distribution, generating
+`assets/database/psitta.db.gz` and its checksum manifest. Both generated files
+are ignored by Git; generate them before running tests, the app, or a build.
+CI generates them automatically. A new installation
+verifies and atomically copies this snapshot, avoiding thousands of SQL calls
+at startup. Existing databases run their pending migrations without replacement.
+The transactional importer remains a recovery path for existing empty databases.
+The snapshot contains 2,677 exercises, 4,749 content records, two HTML field
+definitions (front/back), sentence groups, instance states and initial SRS states. Word exercise IDs
+follow the word order; sentence exercise IDs follow the group order. The
+learning session may shuffle its selected exercises.
+
+Existing development installations with synthetic exercises keep their data;
+to test a clean install, clear application data or remove `psitta.db` from the
+application-support directory. `DevelopmentDataSeeder` remains available to
+test media rendering explicitly, but is no longer called on normal startup.
+
+The current export preserves the final 2026-10-19 word/group order and includes aligned
+furigana, JMdict labels and Tatoeba links on all sentence cards. Fifteen justified
+translation flags preserve the Tatoeba translation alongside a clearly labelled,
+unverified AI suggestion. The upstream manifest still records `release_ready: false`
+because contextual reading review is incomplete; integration does not certify
+linguistic correctness.
+
+Ten corrected word cards explicitly attribute sense selection and usage notes to
+ChatGPT while retaining JMdict attribution for dictionary glosses. The corrected
+reading of 訳 is やく. The recommended 4-word / up-to-3-group schedule is retained
+as export metadata; the application does not enforce that joint timetable.
+
+The import is a one-time installation of v0.1. Updating a populated database
+to a revised corpus will need a versioned content migration that preserves
+learning progress. For the regeneration command and migration workflow, see
+[bundled database generation](docs/bundled_database.md).
 
 Run the same checks as CI with:
 
 ```bash
+flutter test tools/build_bundled_database.dart
 dart format lib test tools
 flutter analyze
 flutter test
@@ -145,4 +184,11 @@ flutter test
 
 ## License
 
-This project is licensed under the MIT License. See the [`LICENSE`](LICENSE) file for details.
+The application code is licensed under MIT; see [`LICENSE`](LICENSE).
+The bundled learning content has separate source licenses. JMdict and OpenJLPT
+use CC BY-SA 4.0, and the underlying Tatoeba sentences use CC BY 2.0 France.
+The Psitta learning-content compilation and adaptations use CC BY-SA 4.0.
+Consolidated credits and license references are accessible through
+**Settings → About Psitta → Sources and licenses**. The shared CC BY-SA license,
+EDRDG statement and required JMdict documentation are bundled in `assets/legal/`. See
+[content sources](docs/content_sources.md) for provenance and maintenance notes.

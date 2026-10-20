@@ -59,8 +59,25 @@ class AboutScreen extends StatelessWidget {
         _buildLinkButton(
           context: context,
           icon: Icons.code,
-          label: 'Source code',
+          label: 'GitHub',
           uri: _sourceCodeUri,
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: () => showLicensePage(
+            context: context,
+            applicationName: 'Psitta',
+            applicationLegalese:
+                'Software: MIT. Learning content: see the source notices below.',
+          ),
+          icon: const Icon(Icons.description_outlined),
+          label: const Text('Sources and licenses'),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Learning content from JMdict / EDRDG, Tatoeba contributors, and '
+          'OpenJLPT, including Jonathan Waller\'s JLPT lists.',
+          textAlign: TextAlign.center,
         ),
       ],
     );

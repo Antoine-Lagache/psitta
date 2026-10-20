@@ -8,9 +8,16 @@ class MigrationRunner {
 
   MigrationRunner({required this.migrations});
 
+  int get latestVersion => migrations.fold(0, (v, m) => m.version > v ? m.version : v);
+
   /// Applies each migration newer than the database's current version.
   Future<void> migrate(sqlite.SqliteDatabase database) async {
     final currentVersion = await _getCurrentVersion(database);
+    if (currentVersion > latestVersion) {
+      throw StateError(
+        'Database version $currentVersion is newer than supported version $latestVersion',
+      );
+    }
 
     final sortedMigrations = [...migrations]
       ..sort((a, b) => a.version.compareTo(b.version));

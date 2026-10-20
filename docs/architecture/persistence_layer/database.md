@@ -72,11 +72,12 @@ one `sentence_exercise` through a unique constraint.
 `SqliteDatabase.open()` is idempotent for an already open wrapper:
 
 1. resolve the application-support directory;
-2. create `<application-support>/psitta.db` through the custom native factory;
-3. initialise `sqlite_async`;
-4. read `PRAGMA user_version`;
-5. apply each newer registered migration in version order;
-6. update `user_version` in the same transaction as its migration.
+2. install the verified bundled snapshot if `<application-support>/psitta.db` is absent;
+3. open the database through the custom native factory;
+4. initialise `sqlite_async`;
+5. read `PRAGMA user_version`;
+6. apply each newer registered migration in version order;
+7. update `user_version` in the same transaction as its migration.
 
 If initialisation or migration fails, the newly created database object is
 closed and the error is rethrown. `close()` releases it and resets the wrapper,
@@ -86,7 +87,8 @@ The only registered migration is currently `V1InitialSchema` with version 1.
 Future schema changes must be added as new ordered migrations rather than by
 editing databases that may already exist.
 
-Development data is not part of the migration. After `open()` completes,
-`AppDependencies` may seed an empty database in debug mode. Keeping sample or
-production content outside schema migration preserves the distinction between
-database structure and application data.
+Initial release content is built into a bundled database using this same migration
+registry and the release importer. See [bundled database generation](../../bundled_database.md)
+for regeneration, installation recovery, and future schema/content updates.
+`AppDependencies` retains the transactional importer only as a recovery path for
+an existing empty database. Development sample seeding is separate and explicit.

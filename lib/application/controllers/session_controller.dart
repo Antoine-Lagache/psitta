@@ -64,7 +64,7 @@ class SessionController {
         exerciseType,
       );
       final newExercises = await _exerciseRepository.getNewExercises(
-        config.newCount,
+        _newExerciseLimit(sessionType),
         exerciseType,
       );
       final exercises = dueExercises + newExercises;
@@ -176,11 +176,16 @@ class SessionController {
 
     return SessionOverview(
       sessionType: sessionType,
-      newExerciseCount: min(newExerciseCount, config.newCount),
+      newExerciseCount: min(newExerciseCount, _newExerciseLimit(sessionType)),
       reviewExerciseCount: min(reviewExerciseCount, config.reviewCount),
       hasActiveSession: false,
     );
   }
+
+  int _newExerciseLimit(SessionType sessionType) => switch (sessionType) {
+    SessionType.wordSession => config.newCount,
+    SessionType.sentenceSession => config.newSentenceCount,
+  };
 
   /// Temporary MVP selection rule, not a Domain-level type correspondence.
   /// A session type may later accept several exercise types or other criteria.

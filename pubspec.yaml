@@ -38,10 +38,8 @@ dependencies:
   flutter_widget_from_html: ^0.17.2
   html: ^0.15.6
   path_provider: ^2.1.6
-  sqlite3: ^3.5.0
   sqlite3_flutter_libs: ^0.6.0+eol
   sqlite_async: ^0.14.4
-  test: ^1.31.0
   url_launcher: ^6.3.2
 
 dev_dependencies:
@@ -54,6 +52,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  test: ^1.31.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -65,6 +64,19 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  fonts:
+    - family: NotoSansJP
+      fonts:
+        - asset: assets/fonts/NotoSansJP-Medium.otf
+          weight: 500
+        - asset: assets/fonts/NotoSansJP-Bold.otf
+          weight: 700
+  assets:
+    - assets/database/
+    - assets/legal/
+    - assets/content/v0_1/manifest.json
+    - assets/content/v0_1/word_exercises.jsonl.gz
+    - assets/content/v0_1/sentence_exercises.jsonl.gz
 
   # To add assets to your application, add an assets section, like this:
   # assets:

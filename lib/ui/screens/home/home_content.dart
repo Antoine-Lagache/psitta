@@ -52,7 +52,7 @@ class HomeContent extends StatelessWidget {
       ),
       const SizedBox(height: 8),
       Text(
-        'Review what is due or start learning something new.',
+        'Recommended: one Words session and one Sentences session per day.',
         style: Theme.of(
           context,
         ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF616161)),

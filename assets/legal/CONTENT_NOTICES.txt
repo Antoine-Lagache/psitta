@@ -1,0 +1,62 @@
+Psitta v0.1 learning content — sources and adaptations
+
+The software license is MIT. It does not replace the licenses of the learning
+content bundled under assets/content/v0_1/.
+
+JMdict (Japanese and English components)
+Copyright James William BREEN and the Electronic Dictionary Research and
+Development Group (EDRDG). Psitta uses JMdict for Japanese word forms, readings
+and English meanings. These files are used in conformance with the EDRDG license.
+License: Creative Commons Attribution-ShareAlike 4.0 International.
+https://www.edrdg.org/edrdg/licence.html
+https://www.edrdg.org/wiki/JMdict-EDICT_Dictionary_Project.html
+Source snapshot: JMdict_e.gz, 2026-10-02.
+SHA-256: 0606397c7e8fdde67cca199168dac75422002cfe39f9dcdca644c4fab9dca94a
+
+Tatoeba and its contributors
+Japanese and English sentences come from Tatoeba.
+License: Creative Commons Attribution 2.0 France.
+https://tatoeba.org/
+https://creativecommons.org/licenses/by/2.0/fr/
+Source snapshot: Japanese and English detailed sentence exports and direct
+translation links, 2026-09-26.
+
+OpenJLPT and its upstream contributors
+OpenJLPT vocabulary lists were used to select the N5/N4 vocabulary.
+Displayed meanings come from JMdict and displayed sentences from Tatoeba.
+License: Creative Commons Attribution-ShareAlike 4.0 International.
+https://github.com/evanclan/OpenJLPT
+Snapshot: 0d1d3410bec90bd4098a7c72de820543cb4f707c
+
+OpenJLPT credits Jonathan Waller's JLPT Resources (CC BY), JMdict and KANJIDIC2
+(EDRDG), Tatoeba, and its own contributors. This credit follows OpenJLPT's
+recommended attribution. Psitta does not bundle its kanji dataset.
+https://www.tanos.co.uk/jlpt/
+JLPT levels are unofficial study-list classifications, not official exam lists.
+
+Adaptations by Antoine Lagache / Psitta
+The source material has been selected, filtered, ordered and grouped into
+1,297 word exercises and 1,357 sentence groups (3,452 Japanese-English instances).
+Selected dictionary senses have been reformatted, and separate question/answer
+HTML fragments with furigana have been generated. On 15 flagged sentence cards,
+the Tatoeba translation is preserved alongside an explanation and an AI-generated
+suggestion explicitly marked as not independently verified.
+These changes do not imply endorsement
+by the source projects. Source material is provided without warranty.
+
+The Psitta learning-content compilation and adaptations are distributed under
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0):
+https://creativecommons.org/licenses/by-sa/4.0/
+The underlying Tatoeba sentences remain available under CC BY 2.0 France.
+Preserve the source credits and license notices when redistributing the data.
+The shared CC BY-SA 4.0 license and EDRDG statement follow this notice.
+JMdict documentation is bundled in assets/legal/JMDICT_DOCUMENTATION.txt
+and available at the EDRDG project URL above. The Tatoeba license is available
+at the Creative Commons URL above.
+
+Generation source: psitta-content, frozen editorial export dated 2026-10-16.
+Input: data/review/v0_1_exercises_reconstructed_draft.json.
+Input SHA-256: 33e1083706425ce4e539f241efceec1837197e20b5cfdc32a75e843d9fe7b808.
+The manifest in assets/content/v0_1/ records the frozen input and output hashes.
+Bundled exercise files and these notices are available with the application:
+https://github.com/Antoine-Lagache/psitta

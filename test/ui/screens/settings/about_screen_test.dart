@@ -16,7 +16,7 @@ void main() {
     expect(find.text('Created by Antoine Lagache.'), findsOne);
   });
 
-  testWidgets('opens the website and source code links', (tester) async {
+  testWidgets('opens the website and GitHub links', (tester) async {
     final openedUris = <Uri>[];
 
     await tester.pumpWidget(
@@ -32,7 +32,7 @@ void main() {
 
     await tester.tap(find.text('Psitta website'));
     await tester.pump();
-    await tester.tap(find.text('Source code'));
+    await tester.tap(find.text('GitHub'));
     await tester.pump();
 
     expect(
@@ -63,6 +63,19 @@ void main() {
     );
   });
 
+  testWidgets('opens the offline license viewer from About', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: AboutScreen()));
+    await tester.ensureVisible(find.text('Sources and licenses'));
+    await tester.tap(find.text('Sources and licenses'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LicensePage), findsOne);
+    expect(
+      find.text('Software: MIT. Learning content: see the source notices below.'),
+      findsOne,
+    );
+  });
+
   testWidgets('shows unexpected launch errors without hiding their details', (
     tester,
   ) async {
@@ -74,7 +87,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Source code'));
+    await tester.tap(find.text('GitHub'));
     await tester.pumpAndSettle();
 
     expect(
