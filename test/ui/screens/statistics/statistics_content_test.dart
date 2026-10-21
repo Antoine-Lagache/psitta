@@ -33,15 +33,19 @@ void main() {
           body: StatisticsContent(
             sessionStatistics: sessions,
             exerciseStatistics: exercises,
+            todaySessionStatistics: sessions,
+            todayExerciseStatistics: exercises,
             onRefresh: () async {},
           ),
         ),
       ),
     );
 
-    expect(find.text('Sessions completed'), findsOneWidget);
-    expect(find.text('1h 5m'), findsOneWidget);
-    expect(find.text('Answers recorded'), findsOneWidget);
+    expect(find.text('Sessions completed'), findsNWidgets(2));
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('All time'), findsOneWidget);
+    expect(find.text('1h 5m'), findsNWidgets(2));
+    expect(find.text('Answers recorded'), findsNWidgets(2));
     expect(find.text('Words'), findsOneWidget);
     expect(find.text('Sentences'), findsOneWidget);
 
@@ -80,15 +84,17 @@ void main() {
           body: StatisticsContent(
             sessionStatistics: sessions,
             exerciseStatistics: exercises,
+            todaySessionStatistics: sessions,
+            todayExerciseStatistics: exercises,
             onRefresh: () async {},
           ),
         ),
       ),
     );
 
-    expect(find.text('0 min'), findsOneWidget);
-    expect(find.text('2'), findsOneWidget);
-    expect(find.text('Sessions completed'), findsOneWidget);
-    expect(find.text('Answers recorded'), findsOneWidget);
+    expect(find.text('0 min'), findsNWidgets(2));
+    expect(find.text('2'), findsNWidgets(2));
+    expect(find.text('Sessions completed'), findsNWidgets(2));
+    expect(find.text('Answers recorded'), findsNWidgets(2));
   });
 }
