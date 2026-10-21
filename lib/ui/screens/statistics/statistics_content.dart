@@ -7,15 +7,19 @@ import 'package:psitta/domain/srs/grade.dart';
 typedef _Metric = ({String label, String value});
 typedef _BreakdownEntry = ({String label, int value});
 
-/// Presents the all-time statistics returned by the application layer.
+/// Presents today's and all-time statistics returned by the application layer.
 class StatisticsContent extends StatelessWidget {
   final SessionStatistics sessionStatistics;
   final ExerciseStatistics exerciseStatistics;
+  final SessionStatistics todaySessionStatistics;
+  final ExerciseStatistics todayExerciseStatistics;
   final RefreshCallback onRefresh;
 
   const StatisticsContent({
     required this.sessionStatistics,
     required this.exerciseStatistics,
+    required this.todaySessionStatistics,
+    required this.todayExerciseStatistics,
     required this.onRefresh,
     super.key,
   });
@@ -39,7 +43,19 @@ class StatisticsContent extends StatelessWidget {
           children: [
             ..._buildHeader(context),
             const SizedBox(height: 28),
-            _buildOverview(context),
+            _buildOverview(
+              context,
+              title: 'Today',
+              sessions: todaySessionStatistics,
+              exercises: todayExerciseStatistics,
+            ),
+            const SizedBox(height: 16),
+            _buildOverview(
+              context,
+              title: 'All time',
+              sessions: sessionStatistics,
+              exercises: exerciseStatistics,
+            ),
             const SizedBox(height: 16),
             _buildSessionBreakdown(context),
             const SizedBox(height: 16),
@@ -61,7 +77,7 @@ class StatisticsContent extends StatelessWidget {
       ),
       const SizedBox(height: 8),
       Text(
-        'Your all-time learning activity.',
+        'Your learning activity today and overall.',
         style: Theme.of(
           context,
         ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF616161)),
@@ -69,8 +85,13 @@ class StatisticsContent extends StatelessWidget {
     ];
   }
 
-  Widget _buildOverview(BuildContext context) {
-    final metrics = _overviewMetrics;
+  Widget _buildOverview(
+    BuildContext context, {
+    required String title,
+    required SessionStatistics sessions,
+    required ExerciseStatistics exercises,
+  }) {
+    final metrics = _overviewMetrics(sessions, exercises);
 
     return Card(
       child: Padding(
@@ -78,7 +99,7 @@ class StatisticsContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle(context, 'Overview'),
+            _buildSectionTitle(context, title),
             const SizedBox(height: 16),
             _buildMetricRow(metrics[0], metrics[1]),
             const SizedBox(height: 12),
@@ -89,18 +110,15 @@ class StatisticsContent extends StatelessWidget {
     );
   }
 
-  List<_Metric> get _overviewMetrics {
+  List<_Metric> _overviewMetrics(
+    SessionStatistics sessions,
+    ExerciseStatistics exercises,
+  ) {
     return [
-      (label: 'Sessions completed', value: '${sessionStatistics.numberOfSessions}'),
-      (
-        label: 'Completed session time',
-        value: _formatDuration(sessionStatistics.totalTimeSpent),
-      ),
-      (label: 'Answers recorded', value: '${exerciseStatistics.totalNumberAnswers}'),
-      (
-        label: 'Exercises completed',
-        value: '${sessionStatistics.numberOfExercisesCompleted}',
-      ),
+      (label: 'Sessions completed', value: '${sessions.numberOfSessions}'),
+      (label: 'Completed session time', value: _formatDuration(sessions.totalTimeSpent)),
+      (label: 'Answers recorded', value: '${exercises.totalNumberAnswers}'),
+      (label: 'Exercises completed', value: '${sessions.numberOfExercisesCompleted}'),
     ];
   }
 

@@ -25,6 +25,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   late final List<Widget> _screens;
+  final _statisticsRefreshSignal = ValueNotifier(0);
   int _selectedIndex = 0;
 
   @override
@@ -35,9 +36,18 @@ class _MainScreenState extends State<MainScreen> {
         sessionController: widget.sessionController,
         contentRenderer: widget.contentRenderer,
       ),
-      StatisticsScreen(statisticController: widget.statisticController),
+      StatisticsScreen(
+        refreshSignal: _statisticsRefreshSignal,
+        statisticController: widget.statisticController,
+      ),
       const SettingsScreen(),
     ];
+  }
+
+  @override
+  void dispose() {
+    _statisticsRefreshSignal.dispose();
+    super.dispose();
   }
 
   @override
@@ -77,6 +87,9 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _selectScreen(int index) {
+    if (index == 1) {
+      _statisticsRefreshSignal.value++;
+    }
     setState(() {
       _selectedIndex = index;
     });

@@ -18,6 +18,23 @@ class SessionController {
   Session? _activeSession;
   bool get hasActiveSession => _activeSession != null;
 
+  /// Counts exercises that are not completed or in sentence training.
+  int get remainingExerciseCount {
+    final session = _requireActiveSession();
+    return ExerciseStatus.values
+        .where(
+          (status) =>
+              status != ExerciseStatus.completed &&
+              status != ExerciseStatus.consolidating,
+        )
+        .fold(0, (count, status) => count + session.countExerciseByStatus(status));
+  }
+
+  /// Counts exercises still undergoing in-session sentence training.
+  int get remainingTrainingCount {
+    return _requireActiveSession().countExerciseByStatus(ExerciseStatus.consolidating);
+  }
+
   Duration? _activeSegmentStartedAt;
 
   bool _operationInProgress = false;
