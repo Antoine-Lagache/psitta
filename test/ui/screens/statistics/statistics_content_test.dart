@@ -46,12 +46,11 @@ void main() {
     expect(find.text('All time'), findsOneWidget);
     expect(find.text('1h 5m'), findsNWidgets(2));
     expect(find.text('Answers recorded'), findsNWidgets(2));
-    expect(find.text('Words'), findsOneWidget);
-    expect(find.text('Sentences'), findsOneWidget);
-
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pump();
 
+    expect(find.text('Words'), findsOneWidget);
+    expect(find.text('Sentences'), findsOneWidget);
     expect(find.text('Again'), findsOneWidget);
     expect(find.text('Medium'), findsOneWidget);
     expect(find.text('Easy'), findsOneWidget);
