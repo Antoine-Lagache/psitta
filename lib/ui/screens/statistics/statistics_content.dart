@@ -118,10 +118,7 @@ class StatisticsContent extends StatelessWidget {
       (label: 'Sessions completed', value: '${sessions.numberOfSessions}'),
       (label: 'Completed session time', value: _formatDuration(sessions.totalTimeSpent)),
       (label: 'Answers recorded', value: '${exercises.totalNumberAnswers}'),
-      (
-        label: 'Exercises completed',
-        value: '${sessions.numberOfExercisesCompleted}',
-      ),
+      (label: 'Exercises completed', value: '${sessions.numberOfExercisesCompleted}'),
     ];
   }
 
