@@ -66,7 +66,9 @@ every sentence instance.
 ## Session policy
 
 The application layer chooses the session pool by loading at most
-`reviewCount` due exercises and `newCount` exercises of the requested type.
+`reviewCount` due exercises and either `newCount` new words (default 4) or
+`newSentenceCount` new sentence groups (default 3). These are per-session
+limits, not daily quotas; the editorial joint timetable is not enforced.
 Due exercises are prioritised by persisted review time; new exercises are
 ordered by identifier.
 

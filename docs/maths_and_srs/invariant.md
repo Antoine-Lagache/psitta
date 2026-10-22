@@ -94,7 +94,7 @@ them:
 - every learning step is positive and the steps are ordered as intended;
 - `hardReviewFactor > 0`, `hardLearningFactor > 0`, and `easyBonus > 0`;
 - `0 <= dayBoundary < 24 hours`;
-- `newCount >= 0` and `reviewCount >= 0`.
+- `newCount >= 0`, `newSentenceCount >= 0`, and `reviewCount >= 0`.
 
 Stronger model expectations, such as `minTolFactor <= 1`, a non-empty increasing
 learning-step sequence, `easyInterval <= iMax`, `hardReviewFactor >= 1`,

@@ -81,7 +81,7 @@ every `SessionType`. The meaning of its counters depends on
 
 | Session state | `newExerciseCount` | `reviewExerciseCount` |
 |---|---|---|
-| Not started | Exercises with no history, capped by `SRSConfig.newCount` | Exercises due at the query time, capped by `SRSConfig.reviewCount` |
+| Not started | Exercises with no history, capped by `SRSConfig.newCount` for words or `newSentenceCount` for groups | Exercises due at the query time, capped by `SRSConfig.reviewCount` |
 | Active | Snapshot exercises in `newExercise` status | Snapshot exercises in `toReview`, `learning`, `relearning`, or `consolidating` status |
 
 Completed snapshot exercises are excluded. When several unfinished persisted

@@ -75,11 +75,12 @@ current MVP boundaries; repository interfaces have not been introduced.
 
 ## Application composition
 
-`AppDependencies` is the composition root. It opens and migrates the database,
-optionally seeds an empty debug database with synthetic exercises, constructs
-the repositories, controllers, and content renderer, and owns the database
-lifetime. Development seeding is guarded by `kDebugMode`; release builds do
-not currently install learning content.
+`AppDependencies` is the composition root. It opens the database (installing the
+bundled snapshot on a fresh installation), applies schema migrations, and runs
+`ReleaseContentImporter.importIfEmpty()` as recovery for an existing empty
+database. This applies to debug and release builds. It then constructs the
+repositories, controllers, and content renderer and owns the database lifetime.
+Synthetic development seeding is separate and never called by normal startup.
 
 `main.dart` starts `PsittaApp`, whose root `MaterialApp` displays
 `PsittaBootstrap`. The bootstrap creates `AppDependencies`, displays loading or

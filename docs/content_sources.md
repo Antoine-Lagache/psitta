@@ -24,15 +24,21 @@ from JMdict, and sentence texts from Tatoeba.
 The acquisition record is `config/sources.lock.json` in `psitta-content`.
 The dictionary snapshot is dated 2026-10-02; Tatoeba exports are dated 2026-09-26.
 OpenJLPT is pinned to `0d1d3410bec90bd4098a7c72de820543cb4f707c`.
-The current generated corpus was exported from `psitta-content` on 2026-10-16,
-using `data/review/v0_1_exercises_reconstructed_draft.json` with SHA-256
-`33e1083706425ce4e539f241efceec1837197e20b5cfdc32a75e843d9fe7b808`.
-It contains 1,297 words, 1,357 groups and 3,452 sentence instances. The two
-compressed JSONL files and generator manifest are copied byte-for-byte.
-The full manifest retains input/output hashes, source-restoration and translation
-review hashes, furigana coverage, and the upstream `release_ready: false` status.
-Referenced preview/review files remain in `psitta-content`; they are not runtime
-assets. The manifest is the upstream export record, not an inventory of app assets.
+The current corpus follows the frozen 2026-10-19 editorial reference in
+`psitta-content` commit `a447a6186fe0e8c5fc1d1b3c6ea5ded42ac70367`, with
+curriculum SHA-256
+`020bdc1582ac2302fcac0ea14ade852a3344e5d0f04ae26f95e227064e8584bd`.
+It contains 1,297 words, 1,380 groups and 3,452 sentence instances.
+`tools/update_final_curriculum.py` adapts the baseline HTML to this final order
+and applies the reviewed lexical corrections; these are not byte-for-byte
+copies of the earlier October 16 export. See [reproduction instructions](bundled_database.md).
+
+The bundled manifest records exact compressed and decoded checksums, source
+references, editorial attribution and translation review metadata. Its
+`release_ready: false` flag remains: contextual readings have not all received
+human verification. Furigana coverage counts are historical baseline audit
+metadata, not recomputed measurements for the final adapted corpus.
+Review files remain in `psitta-content`, not in application runtime assets.
 
 All sentence cards link to their Japanese and English Tatoeba source records.
 Fifteen cards preserve the original translation and add an English explanation

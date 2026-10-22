@@ -23,6 +23,7 @@ android/local.properties
 android/.gradle/
 
 # Generated docs
+/docs/FULL_DOC.md
 *.pdf
 
 # Logs / temp
