@@ -1,8 +1,26 @@
+<p align="center">
+  <img src="PSITTA.png" alt="Psitta — Language Learning App" width="640">
+</p>
+
 # Psitta
 
-Psitta is a Flutter application for studying Japanese vocabulary and sentences
-with spaced repetition. The v0.1 corpus contains **1,297 words and 1,380 sentence
-groups (3,452 sentences)**, with Japanese text, furigana and English meanings.
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart)](https://dart.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-In%20Development-orange)](docs/publication_plan.md)
+
+**Psitta** is an open-source language learning application built with Flutter.
+It combines vocabulary study and sentence practice with a custom spaced
+repetition system: words introduce vocabulary, while groups of related sentences
+provide practice with shared grammatical structures.
+
+The project explores both language learning and the engineering behind a study
+application. Its learning engine has an explicitly documented mathematical model,
+with separate layers for the interface, application workflows, learning rules,
+and persistence, so each part can evolve independently.
+
+The first version focuses on **Japanese**, with **1,297 words and 1,380 sentence
+groups (3,452 sentences)**, furigana, and English meanings and translations.
 
 [Website](https://psitta.net) · [Documentation](docs/index.md) ·
 [Report an issue](https://github.com/Antoine-Lagache/psitta/issues)
