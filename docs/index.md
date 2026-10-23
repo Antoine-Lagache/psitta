@@ -41,6 +41,8 @@ and SRS rules needed by a developer entering the project.
 - [Validity rules](maths_and_srs/invariant.md) — enforced checks, repairs, and
   configuration assumptions.
 
+- [Native builds](builds.md) — platform workflows, archives and signing limits.
+
 ## Maintenance
 
 Each source document has one primary topic and one compact Mermaid diagram.

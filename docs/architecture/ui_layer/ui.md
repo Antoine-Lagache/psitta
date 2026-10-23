@@ -200,7 +200,8 @@ Audio and external-link errors have their own selectable presentation.
 - Concatenated content fields have no automatically inserted separator; field
   markup and block widgets currently determine spacing.
 - The repository contains Android and Linux platform projects. Web is unsupported
-  because persistence uses native SQLite and `dart:io`. Windows, macOS, and iOS
-  projects and builds have not been added or verified.
+  because persistence uses native SQLite and `dart:io`. The build workflow
+  generates Windows, macOS and iOS wrappers; successful compilation and manual
+  device validation are tracked separately. See [native builds](../../builds.md).
 - Audio playback is implemented, but the frozen corpus has no audio assets
   and the application does not synthesize speech.

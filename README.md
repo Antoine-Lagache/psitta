@@ -51,19 +51,20 @@ Version in source: **0.1.0+2**, preparing the first public distribution.
 |---|---|
 | Android | Native project present; manually exercised on the maintainer's phone. |
 | Linux | Native project present; manually exercised on Ubuntu. |
-| Windows | Platform project and build validation still to add. |
-| macOS / iOS | Platform projects and build validation still to add; no manual device testing yet. |
+| Windows | Build workflow generates the native project; manual validation pending. |
+| macOS / iOS | Experimental unsigned builds in CI; no manual device testing yet. |
 | Web | Unsupported: persistence uses native SQLite and `dart:io`. |
 
 These manual checks do not certify every device or OS version. CI currently
-runs formatting, static analysis and tests on Linux, not a platform build matrix.
+runs formatting, static analysis and tests on Linux. A separate five-platform
+[build workflow](docs/builds.md) produces downloadable candidates.
 Android release builds still use debug signing; durable release signing is a
 publication task. See the [publication plan](docs/publication_plan.md).
 
 ## Build from source
 
-Use a Flutter SDK that includes Dart **3.9 or later compatible with the package
-constraints**, and the native toolchain for the chosen target. Keep
+Use **Flutter 3.47.2** (the build workflow version) and the native toolchain for
+the chosen target. The lockfile requires Dart >=3.12 and Flutter >=3.44. Keep
 `pubspec.lock` for reproducible package resolution.
 
 ```sh

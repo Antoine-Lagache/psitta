@@ -37,3 +37,7 @@ coverage/
 
 #others
 local/
+# Local Python build helpers and packaged candidates
+__pycache__/
+*.pyc
+/dist/
