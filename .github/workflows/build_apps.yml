@@ -1,0 +1,100 @@
+name: Build applications
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [chatGPT/develop]
+    paths:
+      - '.github/workflows/build_apps.yml'
+      - 'tools/prepare_native_platform.py'
+      - 'tools/package_build.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-builds-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.47.2'
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: android
+            os: ubuntu-24.04
+          - target: linux
+            os: ubuntu-24.04
+          - target: windows
+            os: windows-2022
+          - target: macos
+            os: macos-15
+          - target: ios
+            os: macos-15
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        if: matrix.target == 'android'
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          pub-cache: true
+      - name: Linux build dependencies
+        if: matrix.target == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libasound2-dev libstdc++-12-dev
+      - name: Prepare native project
+        run: |
+          python -m pip install Pillow==11.3.0
+          python tools/prepare_native_platform.py ${{ matrix.target }}
+      - name: Install locked packages
+        run: flutter pub get --enforce-lockfile
+      - name: Generate initial database
+        run: flutter test tools/build_bundled_database.dart --reporter expanded
+      - name: Compile
+        run: |
+          case '${{ matrix.target }}' in
+            android) flutter build apk --release ;;
+            linux) flutter build linux --release ;;
+            windows) flutter build windows --release ;;
+            macos) flutter build macos --release --config-only
+                   xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath build/apple CODE_SIGNING_ALLOWED=NO ;;
+            ios) flutter build ios --release --no-codesign ;;
+          esac
+      - name: Package application and build information
+        run: python tools/package_build.py ${{ matrix.target }}
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Psitta-${{ matrix.target }}-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve generated native project
+        if: always() && (matrix.target == 'windows' || matrix.target == 'macos' || matrix.target == 'ios')
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-project-${{ matrix.target }}
+          path: |
+            ${{ matrix.target }}/
+            !${{ matrix.target }}/**/ephemeral/**
+            !${{ matrix.target }}/Pods/**
+            !${{ matrix.target }}/**/.symlinks/**
+          retention-days: 30
