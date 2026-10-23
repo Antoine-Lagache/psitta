@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import tarfile
@@ -29,6 +30,9 @@ else:
         raise SystemExit(f'Expected application bundle missing: {source}')
     if target == 'windows':
         shutil.make_archive(str(dist / 'Psitta-windows-x64'), 'zip', source)
+        iscc = shutil.which('ISCC') or str(Path(os.environ.get('ProgramFiles(x86)', r'C:\Program Files (x86)')) / 'Inno Setup 6' / 'ISCC.exe')
+        version = re.search(r'^version:\s*(\d+\.\d+\.\d+)', Path('pubspec.yaml').read_text(), re.MULTILINE).group(1)
+        subprocess.run([iscc, '/DAppVersion=' + version, 'packaging/windows/psitta.iss'], check=True)
     else:
         with tarfile.open(dist / f'Psitta-{target}.tar.gz', 'w:gz') as archive:
             archive.add(source, arcname=source.name if source.suffix == '.app' else 'Psitta')
@@ -45,7 +49,8 @@ info = {
 }
 (dist / 'build-info.json').write_text(json.dumps(info, indent=2) + '\n')
 (dist / 'README.txt').write_text('Psitta build candidate. See build-info.json for commit and checksums.\n'
-    'Windows: extract the entire ZIP and run psitta.exe; keep all DLLs and data beside it.\n'
+    'Windows: run Psitta-*-windows-x64-setup.exe to install with a Start menu shortcut.\n'
+    'Alternatively extract the portable ZIP completely and run psitta.exe.\n'
     'Linux: extract the tar.gz and run Psitta/psitta; requires GTK 3 and ALSA runtime libraries.\n'
     'Android: APK uses a development key. It may not update an existing installation signed with another key.\n'
     'Do not uninstall an existing app without preserving its progress.\n'

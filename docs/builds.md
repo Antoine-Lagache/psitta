@@ -12,7 +12,7 @@ package's own declared Dart lower bound is 3.9.
 |---|---|---|---|
 | Android | Ubuntu 24.04 / Java 21 | Release-mode APK signed with a development key | Device test; durable release signing |
 | Linux x64 | Ubuntu 24.04 | Complete bundle in tar.gz | Launch on supported distributions |
-| Windows x64 | Windows 2022 | ZIP with executable, DLLs and data | Manual Windows test |
+| Windows x64 | Windows 2022 | Installer EXE and portable ZIP with executable, DLLs and data | Manual Windows test |
 | macOS | macOS 15 | Unsigned .app in tar.gz | Hardware test, signing and notarization |
 | iOS | macOS 15 | Unsigned device .app in tar.gz | Signing/provisioning and device test; not an installable IPA |
 
@@ -31,8 +31,16 @@ The five jobs run independently; one failure does not cancel the others.
 Download artifacts from the completed run. They expire after 30 days; they are
 build candidates, not permanent release downloads.
 
-Extract the Windows ZIP completely and run `psitta.exe` alongside its DLLs and
-`data` directory. A Visual C++ runtime may be needed on a clean Windows machine.
+Extract the GitHub artifact ZIP and run `Psitta-<version>-windows-x64-setup.exe`.
+The installer copies the complete bundle to `%LOCALAPPDATA%\Programs\Psitta`,
+creates a Start menu shortcut and optionally a desktop shortcut, and registers
+an uninstaller. It installs for the current user without requiring administrator
+rights. User progress in the application support directory is not removed by
+uninstallation. Both the app and installer are unsigned; SmartScreen warnings
+may remain. CI checks silent installation, required files, shortcuts and uninstall.
+
+Alternatively, extract the portable ZIP completely and run `psitta.exe` alongside
+its DLLs and `data` directory. A Visual C++ runtime may be needed on a clean Windows machine.
 On Linux, extract the tar.gz and run `Psitta/psitta`; GTK 3 and ALSA libraries
 must be installed. Ubuntu 24.04 builds are not guaranteed to run on older glibc.
 
@@ -45,7 +53,8 @@ test flavor/channel is implemented by this workflow.
 
 ## Reproducing a build
 
-Install Flutter 3.47.2, Python 3.12 and the target's native build tools. From the
+Install Flutter 3.47.2, Python 3.12 and the target's native build tools.
+Windows packaging additionally requires Inno Setup 6 (available on the CI runner). From the
 repository root:
 
 ```sh

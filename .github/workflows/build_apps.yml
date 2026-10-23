@@ -8,6 +8,7 @@ on:
       - '.github/workflows/build_apps.yml'
       - 'tools/prepare_native_platform.py'
       - 'tools/package_build.py'
+      - 'packaging/windows/**'
 
 permissions:
   contents: read
@@ -80,6 +81,23 @@ jobs:
           esac
       - name: Package application and build information
         run: python tools/package_build.py ${{ matrix.target }}
+      - name: Verify Windows installer
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem dist/*-setup.exe | Select-Object -First 1
+          $installDir = Join-Path $env:RUNNER_TEMP 'Psitta-install-check'
+          $result = Start-Process $installer.FullName -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$installDir`"") -Wait -PassThru
+          if ($result.ExitCode -ne 0) { throw "Installer failed: $($result.ExitCode)" }
+          foreach ($file in @('psitta.exe', 'flutter_windows.dll', 'data/flutter_assets/AssetManifest.bin')) {
+            if (!(Test-Path (Join-Path $installDir $file))) { throw "Missing installed file: $file" }
+          }
+          $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Psitta.lnk'
+          if (!(Test-Path $shortcut)) { throw 'Start menu shortcut missing' }
+          $result = Start-Process (Join-Path $installDir 'unins000.exe') -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') -Wait -PassThru
+          if ($result.ExitCode -ne 0) { throw 'Uninstaller failed' }
+          if (Test-Path (Join-Path $installDir 'psitta.exe')) { throw 'Executable remains after uninstall' }
+          if (Test-Path $shortcut) { throw 'Shortcut remains after uninstall' }
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:

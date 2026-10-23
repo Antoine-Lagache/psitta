@@ -43,6 +43,20 @@ text-to-speech feature is currently implemented. Settings are a placeholder.
 Progress stays in the local database; cloud sync and a user-facing backup/export
 workflow are not implemented.
 
+## Download build candidates
+
+Open [GitHub Actions → Build applications](https://github.com/Antoine-Lagache/psitta/actions/workflows/build_apps.yml),
+select a successful run, then scroll to **Artifacts** and select `Psitta-windows-…`
+(or another platform). GitHub requires sign-in and downloads these artifacts as
+ZIP files. Extract the downloaded ZIP, then run the Windows `Psitta-…-setup.exe`
+to install the app and add a Start menu shortcut. The portable ZIP is optional.
+Older builds contain only the portable archive.
+
+These are temporary build artifacts (30-day retention), not GitHub Releases.
+The Windows executable and installer are currently unsigned; Windows may show
+an unknown-publisher or SmartScreen warning. An installer does not remove that
+warning. See [build documentation](docs/builds.md).
+
 ## Platforms and release status
 
 Version in source: **0.1.0+2**, preparing the first public distribution.
