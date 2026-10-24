@@ -94,8 +94,8 @@ operation is running to prevent duplicate submissions.
 
 ## Statistics
 
-`StatisticsScreen` loads all-time session and exercise aggregates in parallel.
-The two controller calls use independent SQLite read transactions; they do not
+`StatisticsScreen` loads today’s and all-time session and exercise aggregates
+in parallel. The four controller calls use independent SQLite read transactions; they do not
 form one strict shared database snapshot. This is acceptable for the MVP, but a
 single repository operation would be required if cross-aggregate snapshot
 consistency became necessary.
@@ -108,8 +108,10 @@ The screen displays:
 - completed sessions by session type;
 - recorded answers by grade.
 
-An empty history produces zero-valued metrics. Pull-to-refresh repeats both
-queries.
+An empty history produces zero-valued metrics. Pull-to-refresh repeats the
+queries, as does returning to the Statistics tab. The current Today query starts
+at local midnight and ends 24 hours later; this is not necessarily the next
+local midnight on a daylight-saving transition day.
 
 ## Settings and About
 
@@ -197,6 +199,9 @@ Audio and external-link errors have their own selectable presentation.
   narrow layouts.
 - Concatenated content fields have no automatically inserted separator; field
   markup and block widgets currently determine spacing.
-- The repository contains Android, Linux, and Web platform projects, but native
-  SQLite makes Web unsupported. Windows, macOS, and iOS projects and builds
-  have not been added or verified.
+- The repository contains Android and Linux platform projects. Web is unsupported
+  because persistence uses native SQLite and `dart:io`. The build workflow
+  generates Windows, macOS and iOS wrappers; successful compilation and manual
+  device validation are tracked separately. See [native builds](../../builds.md).
+- Audio playback is implemented, but the frozen corpus has no audio assets
+  and the application does not synthesize speech.

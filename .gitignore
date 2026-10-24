@@ -23,6 +23,7 @@ android/local.properties
 android/.gradle/
 
 # Generated docs
+/docs/FULL_DOC.md
 *.pdf
 
 # Logs / temp
@@ -36,3 +37,7 @@ coverage/
 
 #others
 local/
+# Local Python build helpers and packaged candidates
+__pycache__/
+*.pyc
+/dist/

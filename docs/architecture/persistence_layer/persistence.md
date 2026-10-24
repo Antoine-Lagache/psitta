@@ -68,17 +68,17 @@ line breaks, a local image, resolved `media://` HTML, and local WAV playback.
 It exists to validate the rendering and learning flows without coupling tests
 to Japanese production content.
 
-`AppDependencies.initialize` invokes it only in `kDebugMode`, after the schema
-has been opened and migrated and before controllers are constructed. It first
+Normal application startup does not invoke this seeder; tests or an explicit
+development setup can use it against a separate empty database. It first
 checks for any exercise and does nothing when one exists. A second check inside
 the write transaction prevents duplicate insertion if two seed attempts race.
 Database rows are inserted atomically; generated media files are created before
 that transaction and are not rolled back with SQLite.
 
-Release builds do not run this seeder. A fresh release database therefore has
-no exercises until a production corpus is installed; an existing database is
-never cleared by this rule. Installing that corpus is deliberately still a
-separate release concern.
+Debug and release builds install the frozen corpus from the bundled database
+on first launch. An existing populated database is preserved. See
+[bundled database generation](../../bundled_database.md) for the snapshot,
+recovery importer, and future content migrations.
 
 ---
 
@@ -130,5 +130,6 @@ infrastructure/persistence/
 ├── development/
 ├── mappers/
 ├── models/
+├── release/
 └── repositories/
 ```

@@ -1,4 +1,4 @@
-package com.antoinelagache.app_langue
+package net.psitta.app
 
 import io.flutter.embedding.android.FlutterActivity
 

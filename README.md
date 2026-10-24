@@ -1,111 +1,90 @@
-[github.com/Antoine-Lagache/psitta](https://github.com/Antoine-Lagache/psitta)
+<p align="center">
+  <img src="PSITTA.png" alt="Psitta — Language Learning App" width="640">
+</p>
+
+# Psitta
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart)](https://dart.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-In%20Development-orange)]()
+[![Status](https://img.shields.io/badge/Status-In%20Development-orange)](docs/publication_plan.md)
 
-**Psitta** is a cross-platform Flutter application built around a custom Spaced Repetition System (SRS) inspired by the SM-2 algorithm. The goal is not just to ship a language learning app — but to engineer a rigorous, modular, and extensible study engine with clearly defined architectural boundaries and a formally documented memory model.
+**Psitta** is an open-source language learning application built with Flutter.
+It combines vocabulary study and sentence practice with a custom spaced
+repetition system: words introduce vocabulary, while groups of related sentences
+provide practice with shared grammatical structures.
 
-This project serves as both a personal deep-dive into Dart/Flutter and a demonstration of clean software architecture applied to a non-trivial domain.
+The project explores both language learning and the engineering behind a study
+application. Its learning engine has an explicitly documented mathematical model,
+with separate layers for the interface, application workflows, learning rules,
+and persistence, so each part can evolve independently.
 
----
+The first version focuses on **Japanese**, with **1,297 words and 1,380 sentence
+groups (3,452 sentences)**, furigana, and English meanings and translations.
 
-## Highlights
+[Website](https://psitta.net) · [Documentation](docs/index.md) ·
+[Report an issue](https://github.com/Antoine-Lagache/psitta/issues)
 
-- **Custom SRS engine** — scheduling logic inspired by SM-2, with formal mathematical documentation and explicit modeling hypotheses
-- **Strict layered architecture** — UI / Application / Domain / Persistence, with enforced separation of concerns
-- **Framework-independent domain layer** — pure Dart business logic with no Flutter or SQLite dependencies
-- **Designed for extensibility** — modular exercise abstractions (`WordExercise`, `SentenceExercise`) allow new content types to be added without altering core logic
-- **SQLite persistence** — repository pattern with clean domain ↔ storage mapping
+## Current features
 
----
+- Separate word and sentence sessions, with answer grading and review intervals.
+- Related sentences share a group-level schedule and individual exposure state.
+- Pause/resume and local persistence of answers and learning progress.
+- Today's and all-time activity statistics.
+- Bundled Japanese fonts, source links and offline license notices.
 
-## Architecture
+The default session introduces at most four words or three sentence groups,
+plus due reviews. This is a per-session limit, not an enforced daily quota.
+The custom SRS model is documented; its learning effectiveness has not been
+empirically established. Psitta is a study aid, not a complete Japanese course.
 
-The application follows a four-layer architecture. Each layer has a single, well-defined responsibility and strict dependency rules.
+Audio playback is implemented, but this corpus contains no audio and no
+text-to-speech feature is currently implemented. Settings are a placeholder.
+Progress stays in the local database; cloud sync and a user-facing backup/export
+workflow are not implemented.
 
-```
-┌──────────────────────────────────────┐
-│                  UI                  │  Flutter screens — presentation only
-├──────────────────────────────────────┤
-│         Application / Controllers    │  Session lifecycle, navigation, aggregation
-├──────────────────────────────────────┤
-│               Domain                 │  Pure business logic — no Flutter, no SQLite
-├──────────────────────────────────────┤
-│             Persistence              │  Repositories, SQL queries, domain mapping
-└──────────────────────────────────────┘
-```
+## Download build candidates
 
-### UI
-Flutter application shell with retryable startup states, Home, Learning,
-Statistics, Settings, and About screens, and typed content rendering for text,
-HTML, images, audio, and video. UI code contains presentation logic only and
-does not directly access Domain objects or database code.
+Open [GitHub Actions → Build applications](https://github.com/Antoine-Lagache/psitta/actions/workflows/build_apps.yml),
+select a successful run, then scroll to **Artifacts** and select `Psitta-windows-…`
+(or another platform). GitHub requires sign-in and downloads these artifacts as
+ZIP files. Extract the downloaded ZIP, then run the Windows `Psitta-…-setup.exe`
+to install the app and add a Start menu shortcut. The portable ZIP is optional.
+On Ubuntu 24.04 x64, download `Psitta-linux-…`, extract the ZIP, and install the
+`.deb` with `sudo apt install ./psitta_0.1.0-2_amd64.deb` from that directory.
+Psitta then appears in the applications menu. Older builds contain only the
+portable archive.
 
-### Application / Controllers
-Orchestrates application workflows: session lifecycle, content loading, persistence coordination, and statistics aggregation. Controllers are long-lived and shared across screens.
+These are temporary build artifacts (30-day retention), not GitHub Releases.
+The Windows executable and installer are currently unsigned; Windows may show
+an unknown-publisher or SmartScreen warning. An installer does not remove that
+warning. See [build documentation](docs/builds.md).
 
-### Domain
-Pure business logic, fully framework-independent:
+## Platforms and release status
 
-- Learning sessions and results: `Session`, `SessionResult`
-- Exercise abstractions: `abstract Exercise`, `WordExercise`, `SentenceExercise`
-- Sentence progression: `SentenceGroup`, `SentenceInstance`
-- SRS scheduling logic
+Version in source: **0.1.0+2**, preparing the first public distribution.
 
-This layer has zero dependencies on Flutter or SQLite and can be tested in isolation.
-
-### Persistence
-Data access through the repository pattern. Responsible for SQL queries, database ↔ domain mapping, and storage optimizations. All storage concerns are strictly confined to this layer.
-
-Full architectural documentation is available in [`docs/`](docs/index.md).
-
----
-
-## Spaced Repetition Model
-
-The SRS model is formally documented and covers modeling assumptions, scheduling hypotheses, mathematical formulation, and system invariants.
-
-- [`docs/maths_and_srs/maths_srs.md`](docs/maths_and_srs/maths_srs.md) — mathematical model and scheduling logic
-- [`docs/maths_and_srs/hypotheses_and_mvp_scopes.md`](docs/maths_and_srs/hypotheses_and_mvp_scopes.md) — modeling hypotheses and design decisions
-- [`docs/maths_and_srs/invariant.md`](docs/maths_and_srs/invariant.md) - formal invariants
-
-The implemented model and its current MVP assumptions are described by this
-formal specification.
-
----
-
-## Current Status
-
-The project is under active development. Here is a transparent breakdown of progress:
-
-| Component | Status |
+| Platform | Current status |
 |---|---|
-| Layered architecture | ✅ Defined and documented |
-| SRS model (formal spec) | ✅ Complete |
-| Domain layer — class & method design | ✅ Complete |
-| Domain layer — implementation | ✅ Complete |
-| Persistence layer | ✅ Complete |
-| Application / Controllers | ✅ Complete |
-| UI | ✅ MVP screens and learning workflow complete |
-| Production learning content | ✅ Frozen v0.1 corpus in a bundled SQLite snapshot |
+| Android | Native project present; manually exercised on the maintainer's phone. |
+| Linux | Native project present; manually exercised on Ubuntu. |
+| Windows | Build workflow generates the native project; manual validation pending. |
+| macOS / iOS | Experimental unsigned builds in CI; no manual device testing yet. |
+| Web | Unsupported: persistence uses native SQLite and `dart:io`. |
 
-The functional MVP shell and its first Japanese corpus are integrated. The
-current focus is reviewing that corpus in the app before the v0.1 release.
+These manual checks do not certify every device or OS version. CI currently
+runs formatting, static analysis and tests on Linux. A separate five-platform
+[build workflow](docs/builds.md) produces downloadable candidates.
+Android builds use a durable release key when configured in GitHub secrets;
+otherwise they remain development-key candidates. See [signing setup](docs/android_signing.md). See the [publication plan](docs/publication_plan.md).
 
+## Build from source
 
----
+Use **Flutter 3.47.2** (the build workflow version) and the native toolchain for
+the chosen target. The lockfile requires Dart >=3.12 and Flutter >=3.44. Keep
+`pubspec.lock` for reproducible package resolution.
 
-## Getting Started
-
-On first launch, the app installs a verified, prefilled `psitta.db` snapshot
-and applies any pending schema migrations before opening the main screen. This
-works in debug and release builds. Later launches retain the database and progress.
-
-**Prerequisites:** Flutter SDK 3.x, Dart 3.x
-
-```bash
+```sh
 git clone https://github.com/Antoine-Lagache/psitta.git
 cd psitta
 flutter pub get
@@ -113,16 +92,18 @@ flutter test tools/build_bundled_database.dart
 flutter run
 ```
 
-On Debian- or Ubuntu-based Linux systems, native audio compilation may require:
+Generate the bundled database before running, testing or building a fresh
+checkout. On Debian/Ubuntu, native audio compilation may additionally require
+`libasound2-dev` alongside the Flutter Linux build prerequisites.
 
-```bash
-sudo apt install libasound2-dev
-```
+## Developer documentation
 
-The repository currently contains Flutter platform projects for Android,
-Linux, and Web. Persistence uses native SQLite and does not support Web. Other
-native platforms require their Flutter platform projects and native builds to
-be added and verified before they can be claimed as supported.
+Start with the [documentation index](docs/index.md) for architecture, persistence,
+and the SRS specification. The main layers are UI, Application controllers,
+Domain learning rules, and Infrastructure persistence. Domain code is independent
+of Flutter and SQLite. See [content sources](docs/content_sources.md) for corpus
+provenance and [database generation](docs/bundled_database.md) for installation
+and progress-preserving migration requirements.
 
 ### Bundled exercises and installation
 
@@ -175,7 +156,7 @@ Run the same checks as CI with:
 
 ```bash
 flutter test tools/build_bundled_database.dart
-dart format lib test tools
+dart format --output=none --set-exit-if-changed lib test tools
 flutter analyze
 flutter test
 ```

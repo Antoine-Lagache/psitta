@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Psitta
+Comment=Study Japanese vocabulary and sentences
+Comment[fr]=Apprendre le vocabulaire japonais et pratiquer avec des phrases
+Exec=/opt/psitta/psitta
+Icon=net.psitta.app
+Terminal=false
+Categories=Education;Languages;
+StartupWMClass=net.psitta.app
