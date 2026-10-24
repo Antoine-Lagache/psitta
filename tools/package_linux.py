@@ -14,6 +14,7 @@ def build_deb(bundle: Path, output: Path) -> Path:
     package = output.resolve() / f'psitta_{package_version}_amd64.deb'
     with tempfile.TemporaryDirectory(prefix='psitta-deb-') as temporary:
         root = Path(temporary)
+        root.chmod(0o755)
         application = root / 'opt/psitta'
         shutil.copytree(bundle, application, symlinks=True)
         (application / 'psitta').chmod(0o755)
