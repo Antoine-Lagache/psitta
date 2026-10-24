@@ -9,6 +9,8 @@ on:
       - 'tools/prepare_native_platform.py'
       - 'tools/package_build.py'
       - 'packaging/windows/**'
+      - 'packaging/linux/**'
+      - 'tools/package_linux.py'
 
 permissions:
   contents: read
@@ -60,7 +62,7 @@ jobs:
           pub-cache: true
       - name: Linux build dependencies
         if: matrix.target == 'linux'
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libasound2-dev libstdc++-12-dev
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libasound2-dev libstdc++-12-dev desktop-file-utils
       - name: Prepare native project
         run: |
           python -m pip install Pillow==11.3.0
@@ -81,6 +83,20 @@ jobs:
           esac
       - name: Package application and build information
         run: python tools/package_build.py ${{ matrix.target }}
+      - name: Verify Ubuntu package
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get install -y ./dist/psitta_*_amd64.deb
+          test -x /opt/psitta/psitta
+          test -f /opt/psitta/data/flutter_assets/AssetManifest.bin
+          test -f /usr/share/icons/hicolor/256x256/apps/net.psitta.app.png
+          desktop-file-validate /usr/share/applications/net.psitta.app.desktop
+          ldd /opt/psitta/psitta > /tmp/psitta-ldd.txt
+          cat /tmp/psitta-ldd.txt
+          if grep -q 'not found' /tmp/psitta-ldd.txt; then exit 1; fi
+          sudo apt-get remove -y psitta
+          test ! -e /opt/psitta/psitta
+          test ! -e /usr/share/applications/net.psitta.app.desktop
       - name: Verify Windows installer
         if: matrix.target == 'windows'
         shell: pwsh

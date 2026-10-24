@@ -36,6 +36,10 @@ else:
     else:
         with tarfile.open(dist / f'Psitta-{target}.tar.gz', 'w:gz') as archive:
             archive.add(source, arcname=source.name if source.suffix == '.app' else 'Psitta')
+if target == 'linux':
+    from package_linux import build_deb
+    build_deb(source, dist)
+
 checksums = {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in dist.iterdir() if f.is_file()}
 info = {
     'target': target,
@@ -51,7 +55,8 @@ info = {
 (dist / 'README.txt').write_text('Psitta build candidate. See build-info.json for commit and checksums.\n'
     'Windows: run Psitta-*-windows-x64-setup.exe to install with a Start menu shortcut.\n'
     'Alternatively extract the portable ZIP completely and run psitta.exe.\n'
-    'Linux: extract the tar.gz and run Psitta/psitta; requires GTK 3 and ALSA runtime libraries.\n'
+    'Ubuntu 24.04 x64: install the .deb using sudo apt install ./psitta_0.1.0-2_amd64.deb, then open Psitta from the applications menu.\n'
+    'The Linux tar.gz is an optional portable bundle.\n'
     'Android: APK uses a development key. It may not update an existing installation signed with another key.\n'
     'Do not uninstall an existing app without preserving its progress.\n'
     'Apple: experimental unsigned build, not notarized. The iOS .app is not an installable IPA.\n')

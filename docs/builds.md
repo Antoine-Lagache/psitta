@@ -11,7 +11,7 @@ package's own declared Dart lower bound is 3.9.
 | Target | Runner | Output | Validation still required |
 |---|---|---|---|
 | Android | Ubuntu 24.04 / Java 21 | Release-mode APK signed with a development key | Device test; durable release signing |
-| Linux x64 | Ubuntu 24.04 | Complete bundle in tar.gz | Launch on supported distributions |
+| Linux x64 | Ubuntu 24.04 | Ubuntu .deb and portable tar.gz | Launch on supported distributions |
 | Windows x64 | Windows 2022 | Installer EXE and portable ZIP with executable, DLLs and data | Manual Windows test |
 | macOS | macOS 15 | Unsigned .app in tar.gz | Hardware test, signing and notarization |
 | iOS | macOS 15 | Unsigned device .app in tar.gz | Signing/provisioning and device test; not an installable IPA |
@@ -41,8 +41,20 @@ may remain. CI checks silent installation, required files, shortcuts and uninsta
 
 Alternatively, extract the portable ZIP completely and run `psitta.exe` alongside
 its DLLs and `data` directory. A Visual C++ runtime may be needed on a clean Windows machine.
-On Linux, extract the tar.gz and run `Psitta/psitta`; GTK 3 and ALSA libraries
-must be installed. Ubuntu 24.04 builds are not guaranteed to run on older glibc.
+On Ubuntu 24.04 x64, extract the GitHub artifact ZIP and install its `.deb`:
+
+```sh
+sudo apt install ./psitta_0.1.0-2_amd64.deb
+```
+
+Run the command from the extracted directory, adjusting the filename for later
+versions. Open **Psitta** from the applications menu afterward. The package
+installs the full bundle under `/opt/psitta`, an icon and a desktop entry, and
+lets apt install required runtime dependencies. Remove it with `sudo apt remove
+psitta`; user progress is kept in the separate application support directory.
+CI verifies installation, desktop entry, runtime linking and removal. The package
+targets Ubuntu 24.04 amd64, not every Linux distribution or older glibc version.
+The tar.gz remains an optional portable bundle.
 
 The Android APK retains the existing `net.psitta.app` identity. A runner's
 development key differs from another machine's key and may differ between runs.

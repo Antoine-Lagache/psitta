@@ -50,7 +50,10 @@ select a successful run, then scroll to **Artifacts** and select `Psitta-windows
 (or another platform). GitHub requires sign-in and downloads these artifacts as
 ZIP files. Extract the downloaded ZIP, then run the Windows `Psitta-…-setup.exe`
 to install the app and add a Start menu shortcut. The portable ZIP is optional.
-Older builds contain only the portable archive.
+On Ubuntu 24.04 x64, download `Psitta-linux-…`, extract the ZIP, and install the
+`.deb` with `sudo apt install ./psitta_0.1.0-2_amd64.deb` from that directory.
+Psitta then appears in the applications menu. Older builds contain only the
+portable archive.
 
 These are temporary build artifacts (30-day retention), not GitHub Releases.
 The Windows executable and installer are currently unsigned; Windows may show
