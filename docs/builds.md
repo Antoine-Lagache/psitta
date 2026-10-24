@@ -56,7 +56,9 @@ CI verifies installation, desktop entry, runtime linking and removal. The packag
 targets Ubuntu 24.04 amd64, not every Linux distribution or older glibc version.
 The tar.gz remains an optional portable bundle.
 
-The Android APK retains the existing `net.psitta.app` identity. A runner's
+The Android APK retains the existing `net.psitta.app` identity.
+[Configure durable signing](android_signing.md) before public distribution.
+Without release secrets, the following candidate limitation applies. A runner's
 development key differs from another machine's key and may differ between runs.
 Consequently Android may reject installation over an existing Psitta installation.
 Do not uninstall an existing app with valuable progress merely to bypass this.

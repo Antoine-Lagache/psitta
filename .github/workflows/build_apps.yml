@@ -3,7 +3,7 @@ name: Build applications
 on:
   workflow_dispatch:
   push:
-    branches: [chatGPT/develop]
+    branches: [main, chatGPT/develop]
     paths:
       - '.github/workflows/build_apps.yml'
       - 'tools/prepare_native_platform.py'
@@ -11,6 +11,8 @@ on:
       - 'packaging/windows/**'
       - 'packaging/linux/**'
       - 'tools/package_linux.py'
+      - 'android/app/build.gradle.kts'
+      - 'tools/configure_android_signing.py'
 
 permissions:
   contents: read
@@ -71,6 +73,14 @@ jobs:
         run: flutter pub get --enforce-lockfile
       - name: Generate initial database
         run: flutter test tools/build_bundled_database.dart --reporter expanded
+      - name: Configure Android release signing when available
+        if: matrix.target == 'android'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: python tools/configure_android_signing.py
       - name: Compile
         run: |
           case '${{ matrix.target }}' in
@@ -121,6 +131,9 @@ jobs:
           path: dist/*
           if-no-files-found: error
           retention-days: 30
+      - name: Remove Android signing material
+        if: always() && matrix.target == 'android'
+        run: rm -f android/key.properties android/release-keystore.jks
       - name: Preserve generated native project
         if: always() && (matrix.target == 'windows' || matrix.target == 'macos' || matrix.target == 'ios')
         uses: actions/upload-artifact@v4

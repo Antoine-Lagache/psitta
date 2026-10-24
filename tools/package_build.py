@@ -17,7 +17,8 @@ dist = Path('dist')
 dist.mkdir(exist_ok=True)
 if target == 'android':
     source = Path('build/app/outputs/flutter-apk/app-release.apk')
-    shutil.copy2(source, dist / 'Psitta-android-development-key.apk')
+    signed = Path('android/key.properties').exists()
+    shutil.copy2(source, dist / ('Psitta-android.apk' if signed else 'Psitta-android-development-key.apk'))
 else:
     roots = {
         'linux': 'build/linux/x64/release/bundle',
@@ -48,7 +49,7 @@ info = {
     'build_host': platform.platform(),
     'build_host_architecture': platform.machine(),
     'manually_tested': False,
-    'signing': 'development key; not final release signing' if target == 'android' else 'no distribution signing configured',
+    'signing': ('release-key' if signed else 'development-key') if target == 'android' else 'no distribution signing configured',
     'sha256': checksums,
 }
 (dist / 'build-info.json').write_text(json.dumps(info, indent=2) + '\n')
@@ -57,6 +58,6 @@ info = {
     'Alternatively extract the portable ZIP completely and run psitta.exe.\n'
     'Ubuntu 24.04 x64: install the .deb using sudo apt install ./psitta_0.1.0-2_amd64.deb, then open Psitta from the applications menu.\n'
     'The Linux tar.gz is an optional portable bundle.\n'
-    'Android: APK uses a development key. It may not update an existing installation signed with another key.\n'
+    'Android: see build-info.json for signing identity type. A different signing key cannot update an existing installation.\n'
     'Do not uninstall an existing app without preserving its progress.\n'
     'Apple: experimental unsigned build, not notarized. The iOS .app is not an installable IPA.\n')

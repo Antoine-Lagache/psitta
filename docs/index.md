@@ -43,6 +43,8 @@ and SRS rules needed by a developer entering the project.
 
 - [Native builds](builds.md) — platform workflows, archives and signing limits.
 
+- [Android signing](android_signing.md) — private key setup and release drafts.
+
 ## Maintenance
 
 Each source document has one primary topic and one compact Mermaid diagram.

@@ -75,8 +75,8 @@ Version in source: **0.1.0+2**, preparing the first public distribution.
 These manual checks do not certify every device or OS version. CI currently
 runs formatting, static analysis and tests on Linux. A separate five-platform
 [build workflow](docs/builds.md) produces downloadable candidates.
-Android release builds still use debug signing; durable release signing is a
-publication task. See the [publication plan](docs/publication_plan.md).
+Android builds use a durable release key when configured in GitHub secrets;
+otherwise they remain development-key candidates. See [signing setup](docs/android_signing.md). See the [publication plan](docs/publication_plan.md).
 
 ## Build from source
 
