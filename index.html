@@ -13,7 +13,7 @@
 body{font-size:18px;font-weight:450;line-height:1.7}
 .hero{padding:55px 0;gap:50px}
 h1{font-size:clamp(40px,6vw,64px);font-weight:750;letter-spacing:-.035em;margin:16px 0}
-.lede{font-size:21px;line-height:1.65;color:var(--ink)}
+.lede{font-size:24px;line-height:1.65;color:var(--ink)}
 .links,.small,.numbers span:last-child,.card-header,.card-bottom,.caption,footer{font-size:15px}
 .step p,.about p{font-size:18px;line-height:1.75}
 .eyebrow,.step b{font-size:14px;letter-spacing:.08em}
@@ -30,13 +30,13 @@ h1{font-size:clamp(40px,6vw,64px);font-weight:750;letter-spacing:-.035em;margin:
 summary:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
 .release-links{font-size:16px;margin:24px 0 0}
 .note{font-size:16px;line-height:1.75}
-@media(max-width:760px){.links{flex-wrap:wrap;justify-content:flex-end;gap:10px 15px}.hero{padding:36px 0}.numbers span:last-child{font-size:15px}.lede{font-size:20px}}
+@media(max-width:760px){.links{flex-wrap:wrap;justify-content:flex-end;gap:10px 15px}.hero{padding:36px 0}.numbers span:last-child{font-size:15px}.lede{font-size:22px}}
 </style>
 </head>
 <body><div class="wrap">
 <nav aria-label="Main navigation"><a class="brand" href="#"><img src="PSITTA_logo.png" alt="">Psitta</a><div class="links"><a href="#approach">How it works</a><a href="#download">Download</a><a href="https://github.com/Antoine-Lagache/psitta">GitHub ↗</a></div></nav>
 <main>
-<div class="hero"><div><div class="eyebrow">Japanese · Spaced repetition · Open source</div><h1>Psitta</h1><p class="lede">Build your vocabulary, practise with related sentences, and return to what you have learned. One study session at a time.</p><div class="buttons"><a class="button" href="#download">Get Psitta</a><a href="#approach">Explore the approach →</a></div><p class="small">For Android, Windows and Ubuntu. Your progress stays on your device.</p></div><div><div class="card"><div class="card-header"><span>SENTENCE PRACTICE</span><span>日本語 → English</span></div><div class="japanese" lang="ja"><ruby>猫<rt>ねこ</rt></ruby>が<ruby>好<rt>す</rt></ruby>きです。</div><p class="meaning">I like cats.</p><div class="card-bottom">One sentence. A shared structure. More ways to practise.</div></div><p class="caption">Illustration using a sentence from the corpus — not an app screenshot.</p></div></div>
+<div class="hero"><div><div class="eyebrow">Japanese · Spaced repetition · Open source</div><h1>Psitta</h1><p class="lede">Build your vocabulary, practise with related sentences, and return to what you have learned. One study session at a time.</p><div class="buttons"><a class="button" href="#download">Get Psitta</a><a href="#approach">Explore the approach →</a></div><p class="small">For Android, Windows and Ubuntu. Your progress stays on your device.</p></div><div><div class="card"><div class="card-header"><span>SENTENCE PRACTICE</span><span>日本語 → English</span></div><div class="japanese" lang="ja"><ruby>猫<rt>ねこ</rt></ruby>が<ruby>好<rt>す</rt></ruby>きです。</div><p class="meaning">I like cats.</p><div class="card-bottom">One sentence. A shared structure. More ways to practise.</div></div><p class="caption">Illustration using a sentence from the corpus.<br>Not an app screenshot.</p></div></div>
 <div class="numbers" aria-label="Japanese corpus"><div><span class="number">1,297</span><span>vocabulary entries</span></div><div><span class="number">1,380</span><span>sentence groups</span></div><div><span class="number">3,452</span><span>Japanese sentences</span></div></div>
 <section id="approach"><div class="eyebrow">The approach</div><h2>Meet words. Practise patterns. Revisit.</h2><div class="grid"><article class="step"><b>01 / VOCABULARY</b><h3>Start with a word</h3><p>Study Japanese words with their readings and English meanings. Furigana helps you read the kanji as you go.</p></article><article class="step"><b>02 / SENTENCES</b><h3>See the structure again</h3><p>Practise related sentences within a group. Each group shares a review schedule, while individual examples track their own exposure.</p></article><article class="step"><b>03 / REPETITION</b><h3>Build a routine</h3><p>Grade your answers, review when exercises become due, and resume unfinished sessions. Follow your activity with daily and overall statistics.</p></article></div></section>
 <section id="download" class="download">
@@ -46,20 +46,21 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
 <article class="platform">
 <h3>Windows</h3><p class="compatibility">64-bit · EXE installer</p>
 <a class="button" href="https://github.com/Antoine-Lagache/psitta/releases/download/v0.1.0/Psitta-0.1.0-windows-x64-setup.exe">Download for Windows</a>
-<details><summary>Installation instructions</summary><p>Open the downloaded installer, then launch Psitta from the Start menu. The installer is unsigned: Windows may display a SmartScreen warning.</p></details>
+<details><summary>Installation instructions</summary><p>Open the downloaded installer. <strong>Psitta is not digitally signed yet</strong>, so Windows may display a warning; antivirus software may also block it. A warning alone does not establish that a file is malicious. Check the alert before proceeding.</p></details>
 </article>
 <article class="platform">
-<h3>Ubuntu</h3><p class="compatibility">24.04 · 64-bit (amd64) · DEB package</p>
-<a class="button" href="https://github.com/Antoine-Lagache/psitta/releases/download/v0.1.0/psitta_0.1.0-2_amd64.deb">Download for Ubuntu</a>
-<details><summary>Installation instructions</summary><p>In the folder containing the download, run <code>sudo apt install ./psitta_0.1.0-2_amd64.deb</code>, then open Psitta from the applications menu. Other Linux distributions are not validated.</p></details>
+<h3>Linux</h3><p class="compatibility">DEB · 64-bit (amd64)<br>Tested on Ubuntu 24.04</p>
+<a class="button" href="https://github.com/Antoine-Lagache/psitta/releases/download/v0.1.0/psitta_0.1.0-2_amd64.deb">Download for Linux</a>
+<details><summary>Installation instructions</summary><p>Open the downloaded .deb with your software installer and select Install. Availability of a graphical installer depends on your distribution.</p></details>
 </article>
 <article class="platform">
 <h3>Android</h3><p class="compatibility">APK · Direct installation</p>
 <a class="button" href="https://github.com/Antoine-Lagache/psitta/releases/download/v0.1.0/Psitta-android.apk">Download for Android</a>
-<details><summary>Installation instructions</summary><p>Open the downloaded APK. If requested, allow installation from the browser or file manager you are using. An older development build may use a different signing key: do not uninstall it without backing up your progress.</p></details>
+<details><summary>Installation instructions</summary><p>Open the downloaded APK. If requested, allow installation from the browser or file manager you are using.</p></details>
 </article>
 </div>
 <p class="release-links"><a href="https://github.com/Antoine-Lagache/psitta/releases/tag/v0.1.0">Release notes, portable versions and checksums →</a></p>
+<p class="release-links"><strong>macOS and iOS:</strong> experimental builds only, not signed or tested on devices. No ready-to-install downloads are available for these platforms yet.</p>
 <div class="note"><strong>About this first version</strong><br>Your progress is saved on your device. Cloud sync and in-app backup are not available yet. Updates are installed manually. The Japanese exercises include readings and English translations, but no audio.</div>
 </section>
 <section class="about"><div><div class="eyebrow">Built in the open</div><h2>A learning project,<br>in more ways than one.</h2><p>Psitta is developed by Antoine Lagache. Built with Flutter, it explores language learning alongside the design of a modular study engine and a documented spaced repetition model.</p><a href="https://github.com/Antoine-Lagache/psitta">Explore the source code →</a></div><div><h3>Content with provenance</h3><p>Vocabulary draws on JMdict; sentences and their English translations come from Tatoeba. Source attribution is available in the app. Editorial choices and known limitations are documented.</p><p>Psitta is a vocabulary and sentence practice tool, intended to accompany other learning resources. The ordering and scheduling are design choices, not a claim of measured learning effectiveness.</p><a href="https://github.com/Antoine-Lagache/psitta/blob/main/docs/content_sources.md">Content sources &amp; licenses →</a></div></section>
