@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Psitta release history: new features, learning content, supported platforms and known limitations for each version.">
+<meta name="theme-color" content="#f6f5f0"><title>Release notes — Psitta</title>
+<link rel="icon" href="PSITTA_logo.png">
+<style>
+:root{--paper:#f6f5f0;--ink:#262820;--muted:#65685e;--line:#dedfd5;--accent:#ad422d;--soft:#e9eadf}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:30px}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:inherit;text-underline-offset:4px}a:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:5px}.wrap{max-width:1120px;margin:auto;padding:0 28px}nav{display:flex;align-items:center;justify-content:space-between;padding:25px 0;border-bottom:1px solid var(--line);gap:20px}.brand{display:flex;gap:12px;align-items:center;text-decoration:none;font-weight:750;font-size:25px}.brand img{width:45px;height:45px;border-radius:12px}.links{display:flex;gap:24px;font-size:14px}.links a{text-decoration:none}.hero{display:grid;grid-template-columns:1.25fr 1fr;gap:70px;align-items:center;padding:85px 0 75px}.eyebrow{text-transform:uppercase;font-size:12px;letter-spacing:.16em;font-weight:750;color:var(--accent)}h1{font-size:clamp(42px,5.5vw,70px);line-height:1.08;font-weight:650;letter-spacing:-.055em;margin:22px 0}h1 em{font-style:normal;color:var(--accent)}.lede{color:var(--muted);max-width:510px;font-size:19px}.buttons{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin:30px 0 12px}.button{display:inline-block;border:1px solid var(--ink);padding:12px 23px;border-radius:8px;background:var(--ink);color:white;text-decoration:none;font-weight:600;font-size:15px}.secondary{background:transparent;color:var(--ink)}.small{font-size:13px;color:var(--muted)}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px;box-shadow:0 22px 60px #2628200b;transform:rotate(2deg)}.card-header{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}.japanese{font-family:"Noto Sans JP","Yu Gothic","Hiragino Sans",sans-serif;font-size:38px;font-weight:500;text-align:center;padding:45px 0 22px}.japanese rt{font-size:13px}.meaning{text-align:center;color:var(--muted);margin:0 0 34px}.card-bottom{border-top:1px solid var(--line);padding-top:16px;font-size:12px;color:var(--muted)}.caption{font-size:12px;color:var(--muted);text-align:center;margin-top:25px}.numbers{display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid var(--line);padding:30px 0;gap:20px}.number{font-size:32px;letter-spacing:-.03em;font-weight:600;display:block}.numbers span:last-child{font-size:14px;color:var(--muted)}section{padding:70px 0}h2{font-size:35px;line-height:1.2;letter-spacing:-.035em;margin:14px 0 24px}h3{font-size:20px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}.step{border-top:2px solid var(--ink);padding-top:16px}.step p{color:var(--muted);font-size:16px}.step b{color:var(--accent);font-size:13px}.download{border-top:1px solid var(--line)}.platform{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);padding:26px;border-radius:12px}.platform p{color:var(--muted);font-size:14px;flex:1}.platform .button{align-self:flex-start}.pending{font-size:14px;font-weight:600;color:var(--muted)}#release-status{color:var(--muted);margin-bottom:28px}.note{background:var(--soft);border-radius:12px;padding:24px 28px;margin-top:30px;font-size:14px}.about{display:grid;grid-template-columns:1fr 1fr;gap:65px;border-top:1px solid var(--line)}.about p{color:var(--muted);font-size:16px}footer{border-top:1px solid var(--line);padding:25px 0 35px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}@media(max-width:760px){.hero{grid-template-columns:1fr;padding:50px 0;gap:35px}.card{transform:none;max-width:440px;margin:auto}.grid,.about{grid-template-columns:1fr}.grid{gap:18px}.numbers{gap:12px}.number{font-size:25px}.numbers span:last-child{font-size:12px}.links{gap:15px}.wrap{padding:0 20px}section{padding:45px 0}.about{gap:20px}h2{font-size:30px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Readable body copy and compact platform downloads. */
+:root{--muted:#45483f}
+body{font-size:18px;font-weight:450;line-height:1.7}
+.hero{padding:55px 0;gap:50px}
+h1{font-size:clamp(40px,6vw,64px);font-weight:750;letter-spacing:-.035em;margin:16px 0}
+.lede{font-size:24px;line-height:1.65;color:var(--ink)}
+.links,.small,.numbers span:last-child,.card-header,.card-bottom,.caption,footer{font-size:15px}
+.step p,.about p{font-size:18px;line-height:1.75}
+.eyebrow,.step b{font-size:14px;letter-spacing:.08em}
+.button{font-size:17px;font-weight:650;min-height:48px;text-align:center}
+.download-intro{max-width:65ch;margin-bottom:28px;color:var(--muted)}
+.platform{padding:26px;gap:12px}
+.platform h3{font-size:25px;margin:0}
+.platform .compatibility{font-size:16px;margin:0;flex:none;min-height:3.4em}
+.platform .platform-note{font-size:14px;margin:-8px 0 0;flex:none}
+.platform .button{align-self:stretch;margin:8px 0}
+.platform details{font-size:16px;line-height:1.65}
+.platform summary{cursor:pointer;font-weight:600;text-underline-offset:4px}
+.platform details p{font-size:16px;margin:12px 0 0;flex:none}
+.platform code{overflow-wrap:anywhere;font-size:14px}
+summary:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
+.release-links{font-size:16px;margin:24px 0 0}
+.note{font-size:16px;line-height:1.75}
+@media(max-width:760px){.links{flex-wrap:wrap;justify-content:flex-end;gap:10px 15px}.hero{padding:36px 0}.numbers span:last-child{font-size:15px}.lede{font-size:22px}}
+.release-page{max-width:800px;padding:48px 0 64px}.release-page h1{font-size:44px}.release-entry{border-top:1px solid var(--line);padding-top:28px;margin-top:36px;scroll-margin-top:28px}.release-entry li{margin:10px 0}.release-entry h3{margin-top:28px}.release-entry p{max-width:68ch}
+</style>
+</head>
+<body><div class="wrap">
+<nav aria-label="Main navigation"><a class="brand" href="index.html"><img src="PSITTA_logo.png" alt="">Psitta</a><div class="links"><a href="index.html#download">Download</a><a href="release-notes.html" aria-current="page">Release notes</a><a href="https://github.com/Antoine-Lagache/psitta">GitHub ↗</a></div></nav>
+<main class="release-page">
+<h1>Release notes</h1>
+<p>Features, content and changes in each Psitta release, with the newest version first.</p>
+<p class="small">Versions: <a href="#v0-1-0">0.1.0</a></p>
+<!-- Add future releases above this entry. Keep previous entries and their anchors. -->
+<article class="release-entry" id="v0-1-0" aria-labelledby="version-0-1-0">
+<h2 id="version-0-1-0">Version 0.1.0</h2>
+<p class="small"><time datetime="2026-10-25">25 October 2026</time> · First public release</p>
+<p>Psitta's first release brings Japanese vocabulary and sentence practice together with spaced repetition.</p>
+<h3>Learning and practice</h3>
+<ul>
+<li>1,297 vocabulary entries and 1,380 sentence groups containing 3,452 Japanese sentences.</li>
+<li>Japanese readings, furigana, English meanings and translations, with source attribution to JMdict and Tatoeba.</li>
+<li>Spaced repetition for words and sentence groups, with practice across related sentences.</li>
+<li>Resumable study sessions, activity statistics and progress saved locally on your device.</li>
+</ul>
+<h3>Available platforms</h3>
+<p>Android APK, Windows x64 installer and portable archive, and Linux amd64 DEB package and portable archive. The Linux package has been tested on Ubuntu 24.04.</p>
+<h3>Known limitations</h3>
+<ul>
+<li>The bundled exercises have no audio. Some readings and translations retain documented editorial limitations.</li>
+<li>No cloud sync, in-app progress export/import or automatic updates.</li>
+<li>Existing populated databases are not automatically replaced by a new bundled corpus.</li>
+<li>Windows binaries are unsigned and may trigger security warnings. macOS and iOS builds are experimental, unsigned and untested on devices.</li>
+</ul>
+<p><a class="button" href="index.html#download">Download Psitta</a></p>
+<p><a href="https://github.com/Antoine-Lagache/psitta/releases/tag/v0.1.0">Version 0.1.0 files and checksums on GitHub ↗</a></p>
+</article>
+</main>
+<footer><span>Psitta · Made by Antoine Lagache</span><span><a href="index.html">Home</a> · <a href="https://github.com/Antoine-Lagache/psitta/issues">Report an issue</a></span></footer>
+</div></body></html>
