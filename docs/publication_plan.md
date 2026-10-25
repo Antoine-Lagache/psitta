@@ -1,5 +1,17 @@
 # Publication plan
 
+## Status on 25 October 2026
+
+- Repository cleanup and branch consolidation completed.
+- v0.1.0 published for Android, Windows and Linux; installations tested by the maintainer.
+- Permanent Android signing configured; the maintainer's existing progress was
+  migrated and verified. This manual recovery is not an in-app backup feature.
+- Psitta.net presentation, downloads and release-history page published on GitHub Pages.
+- Next: record the short presentation video, then inventory and prioritize updates.
+- Windows signing remains deferred; Apple builds remain experimental.
+
+## Original sequence
+
 Agreed sequence (2026-10-22):
 
 1. Clean the repository and review README/documentation on `chatGPT/develop`.

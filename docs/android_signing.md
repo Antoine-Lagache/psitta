@@ -1,5 +1,9 @@
 # Android release signing
 
+The public v0.1.0 APK uses the permanent Psitta signing key. The setup below is
+a maintainer procedure, not a prerequisite for users installing the app.
+Reuse the existing key for future releases; do not generate a replacement key.
+
 The permanent release key must be created on the maintainer's machine and backed
 up securely. Never commit it or its password. GitHub stores the CI copy in Actions
 secrets. A newly generated release key cannot update an existing app signed with

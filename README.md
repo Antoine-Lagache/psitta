@@ -1,13 +1,9 @@
-<p align="center">
-  <img src="PSITTA.png" alt="Psitta — Language Learning App" width="640">
-</p>
-
 # Psitta
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart)](https://dart.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-In%20Development-orange)](docs/publication_plan.md)
+[![Release](https://img.shields.io/badge/Release-v0.1.0-blue)](https://github.com/Antoine-Lagache/psitta/releases/tag/v0.1.0)
 
 **Psitta** is an open-source language learning application built with Flutter.
 It combines vocabulary study and sentence practice with a custom spaced
@@ -22,8 +18,13 @@ and persistence, so each part can evolve independently.
 The first version focuses on **Japanese**, with **1,297 words and 1,380 sentence
 groups (3,452 sentences)**, furigana, and English meanings and translations.
 
-[Website](https://psitta.net) · [Documentation](docs/index.md) ·
+[Download](https://psitta.net/#download) · [Website](https://psitta.net) ·
+[Release notes](https://psitta.net/release-notes.html) · [Documentation](docs/index.md) ·
 [Report an issue](https://github.com/Antoine-Lagache/psitta/issues)
+
+<p align="center">
+  <img src="PSITTA.png" alt="Psitta — Language Learning App" width="440">
+</p>
 
 ## Current features
 
@@ -43,40 +44,42 @@ text-to-speech feature is currently implemented. Settings are a placeholder.
 Progress stays in the local database; cloud sync and a user-facing backup/export
 workflow are not implemented.
 
-## Download build candidates
+## Download
 
-Open [GitHub Actions → Build applications](https://github.com/Antoine-Lagache/psitta/actions/workflows/build_apps.yml),
-select a successful run, then scroll to **Artifacts** and select `Psitta-windows-…`
-(or another platform). GitHub requires sign-in and downloads these artifacts as
-ZIP files. Extract the downloaded ZIP, then run the Windows `Psitta-…-setup.exe`
-to install the app and add a Start menu shortcut. The portable ZIP is optional.
-On Ubuntu 24.04 x64, download `Psitta-linux-…`, extract the ZIP, and install the
-`.deb` with `sudo apt install ./psitta_0.1.0-2_amd64.deb` from that directory.
-Psitta then appears in the applications menu. Older builds contain only the
-portable archive.
+**[Download Psitta v0.1.0](https://github.com/Antoine-Lagache/psitta/releases/tag/v0.1.0)**,
+published on 25 October 2026. Downloads are public and do not require a GitHub account.
 
-These are temporary build artifacts (30-day retention), not GitHub Releases.
-The Windows executable and installer are currently unsigned; Windows may show
-an unknown-publisher or SmartScreen warning. An installer does not remove that
-warning. See [build documentation](docs/builds.md).
+| Platform | Download and installation |
+|---|---|
+| Android | Open `Psitta-android.apk` and allow installation from your browser or file manager if requested. |
+| Windows x64 | Run `Psitta-0.1.0-windows-x64-setup.exe`. A portable ZIP is also available; extract it completely before running `psitta.exe`. |
+| Linux amd64 | Open `psitta_0.1.0-2_amd64.deb` with your software installer. Tested on Ubuntu 24.04; other distributions are not validated. A portable tar.gz is also available. |
+
+Windows binaries are unsigned and may trigger SmartScreen or antivirus alerts.
+Android releases use the permanent Psitta signing key. Updates must have a
+compatible signature; old development installations may use a different key.
+Do not uninstall an old installation with valuable progress without a verified backup.
+Updates are installed manually; no automatic updater or in-app backup is available.
+
+See the [release history](https://psitta.net/release-notes.html) for features and
+limitations, and the release's `SHA256SUMS.txt` for file checksums.
 
 ## Platforms and release status
 
-Version in source: **0.1.0+2**, preparing the first public distribution.
+Published release: **v0.1.0**. Version in source: **0.1.0+2**.
 
 | Platform | Current status |
 |---|---|
-| Android | Native project present; manually exercised on the maintainer's phone. |
-| Linux | Native project present; manually exercised on Ubuntu. |
-| Windows | Build workflow generates the native project; manual validation pending. |
-| macOS / iOS | Experimental unsigned builds in CI; no manual device testing yet. |
-| Web | Unsupported: persistence uses native SQLite and `dart:io`. |
+| Android | Signed release tested on the maintainer's phone, including progress restoration during the development-key transition. |
+| Linux | Package installation and application tested on Ubuntu 24.04. |
+| Windows | Installer and application manually tested on Windows. |
+| macOS / iOS | Experimental unsigned CI builds; not tested on devices or included in the public release. The iOS output is not an installable IPA. |
+| Web app | Unsupported: persistence uses native SQLite and `dart:io`. The presentation website is hosted separately on GitHub Pages. |
 
-These manual checks do not certify every device or OS version. CI currently
-runs formatting, static analysis and tests on Linux. A separate five-platform
-[build workflow](docs/builds.md) produces downloadable candidates.
-Android builds use a durable release key when configured in GitHub secrets;
-otherwise they remain development-key candidates. See [signing setup](docs/android_signing.md). See the [publication plan](docs/publication_plan.md).
+These checks do not certify every device or OS version. CI runs formatting,
+static analysis and tests. The five-platform [build workflow](docs/builds.md)
+produces temporary development artifacts; published downloads are in GitHub Releases.
+See [Android signing](docs/android_signing.md) and the [publication plan](docs/publication_plan.md).
 
 ## Build from source
 

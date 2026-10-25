@@ -41,6 +41,10 @@ and SRS rules needed by a developer entering the project.
 - [Validity rules](maths_and_srs/invariant.md) — enforced checks, repairs, and
   configuration assumptions.
 
+## Releases and distribution
+
+- [Public release history](https://psitta.net/release-notes.html) — features and limitations by version.
+- [Downloads](https://github.com/Antoine-Lagache/psitta/releases) — published installers and archives.
 - [Native builds](builds.md) — platform workflows, archives and signing limits.
 
 - [Android signing](android_signing.md) — private key setup and release drafts.
