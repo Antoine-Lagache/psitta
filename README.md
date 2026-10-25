@@ -40,6 +40,14 @@ changes as they become available.
 
 The default session introduces at most four words or three sentence groups,
 plus due reviews. This is a per-session limit, not an enforced daily quota.
+
+Reviews become available at their scheduled time, rather than being grouped
+into a daily batch. A new session in the evening can therefore include reviews
+that were not due in the morning. You can study in short sessions throughout
+the day and pause unfinished sessions to resume later. Resuming keeps the
+existing session's exercise list; newly due exercises are selected when starting
+a new session.
+
 The custom SRS model is documented; its learning effectiveness has not been
 empirically established. Psitta is a study aid, not a complete Japanese course.
 

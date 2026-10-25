@@ -43,6 +43,21 @@ exercises enter the list.
 
 ---
 
+## Review availability between sessions
+
+When creating a new session, `SessionController` requests exercises whose
+`next_review <= now`, up to the configured review limit. The SRS due time is
+`lastReview + interval`, persisted as an absolute timestamp in microseconds.
+There is no rounding to a calendar day or daily batch of reviews. An exercise
+not yet due in the morning may become available for a new evening session.
+
+A session receives a fixed exercise list at creation. Pausing and resuming
+restores that list; it does not add exercises that became due meanwhile.
+Intra-session learning selection follows the separate rules below and can
+present an exercise before its short learning interval has elapsed.
+
+---
+
 ## Execution
 
 `beginSession` records the start time and selects the first exercise. For each
