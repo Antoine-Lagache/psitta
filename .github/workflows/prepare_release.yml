@@ -55,4 +55,4 @@ jobs:
           SOURCE_SHA: ${{ steps.source.outputs.sha }}
         run: |
           version=$(sed -n 's/^version: \([0-9.]*\).*/\1/p' pubspec.yaml)
-          gh release create "v$version" dist/release/* --draft --target "$SOURCE_SHA" --title "Psitta $version" --notes-file docs/release_notes_v0.1.0.md
+          gh release create "v$version" dist/release/* --draft --target "$SOURCE_SHA" --title "Psitta $version" --notes-file docs/releases/release_notes_v0.1.0.md

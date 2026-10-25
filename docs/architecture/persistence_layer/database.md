@@ -88,7 +88,7 @@ Future schema changes must be added as new ordered migrations rather than by
 editing databases that may already exist.
 
 Initial release content is built into a bundled database using this same migration
-registry and the release importer. See [bundled database generation](../../bundled_database.md)
+registry and the release importer. See [bundled database generation](../../content/bundled_database.md)
 for regeneration, installation recovery, and future schema/content updates.
 `AppDependencies` retains the transactional importer only as a recovery path for
 an existing empty database. Development sample seeding is separate and explicit.

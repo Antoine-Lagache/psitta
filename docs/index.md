@@ -6,7 +6,6 @@ These documents describe the implementation that currently exists in Psitta.
 They focus on the architectural boundaries, runtime flows, persistence model,
 and SRS rules needed by a developer entering the project.
 
-
 ## Architecture
 
 - [Overview](architecture/overview.md) — layers, dependency directions, and
@@ -27,8 +26,6 @@ and SRS rules needed by a developer entering the project.
   DAOs, mappers, and transaction boundaries.
   - [Database](architecture/persistence_layer/database.md) — database lifecycle
     and version 1 schema.
-  - [Bundled database](bundled_database.md) — generation, first-install snapshot,
-    and upgrades that preserve user progress.
   - [Repositories](architecture/persistence_layer/repositories.md) — the APIs
     exposed to the application layer.
 
@@ -41,13 +38,19 @@ and SRS rules needed by a developer entering the project.
 - [Validity rules](maths_and_srs/invariant.md) — enforced checks, repairs, and
   configuration assumptions.
 
+## Content
+
+- [Content sources](content/content_sources.md) — provenance, notices, and editorial limits.
+- [Bundled database](content/bundled_database.md) — generation, first-install snapshot,
+  and upgrades that preserve user progress.
+
 ## Releases and distribution
 
 - [Public release history](https://psitta.net/release-notes.html) — features and limitations by version.
 - [Downloads](https://github.com/Antoine-Lagache/psitta/releases) — published installers and archives.
-- [Native builds](builds.md) — platform workflows, archives and signing limits.
-
-- [Android signing](android_signing.md) — private key setup and release drafts.
+- [Native builds](releases/builds.md) — platform workflows, archives and signing limits.
+- [Android signing](releases/android_signing.md) — private key setup and release drafts.
+- [v0.1.0 release notes](releases/release_notes_v0.1.0.md) — notes used for the GitHub release.
 
 ## Maintenance
 
@@ -59,12 +62,9 @@ as planned rather than documented as existing.
 context loading. This duplicate snapshot is ignored by Git; edit the source
 documents above.
 
-- [Content sources](content_sources.md) — provenance, notices, and editorial limits.
-- [Publication plan](publication_plan.md) — release steps and deferred ideas.
-
 `tools/line_count.dart` is an optional source-size inspection tool.
 `tools/update_final_curriculum.py` reproduces the frozen content adapter; its
-inputs and historical Git dependency are documented in [bundled database](bundled_database.md).
+inputs and historical Git dependency are documented in [bundled database](content/bundled_database.md).
 
 Some documentation was written with AI assistance and reviewed by the project
 author.

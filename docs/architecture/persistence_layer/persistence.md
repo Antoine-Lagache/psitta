@@ -77,7 +77,7 @@ that transaction and are not rolled back with SQLite.
 
 Debug and release builds install the frozen corpus from the bundled database
 on first launch. An existing populated database is preserved. See
-[bundled database generation](../../bundled_database.md) for the snapshot,
+[bundled database generation](../../content/bundled_database.md) for the snapshot,
 recovery importer, and future content migrations.
 
 ---

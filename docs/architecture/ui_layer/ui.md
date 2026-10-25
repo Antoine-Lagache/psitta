@@ -202,6 +202,6 @@ Audio and external-link errors have their own selectable presentation.
 - The repository contains Android and Linux platform projects. Web is unsupported
   because persistence uses native SQLite and `dart:io`. The build workflow
   generates Windows, macOS and iOS wrappers; successful compilation and manual
-  device validation are tracked separately. See [native builds](../../builds.md).
+  device validation are tracked separately. See [native builds](../../releases/builds.md).
 - Audio playback is implemented, but the frozen corpus has no audio assets
   and the application does not synthesize speech.

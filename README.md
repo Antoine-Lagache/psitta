@@ -18,6 +18,10 @@ and persistence, so each part can evolve independently.
 The first version focuses on **Japanese**, with **1,297 words and 1,380 sentence
 groups (3,452 sentences)**, furigana, and English meanings and translations.
 
+Psitta is actively developed. Future updates will bring improvements and new
+features. Follow the [release notes](https://psitta.net/release-notes.html) for
+changes as they become available.
+
 [Download](https://psitta.net/#download) · [Website](https://psitta.net) ·
 [Release notes](https://psitta.net/release-notes.html) · [Documentation](docs/index.md) ·
 [Report an issue](https://github.com/Antoine-Lagache/psitta/issues)
@@ -77,9 +81,9 @@ Published release: **v0.1.0**. Version in source: **0.1.0+2**.
 | Web app | Unsupported: persistence uses native SQLite and `dart:io`. The presentation website is hosted separately on GitHub Pages. |
 
 These checks do not certify every device or OS version. CI runs formatting,
-static analysis and tests. The five-platform [build workflow](docs/builds.md)
+static analysis and tests. The five-platform [build workflow](docs/releases/builds.md)
 produces temporary development artifacts; published downloads are in GitHub Releases.
-See [Android signing](docs/android_signing.md) and the [publication plan](docs/publication_plan.md).
+See [Android signing](docs/releases/android_signing.md) for signing and release preparation.
 
 ## Build from source
 
@@ -104,8 +108,8 @@ checkout. On Debian/Ubuntu, native audio compilation may additionally require
 Start with the [documentation index](docs/index.md) for architecture, persistence,
 and the SRS specification. The main layers are UI, Application controllers,
 Domain learning rules, and Infrastructure persistence. Domain code is independent
-of Flutter and SQLite. See [content sources](docs/content_sources.md) for corpus
-provenance and [database generation](docs/bundled_database.md) for installation
+of Flutter and SQLite. See [content sources](docs/content/content_sources.md) for corpus
+provenance and [database generation](docs/content/bundled_database.md) for installation
 and progress-preserving migration requirements.
 
 ### Bundled exercises and installation
@@ -153,7 +157,7 @@ as export metadata; the application does not enforce that joint timetable.
 The import is a one-time installation of v0.1. Updating a populated database
 to a revised corpus will need a versioned content migration that preserves
 learning progress. For the regeneration command and migration workflow, see
-[bundled database generation](docs/bundled_database.md).
+[bundled database generation](docs/content/bundled_database.md).
 
 Run the same checks as CI with:
 
@@ -175,4 +179,4 @@ The Psitta learning-content compilation and adaptations use CC BY-SA 4.0.
 Consolidated credits and license references are accessible through
 **Settings → About Psitta → Sources and licenses**. The shared CC BY-SA license,
 EDRDG statement and required JMdict documentation are bundled in `assets/legal/`. See
-[content sources](docs/content_sources.md) for provenance and maintenance notes.
+[content sources](docs/content/content_sources.md) for provenance and maintenance notes.
