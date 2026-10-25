@@ -21,7 +21,8 @@ h1{font-size:clamp(40px,6vw,64px);font-weight:750;letter-spacing:-.035em;margin:
 .download-intro{max-width:65ch;margin-bottom:28px;color:var(--muted)}
 .platform{padding:26px;gap:12px}
 .platform h3{font-size:25px;margin:0}
-.platform .compatibility{font-size:16px;margin:0;flex:none}
+.platform .compatibility{font-size:16px;margin:0;flex:none;min-height:3.4em}
+.platform .platform-note{font-size:14px;margin:-8px 0 0;flex:none}
 .platform .button{align-self:stretch;margin:8px 0}
 .platform details{font-size:16px;line-height:1.65}
 .platform summary{cursor:pointer;font-weight:600;text-underline-offset:4px}
@@ -34,7 +35,7 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
 </style>
 </head>
 <body><div class="wrap">
-<nav aria-label="Main navigation"><a class="brand" href="#"><img src="PSITTA_logo.png" alt="">Psitta</a><div class="links"><a href="#approach">How it works</a><a href="#download">Download</a><a href="https://github.com/Antoine-Lagache/psitta">GitHub ↗</a></div></nav>
+<nav aria-label="Main navigation"><a class="brand" href="#"><img src="PSITTA_logo.png" alt="">Psitta</a><div class="links"><a href="#approach">How it works</a><a href="#download">Download</a><a href="release-notes.html">Release notes</a><a href="https://github.com/Antoine-Lagache/psitta">GitHub ↗</a></div></nav>
 <main>
 <div class="hero"><div><div class="eyebrow">Japanese · Spaced repetition · Open source</div><h1>Psitta</h1><p class="lede">Build your vocabulary, practise with related sentences, and return to what you have learned. One study session at a time.</p><div class="buttons"><a class="button" href="#download">Get Psitta</a><a href="#approach">Explore the approach →</a></div><p class="small">For Android, Windows and Ubuntu. Your progress stays on your device.</p></div><div><div class="card"><div class="card-header"><span>SENTENCE PRACTICE</span><span>日本語 → English</span></div><div class="japanese" lang="ja"><ruby>猫<rt>ねこ</rt></ruby>が<ruby>好<rt>す</rt></ruby>きです。</div><p class="meaning">I like cats.</p><div class="card-bottom">One sentence. A shared structure. More ways to practise.</div></div><p class="caption">Illustration using a sentence from the corpus.<br>Not an app screenshot.</p></div></div>
 <div class="numbers" aria-label="Japanese corpus"><div><span class="number">1,297</span><span>vocabulary entries</span></div><div><span class="number">1,380</span><span>sentence groups</span></div><div><span class="number">3,452</span><span>Japanese sentences</span></div></div>
@@ -49,8 +50,9 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
 <details><summary>Installation instructions</summary><p>Open the downloaded installer. <strong>Psitta is not digitally signed yet</strong>, so Windows may display a warning; antivirus software may also block it. A warning alone does not establish that a file is malicious. Check the alert before proceeding.</p></details>
 </article>
 <article class="platform">
-<h3>Linux</h3><p class="compatibility">DEB · 64-bit (amd64)<br>Tested on Ubuntu 24.04</p>
+<h3>Linux</h3><p class="compatibility">DEB · 64-bit (amd64)</p>
 <a class="button" href="https://github.com/Antoine-Lagache/psitta/releases/download/v0.1.0/psitta_0.1.0-2_amd64.deb">Download for Linux</a>
+<p class="platform-note">Tested on Ubuntu 24.04</p>
 <details><summary>Installation instructions</summary><p>Open the downloaded .deb with your software installer and select Install. Availability of a graphical installer depends on your distribution.</p></details>
 </article>
 <article class="platform">
@@ -59,7 +61,7 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
 <details><summary>Installation instructions</summary><p>Open the downloaded APK. If requested, allow installation from the browser or file manager you are using.</p></details>
 </article>
 </div>
-<p class="release-links"><a href="https://github.com/Antoine-Lagache/psitta/releases/tag/v0.1.0">Release notes, portable versions and checksums →</a></p>
+<p class="release-links"><a href="release-notes.html">Release notes →</a> · <a href="https://github.com/Antoine-Lagache/psitta/releases/tag/v0.1.0">Portable versions and checksums ↗</a></p>
 <p class="release-links"><strong>macOS and iOS:</strong> experimental builds only, not signed or tested on devices. No ready-to-install downloads are available for these platforms yet.</p>
 <div class="note"><strong>About this first version</strong><br>Your progress is saved on your device. Cloud sync and in-app backup are not available yet. Updates are installed manually. The Japanese exercises include readings and English translations, but no audio.</div>
 </section>
