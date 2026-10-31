@@ -32,7 +32,10 @@ class SessionController {
 
   /// Counts exercises still undergoing in-session sentence training.
   int get remainingTrainingCount {
-    return _requireActiveSession().countExerciseByStatus(ExerciseStatus.consolidating);
+    return _requireActiveSession().getResumeList().fold(
+      0,
+      (count, resume) => count + (resume.trainingCount ?? 0),
+    );
   }
 
   Duration? _activeSegmentStartedAt;
