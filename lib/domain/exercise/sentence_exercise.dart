@@ -1,6 +1,5 @@
 import 'package:psitta/domain/exercise/exercise.dart';
 import 'package:psitta/domain/sentences/sentence_group.dart';
-import 'package:psitta/domain/sentences/sentence_instance.dart';
 
 export 'package:psitta/domain/sentences/sentence_group.dart';
 
@@ -34,25 +33,11 @@ class SentenceExercise extends Exercise {
   }
 
   @override
-  int getContentId() => _getSentence().contentId;
+  int getContentId() => _sentences.getSentence().contentId;
 
   @override
   ExerciseResume getResume() {
     return ExerciseResume(exerciseId: id, status: status, trainingCount: trainingCount);
-  }
-
-  /// Deterministically selects the least-known sentence in the group.
-  SentenceInstance _getSentence() {
-    double minScore = _sentences.sentences[0].state.getscore();
-    SentenceInstance sentence = _sentences.sentences[0];
-
-    for (final sentenceInstance in _sentences.sentences) {
-      if (sentenceInstance.state.getscore() < minScore) {
-        minScore = sentenceInstance.state.getscore();
-        sentence = sentenceInstance;
-      }
-    }
-    return sentence;
   }
 
   @override
@@ -80,11 +65,13 @@ class SentenceExercise extends Exercise {
         answer: answer,
         exerciseId: id,
         status: status,
-        sentenceInstanceId: _getSentence().id,
+        sentenceInstanceId: _sentences.getSentence().id,
       ),
     );
+
+    _sentences.updateStates(answer.grade);
+
     if (status == ExerciseStatus.consolidating) {
-      _getSentence().state.updateState(answer.grade);
       if (!answer.grade.isFail) trainingCount--;
 
       if (trainingCount == 0) {
@@ -92,7 +79,6 @@ class SentenceExercise extends Exercise {
       }
       return;
     } else {
-      _getSentence().state.updateState(answer.grade);
       super.applyAnswer(answer, config);
 
       if (status == ExerciseStatus.completed && trainingCount > 0) {
