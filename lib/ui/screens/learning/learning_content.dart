@@ -36,13 +36,24 @@ class LearningContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.topCenter,
+    return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-          children: [_buildCard(context), const SizedBox(height: 20), _buildActions()],
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: _buildActions(),
+            ),
+            Expanded(
+              child: SelectionArea(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                  children: [_buildCard(context)],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
