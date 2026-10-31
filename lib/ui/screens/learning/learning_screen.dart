@@ -290,9 +290,7 @@ class _LearningScreenState extends State<LearningScreen> {
     if (_operationInProgress || _selectedGrade == null) {
       return;
     }
-    setState(() {
-      _operationInProgress = true;
-    });
+    _setLoading();
 
     try {
       final result = await _submitPendingAnswer();
@@ -322,9 +320,7 @@ class _LearningScreenState extends State<LearningScreen> {
       return;
     }
 
-    setState(() {
-      _operationInProgress = true;
-    });
+    _setLoading();
     try {
       final result = await _submitPendingAnswer();
       if (result == SubmitAnswerResult.sessionCompleted) {
@@ -386,9 +382,7 @@ class _LearningScreenState extends State<LearningScreen> {
       return;
     }
 
-    setState(() {
-      _operationInProgress = true;
-    });
+    _setLoading();
     try {
       final result = await _submitPendingAnswer();
       if (result == SubmitAnswerResult.sessionCompleted) {
