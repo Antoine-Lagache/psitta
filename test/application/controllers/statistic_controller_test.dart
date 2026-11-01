@@ -100,7 +100,7 @@ void main() {
           startedDate: dayStart,
           endDate: dayEnd,
           completedOnly: true,
-        )).single.endAt,
+        )).single.endAt?.toUtc(),
         dayStart.add(const Duration(minutes: 5)),
       );
     });
