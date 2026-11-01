@@ -103,18 +103,19 @@ class SessionResultDao {
       final conditions = <String>[];
       final parameters = <Object?>[];
 
+      if (completedOnly) {
+        conditions.add('end_at IS NOT NULL');
+      }
+
+      final dateColumn = completedOnly ? 'end_at' : 'started_at';
       if (startDate != null) {
-        conditions.add('started_at >= ?');
+        conditions.add('$dateColumn >= ?');
         parameters.add(startDate);
       }
 
       if (endDate != null) {
-        conditions.add('started_at < ?');
+        conditions.add('$dateColumn < ?');
         parameters.add(endDate);
-      }
-
-      if (completedOnly) {
-        conditions.add('end_at IS NOT NULL');
       }
 
       final whereClause = conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';

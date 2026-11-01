@@ -73,6 +73,38 @@ void main() {
       expect(statistics.totalTimeSpent, const Duration(minutes: 3));
     });
 
+    test('completed sessions are grouped by their end date', () async {
+      final dayStart = DateTime.utc(2026, 9, 15);
+      final dayEnd = dayStart.add(const Duration(days: 1));
+
+      final first = createSession(await createWordExercise());
+      first.beginSession(dayStart.subtract(const Duration(minutes: 5)));
+      first.intermediateResult.id = await sessionRepository.save(first);
+      first.endSession(dayStart.add(const Duration(minutes: 5)));
+      await sessionRepository.completeSession(first);
+
+      final second = createSession(await createWordExercise());
+      second.beginSession(dayEnd.subtract(const Duration(minutes: 5)));
+      second.intermediateResult.id = await sessionRepository.save(second);
+      second.endSession(dayEnd.add(const Duration(minutes: 5)));
+      await sessionRepository.completeSession(second);
+
+      final statistics = await controller.getSessionStatistics(
+        startDate: dayStart,
+        endDate: dayEnd,
+      );
+
+      expect(statistics.numberOfSessions, 1);
+      expect(
+        (await sessionRepository.getList(
+          startedDate: dayStart,
+          endDate: dayEnd,
+          completedOnly: true,
+        )).single.endAt,
+        dayStart.add(const Duration(minutes: 5)),
+      );
+    });
+
     test('session answer counters keep their answer semantics', () async {
       final exercise = await createWordExercise();
       final startedAt = DateTime.utc(2026, 9, 14, 10);
