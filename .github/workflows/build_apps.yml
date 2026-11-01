@@ -5,6 +5,7 @@ on:
   push:
     branches: [main, chatGPT/develop]
     paths:
+      - 'pubspec.yaml'
       - '.github/workflows/build_apps.yml'
       - 'tools/prepare_native_platform.py'
       - 'tools/package_build.py'
