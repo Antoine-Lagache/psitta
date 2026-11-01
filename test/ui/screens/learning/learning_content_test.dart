@@ -88,9 +88,7 @@ void main() {
     expect(selectedGrade, Grade.good);
   });
 
-  testWidgets('hides the legacy hard grade and presents medium as Hard', (
-    tester,
-  ) async {
+  testWidgets('hides the legacy hard grade and presents medium as Hard', (tester) async {
     Grade? selectedGrade;
 
     await tester.pumpWidget(
