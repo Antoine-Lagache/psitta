@@ -168,14 +168,8 @@ class StatisticsContent extends StatelessWidget {
           label: 'Hard',
           value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.medium),
         ),
-        (
-          label: 'Good',
-          value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.good),
-        ),
-        (
-          label: 'Easy',
-          value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.easy),
-        ),
+        (label: 'Good', value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.good)),
+        (label: 'Easy', value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.easy)),
       ],
     );
   }
@@ -238,7 +232,6 @@ class StatisticsContent extends StatelessWidget {
     }
     return minutes == 0 ? '${hours}h' : '${hours}h ${minutes}m';
   }
-
 }
 
 class _StatisticMetric extends StatelessWidget {
