@@ -78,7 +78,7 @@ void main() {
     expect(find.text('Again'), findsOneWidget);
     expect(find.text('Now'), findsOneWidget);
     expect(find.text('Good'), findsOneWidget);
-    expect(find.text('2d'), findsOneWidget);
+    expect(find.text('2.0 days'), findsOneWidget);
     expect(find.text('Hard'), findsNothing);
 
     await tester.tap(find.text('Good'));
@@ -131,7 +131,7 @@ void main() {
     expect(find.text('Again'), findsOneWidget);
     expect(find.text('Good'), findsOneWidget);
     expect(find.text('Now'), findsNothing);
-    expect(find.text('2d'), findsNothing);
+    expect(find.text('2.0 days'), findsNothing);
   });
 
   testWidgets('disables the available action while an operation is running', (

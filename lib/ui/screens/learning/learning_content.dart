@@ -183,15 +183,20 @@ class LearningContent extends StatelessWidget {
   }
 
   String _formatInterval(Duration duration) {
+    if (duration == Duration.zero) {
+      return 'Now';
+    }
     if (duration < const Duration(minutes: 1)) {
-      return duration == Duration.zero ? 'Now' : '${duration.inSeconds}s';
+      return '${duration.inSeconds} sec';
     }
     if (duration < const Duration(hours: 1)) {
-      return '${duration.inMinutes}m';
+      return '${duration.inMinutes} min';
     }
     if (duration < const Duration(days: 1)) {
-      return '${duration.inHours}h';
+      final hours = duration.inMinutes / Duration.minutesPerHour;
+      return '${hours.toStringAsFixed(1)} ${hours == 1 ? 'hour' : 'hours'}';
     }
-    return '${duration.inDays}d';
+    final days = duration.inMinutes / Duration.minutesPerDay;
+    return '${days.toStringAsFixed(1)} ${days == 1 ? 'day' : 'days'}';
   }
 }
