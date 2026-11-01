@@ -52,7 +52,8 @@ void main() {
     expect(find.text('Words'), findsOneWidget);
     expect(find.text('Sentences'), findsOneWidget);
     expect(find.text('Again'), findsOneWidget);
-    expect(find.text('Medium'), findsOneWidget);
+    expect(find.text('Hard'), findsOneWidget);
+    expect(find.text('Medium'), findsNothing);
     expect(find.text('Easy'), findsOneWidget);
   });
 

@@ -10,6 +10,7 @@ void main() {
     required ValueChanged<Grade> onGradeSelected,
     Grade? selectedGrade,
     bool interactionEnabled = true,
+    List<Grade> allowedGrades = const [Grade.again, Grade.good],
     bool showPreviewIntervals = true,
     VoidCallback? onToggleSide,
     VoidCallback? onCancelAnswer,
@@ -23,10 +24,12 @@ void main() {
           showingAnswer: showingAnswer,
           interactionEnabled: interactionEnabled,
           selectedGrade: selectedGrade,
-          allowedGrades: const [Grade.again, Grade.good],
+          allowedGrades: allowedGrades,
           previewIntervals: const {
             Grade.again: Duration.zero,
             Grade.good: Duration(days: 2),
+            Grade.hard: Duration(minutes: 10),
+            Grade.medium: Duration(days: 1),
           },
           showPreviewIntervals: showPreviewIntervals,
           onRevealAnswer: onRevealAnswer,
@@ -83,6 +86,27 @@ void main() {
 
     await tester.tap(find.text('Good'));
     expect(selectedGrade, Grade.good);
+  });
+
+  testWidgets('hides the legacy hard grade and presents medium as Hard', (
+    tester,
+  ) async {
+    Grade? selectedGrade;
+
+    await tester.pumpWidget(
+      buildContent(
+        showingAnswer: true,
+        allowedGrades: const [Grade.again, Grade.hard, Grade.medium, Grade.good],
+        onRevealAnswer: () {},
+        onGradeSelected: (grade) => selectedGrade = grade,
+      ),
+    );
+
+    expect(find.text('Hard'), findsOneWidget);
+    expect(find.text('Medium'), findsNothing);
+    expect(find.text('10 min'), findsNothing);
+    await tester.tap(find.text('Hard'));
+    expect(selectedGrade, Grade.medium);
   });
 
   testWidgets('keeps the selected answer pending until the next exercise', (

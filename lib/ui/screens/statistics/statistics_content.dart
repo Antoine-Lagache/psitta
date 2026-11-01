@@ -158,11 +158,24 @@ class StatisticsContent extends StatelessWidget {
       context,
       title: 'Recorded answers by grade',
       entries: [
-        for (final grade in Grade.values)
-          (
-            label: _gradeLabel(grade),
-            value: exerciseStatistics.getNumberOfAnswersByGrade(grade),
-          ),
+        (
+          label: 'Again',
+          value:
+              exerciseStatistics.getNumberOfAnswersByGrade(Grade.again) +
+              exerciseStatistics.getNumberOfAnswersByGrade(Grade.hard),
+        ),
+        (
+          label: 'Hard',
+          value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.medium),
+        ),
+        (
+          label: 'Good',
+          value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.good),
+        ),
+        (
+          label: 'Easy',
+          value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.easy),
+        ),
       ],
     );
   }
@@ -226,15 +239,6 @@ class StatisticsContent extends StatelessWidget {
     return minutes == 0 ? '${hours}h' : '${hours}h ${minutes}m';
   }
 
-  String _gradeLabel(Grade grade) {
-    return switch (grade) {
-      Grade.again => 'Again',
-      Grade.hard => 'Hard',
-      Grade.medium => 'Medium',
-      Grade.good => 'Good',
-      Grade.easy => 'Easy',
-    };
-  }
 }
 
 class _StatisticMetric extends StatelessWidget {
