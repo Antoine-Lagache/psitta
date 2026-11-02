@@ -11,6 +11,8 @@ environment:
   sdk: ^3.9.0
 
 dependencies:
+  fsrs:
+    path: third_party/dart_fsrs
   crypto: ^3.0.7
   flutter:
     sdk: flutter

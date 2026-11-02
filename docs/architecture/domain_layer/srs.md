@@ -2,6 +2,10 @@
 
 # Spaced repetition system
 
+This page describes the currently active legacy SRS. The isolated
+[FSRS-6 adapter](fsrs.md) is available for the upcoming persistence migration,
+but is not yet used by exercise sessions.
+
 ## Purpose
 
 This document explains the role of the SRS inside the Domain and the distinction
