@@ -15,10 +15,7 @@ class FsrsSchedulerConfig {
   FsrsSchedulerConfig({
     List<double> parameters = fsrs.defaultParameters,
     this.desiredRetention = 0.9,
-    List<Duration> learningSteps = const [
-      Duration(minutes: 1),
-      Duration(minutes: 10),
-    ],
+    List<Duration> learningSteps = const [Duration(minutes: 1), Duration(minutes: 10)],
     List<Duration> relearningSteps = const [Duration(minutes: 10)],
     this.maximumInterval = 36500,
     this.enableFuzzing = false,

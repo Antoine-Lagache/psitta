@@ -29,6 +29,9 @@ void main() {
     expect(scheduler.learningSteps, const [Duration(minutes: 2)]);
     expect(scheduler.maximumInterval, 5000);
     expect(scheduler.enableFuzzing, isTrue);
-    expect(() => config.learningSteps.add(const Duration(minutes: 4)), throwsUnsupportedError);
+    expect(
+      () => config.learningSteps.add(const Duration(minutes: 4)),
+      throwsUnsupportedError,
+    );
   });
 }
