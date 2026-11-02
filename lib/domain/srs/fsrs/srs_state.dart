@@ -11,8 +11,25 @@ class SRSState {
 
   fsrs.Card _card;
 
-  SRSState({required int exerciseId})
-    : _card = fsrs.Card(cardId: exerciseId, due: DateTime.utc(1970));
+  SRSState({
+    required int exerciseId,
+    fsrs.State state = fsrs.State.learning,
+    int? step,
+    double? stability,
+    double? difficulty,
+    DateTime? due,
+    DateTime? lastReview,
+  }) : _card = fsrs.Card(
+         cardId: exerciseId,
+         state: state,
+         step: step,
+         stability: stability,
+         difficulty: difficulty,
+         // Keep unseen exercises immediately eligible, as in the original
+         // adapter, unless a persisted due date was supplied.
+         due: due ?? DateTime.utc(1970),
+         lastReview: lastReview,
+       );
 
   SRSState.clone(SRSState other) : _card = other._card.copyWith();
 
