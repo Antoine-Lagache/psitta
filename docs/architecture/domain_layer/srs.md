@@ -2,105 +2,61 @@
 
 # Spaced repetition system
 
-This page describes the currently active legacy SRS. The isolated
-[FSRS-6 adapter](fsrs.md) is available for the upcoming persistence migration,
-but is not yet used by exercise sessions.
+Psitta now uses FSRS-6 for exercise scheduling. The previous SM-2-derived
+implementation is archived in
+[the history folder](../../history/srs/srs_state_sm2_v0_1.md); it is not part of
+the runtime.
 
-## Purpose
+## State and scheduling
 
-This document explains the role of the SRS inside the Domain and the distinction
-between exercise scheduling, sentence progression, and session orchestration.
+Each exercise owns one `SRSState`, which wraps an FSRS `Card`. Its persistent
+state consists of the FSRS phase (`learning`, `review`, or `relearning`), the
+optional step index, stability, difficulty, due time, and last-review time.
+`interval` is derived as `due - lastReview`; an unseen card has no
+`nextReview`.
 
-The exact formulas are documented in
-[SRS model mathematics](../../maths_and_srs/maths_srs.md).
+FSRS computes the next card state and due time from the current card, a rating,
+and the answer timestamp. The adapter uses the upstream default parameters,
+0.9 desired retention, 1- and 10-minute learning steps, a 10-minute relearning
+step, a 36,500-day maximum interval, and disabled fuzzing. These are fixed
+defaults for now; user-configurable FSRS settings and parameter optimization
+are outside this migration.
 
----
+The scheduler owns card memory state. `ExerciseStatus` separately controls the
+current session, and `SessionScheduler` decides which exercise is presented
+next. `SentenceState` remains independent: it tracks progress for individual
+sentences while the containing sentence exercise has one FSRS card.
 
-## Diagram
+## Grades
 
-```mermaid
-flowchart TD
-    ANSWER["Grade and timestamp"] --> EXERCISE["Exercise"]
-    EXERCISE --> SRS["SRSState"]
-    SRS --> INTERVAL["Theoretical interval"]
-    INTERVAL --> SCHEDULER["SessionScheduler"]
-    EXERCISE -. "sentence exercise" .-> SENTENCE["SentenceState"]
-```
+FSRS accepts four ratings: Again, Hard, Good, and Easy. Psitta's existing
+five-value grade enum is temporarily mapped as follows while the database and
+UI contract are migrated:
 
----
+| Stored Psitta grade | FSRS rating | Interpretation |
+|---|---|---|
+| `again` (q=0) | Again | Failure |
+| legacy `hard` (q=2) | Again | Failure |
+| `medium` (q=3) | Hard | Successful recall |
+| `good` (q=4) | Good | Successful recall |
+| `easy` (q=5) | Easy | Successful recall |
 
-## Role of `SRSState`
+This is an explicit semantic mapping; numeric values are not cast between
+enums. Sentence exercises continue to reject the grades they do not expose.
 
-Each exercise owns one `SRSState`. It stores the current interval, the last
-review time, the learning-step index, and the parameters used by the recall
-model. The next review time is derived from the last review and interval.
+## Session behavior
 
-`SRSState` has two update modes:
+Learning and relearning cards both count as `isInLearning`. A failed review can
+therefore remain in the active session for a relearning step. The exercise
+completion rule still uses the configured day boundary and whether FSRS has
+left its learning/relearning phase. Session limits and the day boundary remain
+in `SRSConfig`; the former SM-2 coefficients have been removed from active
+configuration.
 
-- **learning mode**, which uses short configured steps;
-- **review mode**, which computes a longer interval from the recall model.
+## Persistence
 
-A failed review returns the state to learning. A successful learning sequence
-graduates it to review mode.
-
-The SRS computes an interval but does not decide which exercises enter a
-session. Repository queries select due and new exercises, while
-`SessionScheduler` uses the resulting state to order exercises inside the
-session.
-
----
-
-## Configuration
-
-`SRSConfig` groups the parameters shared by every exercise in one session:
-
-- recall target and model coefficients;
-- grade-dependent weights;
-- learning steps and interval multipliers;
-- maximum and graduation intervals;
-- day boundary;
-- limits on new and due exercises loaded for a session.
-
-`SessionController` currently uses a default in-memory configuration. There is
-no persisted or user-editable SRS configuration yet.
-
----
-
-## Answers and grades
-
-`SubmittedExerciseAnswer` changes progression. `PreviewExerciseAnswer` applies
-the same interval calculation to a copy and has no side effect.
-
-| Grade | Quality | Successful |
-|---|---:|---|
-| `again` | 0 | no |
-| `hard` | 2 | no |
-| `medium` | 3 | yes |
-| `good` | 4 | yes |
-| `easy` | 5 | yes |
-
-Word exercises accept every grade. Sentence exercises deliberately expose only
-`again`, `medium`, and `good`.
-
----
-
-## Sentence progression
-
-`SentenceState` is independent from `SRSState`. It records how often one
-sentence has been shown, its accumulated answer score, and whether it is
-currently learning. A sentence exercise uses this information to select the
-least-known sentence in its group.
-
-The group-level SRS determines when the sentence exercise is reviewed; the
-per-sentence state determines which example is presented.
-
----
-
-## Persistence rule
-
-SRS state changes only after a submitted answer. The Application then asks
-Persistence to store the updated exercise state together with history and the
-current session state. Preview operations are never persisted.
-
-The distinction between enforced checks and assumed parameter constraints is
-documented in [SRS validity rules](../../maths_and_srs/invariant.md).
+The migration replays non-training answer history chronologically to derive
+each FSRS card. Equal timestamps are ordered by history ID. Original grade and
+timestamp events remain in `exercise_history`; the card table stores only the
+current derived FSRS state. See [FSRS-6 integration](fsrs.md) and the
+[database architecture](../persistence_layer/database.md).

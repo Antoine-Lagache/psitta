@@ -17,7 +17,7 @@ flowchart TD
 ```
 
 This is an aggregate view rather than a table-level entity diagram. The
-version 1 schema is normalized across the following tables.
+version 2 schema is normalized across the following tables.
 
 ## Schema areas
 
@@ -41,10 +41,12 @@ unique sentence group, whose instances each point to content and own one
 The database stores enough information to reconstruct domain aggregates, but it
 does not serialize an in-memory object graph.
 
-- Exercise identity, subtype configuration, and SRS values are persistent.
-- `next_review` is stored so SQL can select due exercises, while the domain
-  reconstructs its value from `lastReview + interval` rather than reading that
-  column as independent state.
+- Exercise identity, subtype configuration, and FSRS card state are persistent.
+- The FSRS row stores `state`, nullable `step`, `stability`, `difficulty`,
+  `due`, and nullable `last_review`. Dates are UTC microseconds since the Unix
+  epoch so due queries use integer comparisons without ISO string ordering
+  edge cases. `due` is always present; `last_review` is null until the first
+  answer.
 - Normal exercise loading derives `newExercise` versus `toReview` from the
   existence of answer history.
 - An unfinished session stores its exact per-exercise status and remaining
@@ -83,9 +85,12 @@ If initialisation or migration fails, the newly created database object is
 closed and the error is rethrown. `close()` releases it and resets the wrapper,
 allowing a later call to reopen the database.
 
-The only registered migration is currently `V1InitialSchema` with version 1.
-Future schema changes must be added as new ordered migrations rather than by
-editing databases that may already exist.
+`V1InitialSchema` creates the original schema. `V2Schema` replaces the legacy
+SRS table and reconstructs one FSRS card per exercise by replaying answer
+history in timestamp and history-ID order, excluding sentence-training
+answers. The runner applies each migration in a transaction and advances
+`user_version` atomically. Future schema changes must be added as new ordered
+migrations rather than by editing databases that may already exist.
 
 Initial release content is built into a bundled database using this same migration
 registry and the release importer. See [bundled database generation](../../content/bundled_database.md)

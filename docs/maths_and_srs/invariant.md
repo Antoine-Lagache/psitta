@@ -1,6 +1,10 @@
 [Documentation index](../index.md)
 
-# SRS validity rules
+# Legacy SRS validity rules (Psitta 0.1)
+
+These invariants describe the retired SM-2-derived implementation. The active
+scheduler is FSRS-6; see the
+[current SRS architecture](../architecture/domain_layer/srs.md).
 
 ## Purpose
 

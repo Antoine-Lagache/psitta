@@ -1,36 +1,39 @@
+import 'package:fsrs/fsrs.dart' as fsrs;
 import 'package:psitta/domain/srs/srs_state.dart';
 import 'package:psitta/infrastructure/persistence/models/exercise/srs_state_persistence.dart';
-import 'package:psitta/utils/conversion/time_conversion.dart';
 
 export 'package:psitta/domain/srs/srs_state.dart';
 export 'package:psitta/infrastructure/persistence/models/exercise/srs_state_persistence.dart';
 
-/// Converts SRS state between domain types and database representations.
+/// Converts FSRS card state between the domain and persistence layers.
 class SRSStateMapper {
   const SRSStateMapper();
 
-  static SRSState toDomainSrsState(SrsStatePersistence persistence) {
+  static SRSState toDomainSrsState(
+    SrsStatePersistence persistence, {
+    required int exerciseId,
+  }) {
     return SRSState(
-      easeFactor: persistence.easeFactor,
-      interval: safeToDuration(persistence.interval),
-      kFactor: persistence.kFactor,
-      w: persistence.w,
-      rbar: persistence.rBar,
-      learningStepIndex: persistence.learningStepIndex,
-      lastReview: safeParseDate(persistence.lastReview),
+      exerciseId: exerciseId,
+      state: fsrs.State.fromValue(persistence.state),
+      step: persistence.step,
+      stability: persistence.stability,
+      difficulty: persistence.difficulty,
+      due: DateTime.fromMicrosecondsSinceEpoch(persistence.due, isUtc: true),
+      lastReview: persistence.lastReview == null
+          ? null
+          : DateTime.fromMicrosecondsSinceEpoch(persistence.lastReview!, isUtc: true),
     );
   }
 
   static SrsStatePersistence toPersistenceSrsState(SRSState domain) {
     return SrsStatePersistence(
-      easeFactor: domain.easeFactor,
-      interval: safeFromDuration(domain.interval),
-      kFactor: domain.kFactor,
-      w: domain.w,
-      rBar: domain.rbar,
-      learningStepIndex: domain.learningStepIndex,
-      lastReview: toIsoUtc(domain.lastReview),
-      nextReview: domain.nextReview?.microsecondsSinceEpoch,
+      state: domain.state.value,
+      step: domain.step,
+      stability: domain.stability,
+      difficulty: domain.difficulty,
+      due: domain.due.microsecondsSinceEpoch,
+      lastReview: domain.lastReview?.microsecondsSinceEpoch,
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:psitta/domain/history/exercise_history_entry.dart';
 import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/domain/srs/srs_state.dart';
+import 'package:fsrs/fsrs.dart' as fsrs;
 import 'package:psitta/infrastructure/persistence/repositories/exercise_history_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/session_repository.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
@@ -14,6 +15,7 @@ import 'package:psitta/infrastructure/persistence/repositories/exercise_reposito
 import 'package:psitta/infrastructure/persistence/repositories/sentence_group_repository.dart';
 
 import 'support/persistence_test_database.dart';
+import '../../support/srs_state_fixtures.dart';
 
 void main() {
   late PersistenceTestDatabase testDatabase;
@@ -124,6 +126,26 @@ void main() {
       expect(exercises.first, isA<WordExercise>());
     });
 
+    test('training history alone does not schedule a new exercise', () async {
+      final contentId = await testDatabase.insertContent();
+      final exerciseId = await repository.createWordExercise(contentId);
+      final exercise = await repository.getById(exerciseId) as WordExercise;
+      exercise.newHistoryEntry.add(
+        ExerciseHistoryEntry(
+          exerciseId: exerciseId,
+          grade: Grade.good,
+          answeredAt: DateTime.utc(2026, 9, 18),
+          status: ExerciseStatus.consolidating,
+        ),
+      );
+      await repository.save(exercise);
+
+      final newExercises = await repository.getNewExercises(10, 'word');
+      expect(newExercises.map((item) => item.id), contains(exerciseId));
+      expect(await repository.countNewExercises('word'), 1);
+      expect(await repository.countDueExercises(DateTime.utc(2026, 9, 18), 'word'), 0);
+    });
+
     test('getDueExercises returns due exercises', () async {
       final contentId = await testDatabase.insertContent();
 
@@ -133,7 +155,7 @@ void main() {
       await database.execute(
         '''
         UPDATE srs_state
-        SET next_review = 0
+        SET due = 0, last_review = -1
         WHERE exercise_id = ?
         ''',
         [exerciseId],
@@ -145,7 +167,7 @@ void main() {
       expect(exercises.first.id, exerciseId);
     });
 
-    test('countNewExercises counts exercises with no history by type', () async {
+    test('countNewExercises counts exercises with no FSRS review by type', () async {
       final firstContentId = await testDatabase.insertContent();
       final secondContentId = await testDatabase.insertContent();
       final wordExerciseId = await repository.createWordExercise(firstContentId);
@@ -156,6 +178,11 @@ void main() {
       await repository.createSentenceExercise(sentenceGroupId, 1);
 
       final reviewedWord = await repository.getById(wordExerciseId) as WordExercise;
+      reviewedWord.srsState = reviewSrsState(
+        exerciseId: wordExerciseId,
+        lastReview: DateTime.utc(2026, 9, 18),
+        interval: const Duration(days: 1),
+      );
       reviewedWord.newHistoryEntry.add(
         ExerciseHistoryEntry(
           exerciseId: wordExerciseId,
@@ -187,11 +214,12 @@ void main() {
       await database.execute(
         '''
         UPDATE srs_state
-        SET next_review = CASE exercise_id
+        SET due = CASE exercise_id
           WHEN ? THEN ?
           WHEN ? THEN ?
           WHEN ? THEN ?
-        END
+        END,
+        last_review = ?
         WHERE exercise_id IN (?, ?, ?)
         ''',
         [
@@ -201,6 +229,7 @@ void main() {
           now.add(const Duration(microseconds: 1)).microsecondsSinceEpoch,
           dueSentenceId,
           now.subtract(const Duration(days: 1)).microsecondsSinceEpoch,
+          now.subtract(const Duration(days: 2)).microsecondsSinceEpoch,
           dueWordId,
           futureWordId,
           dueSentenceId,
@@ -212,7 +241,7 @@ void main() {
       expect(await repository.countDueExercises(now, null), 2);
     });
 
-    test('save round-trips every word SRS field', () async {
+    test('save round-trips every FSRS card field', () async {
       final contentId = await testDatabase.insertContent();
 
       final exerciseId = await repository.createWordExercise(contentId);
@@ -221,13 +250,12 @@ void main() {
 
       final wordExercise = exercise as WordExercise;
       wordExercise.srsState = SRSState(
-        easeFactor: 2.1,
-        interval: const Duration(days: 7, minutes: 3),
-        kFactor: 0.25,
-        w: 0.2,
-        rbar: 0.4,
+        exerciseId: exerciseId,
+        state: fsrs.State.review,
+        stability: 12.5,
+        difficulty: 5.25,
+        due: reviewedAt.add(const Duration(days: 7, minutes: 3)),
         lastReview: reviewedAt,
-        learningStepIndex: -1,
       );
       await repository.save(wordExercise);
 
@@ -235,11 +263,15 @@ void main() {
 
       expect(savedExercise, isNotNull);
       expect(savedExercise!.id, exerciseId);
-      expect(savedExercise.srsState.easeFactor, 2.1);
+      expect(savedExercise.srsState.state, fsrs.State.review);
+      expect(savedExercise.srsState.step, isNull);
+      expect(savedExercise.srsState.stability, 12.5);
+      expect(savedExercise.srsState.difficulty, 5.25);
       expect(savedExercise.srsState.interval, const Duration(days: 7, minutes: 3));
-      expect(savedExercise.srsState.kFactor, 0.25);
-      expect(savedExercise.srsState.w, 0.2);
-      expect(savedExercise.srsState.rbar, 0.4);
+      expect(
+        savedExercise.srsState.due,
+        reviewedAt.add(const Duration(days: 7, minutes: 3)),
+      );
       expect(savedExercise.srsState.lastReview?.toUtc(), reviewedAt);
       expect(savedExercise.srsState.learningStepIndex, -1);
     });
@@ -321,14 +353,12 @@ void main() {
           status: ExerciseStatus.newExercise,
         ),
       );
-      wordExercise.srsState = SRSState(
-        easeFactor: 1.8,
+      wordExercise.srsState = reviewSrsState(
+        exerciseId: exerciseId,
         interval: const Duration(days: 12),
-        kFactor: 0.2,
-        w: 0.3,
-        rbar: 0.5,
         lastReview: DateTime.utc(2026, 9, 4, 12),
-        learningStepIndex: -1,
+        stability: 15,
+        difficulty: 6,
       );
       await repository.save(wordExercise);
 
@@ -339,11 +369,10 @@ void main() {
       expect(resetExercise, isNotNull);
       expect(resetExercise!.id, exerciseId);
       expect(resetExercise.status, ExerciseStatus.newExercise);
-      expect(resetExercise.srsState.easeFactor, 2.5);
-      expect(resetExercise.srsState.interval, const Duration(days: 1));
-      expect(resetExercise.srsState.kFactor, 0.1);
-      expect(resetExercise.srsState.w, 0.0);
-      expect(resetExercise.srsState.rbar, 0.0);
+      expect(resetExercise.srsState.state, fsrs.State.learning);
+      expect(resetExercise.srsState.interval, Duration.zero);
+      expect(resetExercise.srsState.stability, isNull);
+      expect(resetExercise.srsState.difficulty, isNull);
       expect(resetExercise.srsState.lastReview, isNull);
       expect(resetExercise.srsState.learningStepIndex, 0);
       expect(
@@ -368,10 +397,10 @@ void main() {
       sentence.state.shownCount = 4;
       sentence.state.accumulatedScore = 2.7;
       sentence.state.isInLearning = true;
-      exercise.srsState = SRSState(
+      exercise.srsState = reviewSrsState(
+        exerciseId: exerciseId,
         interval: const Duration(days: 3),
         lastReview: reviewedAt,
-        learningStepIndex: -1,
       );
       exercise.newHistoryEntry.add(
         ExerciseHistoryEntry(

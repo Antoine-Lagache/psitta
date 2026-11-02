@@ -40,7 +40,7 @@ abstract class Exercise {
       throw StateError("The grade is not allowed by this exercise");
     }
 
-    srsState.applyAnswer(answer, config);
+    srsState.applyAnswer(answer);
 
     DateTime nextDay = DateTime(
       answer.at.year,
@@ -70,7 +70,7 @@ abstract class Exercise {
     if (!isGradeAllowed(answer.grade)) {
       throw StateError('The grade is not allowed by this exercise');
     }
-    return srsState.previewInterval(answer, config);
+    return srsState.previewInterval(answer);
   }
 
   /// Whether answering the exercise currently updates its SRS interval.

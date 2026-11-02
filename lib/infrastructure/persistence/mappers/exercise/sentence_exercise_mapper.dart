@@ -18,7 +18,10 @@ class SentenceExerciseMapper {
     return SentenceExercise(
       id: persistence.id!,
       status: hasHistory ? ExerciseStatus.toReview : ExerciseStatus.newExercise,
-      srsState: SRSStateMapper.toDomainSrsState(persistence.srsState),
+      srsState: SRSStateMapper.toDomainSrsState(
+        persistence.srsState,
+        exerciseId: persistence.id!,
+      ),
 
       sentences: sentences,
       trainingCountMax: persistence.trainingCountMax,

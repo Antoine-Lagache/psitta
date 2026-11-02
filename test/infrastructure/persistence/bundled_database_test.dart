@@ -39,7 +39,7 @@ void main() {
     await directory.delete(recursive: true);
   });
 
-  test('bundled snapshot equals the current migrations and full importer', () async {
+  test('bundled snapshot upgrades to the current schema and matches the importer', () async {
     final reference = await PersistenceTestDatabase.create();
     try {
       final timer = Stopwatch()..start();
@@ -76,7 +76,10 @@ void main() {
       }
       final metadata =
           jsonDecode(await File('assets/database/manifest.json').readAsString()) as Map;
-      expect(metadata['database_version'], createMigrationRunner().latestVersion);
+      expect(
+        metadata['database_version'],
+        lessThanOrEqualTo(createMigrationRunner().latestVersion),
+      );
       expect(
         metadata['content_manifest_sha256'],
         sha256
@@ -98,7 +101,7 @@ void main() {
     final connections = await Future.wait([owner.open(), owner.open()]);
     expect(identical(connections.first, connections.last), isTrue);
     await connections.first.execute(
-      'UPDATE srs_state SET interval = 987654 WHERE exercise_id = 1',
+      'UPDATE srs_state SET due = 987654, last_review = 123 WHERE exercise_id = 1',
     );
     await connections.first.execute(
       "INSERT INTO exercise_history (exercise_id, grade, answered_at, status) VALUES (1, 2, '2026-10-16T00:00:00Z', 1)",
@@ -120,7 +123,7 @@ void main() {
     );
     expect(
       (await upgraded.get(
-        'SELECT interval FROM srs_state WHERE exercise_id = 1',
+        'SELECT due FROM srs_state WHERE exercise_id = 1',
       )).values.single,
       987654,
     );

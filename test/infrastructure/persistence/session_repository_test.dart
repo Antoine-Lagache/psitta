@@ -3,7 +3,6 @@ import 'package:psitta/domain/exercise/sentence_exercise.dart';
 import 'package:psitta/domain/exercise/word_exercise.dart';
 import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
-import 'package:psitta/domain/srs/srs_state.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_history_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/sentence_group_repository.dart';
@@ -12,6 +11,7 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 import 'package:test/test.dart';
 
 import 'support/persistence_test_database.dart';
+import '../../support/srs_state_fixtures.dart';
 
 void main() {
   late PersistenceTestDatabase testDatabase;
@@ -89,10 +89,11 @@ void main() {
         final exercise = await createWordExercise();
         exercise.status = status;
         if (status == ExerciseStatus.learning || status == ExerciseStatus.relearning) {
-          exercise.srsState = SRSState(
+          exercise.srsState = learningSrsState(
+            exerciseId: exercise.id,
             interval: const Duration(minutes: 1),
             lastReview: now,
-            learningStepIndex: 0,
+            relearning: status == ExerciseStatus.relearning,
           );
         }
         exercises.add(exercise);
@@ -271,10 +272,10 @@ void main() {
       session.beginSession(startedAt);
       session.intermediateResult.id = await repository.save(session);
       exercise.status = ExerciseStatus.learning;
-      exercise.srsState = SRSState(
+      exercise.srsState = learningSrsState(
+        exerciseId: exercise.id,
         interval: const Duration(minutes: 1),
         lastReview: startedAt,
-        learningStepIndex: 0,
       );
       await exerciseRepository.save(exercise);
       session.intermediateResult.numberOfAnswersByStatus[ExerciseStatus

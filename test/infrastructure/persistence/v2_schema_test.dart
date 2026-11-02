@@ -4,7 +4,6 @@ import 'package:psitta/infrastructure/persistence/database/migration_registry.da
 import 'package:psitta/infrastructure/persistence/database/migration_runner.dart';
 import 'package:psitta/infrastructure/persistence/database/migrations/v1_initial_schema.dart';
 import 'package:psitta/infrastructure/persistence/database/migrations/v2_schema.dart';
-import 'package:psitta/utils/conversion/time_conversion.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 import 'package:test/test.dart';
 
@@ -116,11 +115,11 @@ void main() {
         expect(row['step'], 0);
         expect(row['stability'], isNull);
         expect(row['difficulty'], isNull);
-        expect(row['due'], toIsoUtc(DateTime.utc(1970)));
+        expect(row['due'], DateTime.utc(1970).microsecondsSinceEpoch);
         expect(row['last_review'], isNull);
       }
 
-      expect(await testDatabase.countRows('exercise_history'), 7);
+      expect(await testDatabase.countRows('exercise_history'), 6);
       expect((await database.get('PRAGMA user_version'))['user_version'], 2);
     });
 
@@ -219,6 +218,6 @@ void _expectPersistedCard(Map<String, Object?> row, fsrs.Card card) {
   expect(row['step'], card.step);
   expect(row['stability'], closeTo(card.stability!, 1e-9));
   expect(row['difficulty'], closeTo(card.difficulty!, 1e-9));
-  expect(row['due'], toIsoUtc(card.due));
-  expect(row['last_review'], toIsoUtc(card.lastReview));
+  expect(row['due'], card.due.microsecondsSinceEpoch);
+  expect(row['last_review'], card.lastReview?.microsecondsSinceEpoch);
 }

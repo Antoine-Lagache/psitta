@@ -58,10 +58,10 @@ class ExerciseDao {
       SELECT e.id
       FROM exercise e
       JOIN srs_state s ON s.exercise_id = e.id
-      WHERE s.next_review IS NOT NULL
-        AND s.next_review <= ?
+      WHERE s.last_review IS NOT NULL
+        AND s.due <= ?
         $typeCondition
-      ORDER BY s.next_review ASC
+      ORDER BY s.due ASC
       LIMIT ?
       ''', arguments);
 
@@ -82,7 +82,7 @@ class ExerciseDao {
     });
   }
 
-  /// Returns exercises with no history, optionally filtered by type.
+  /// Returns exercises that have not entered the FSRS schedule yet.
   Future<List<ExercisePersistence>> getNewExercises(int count, String? type) {
     return database.readTransaction((txn) async {
       final typeCondition = type == null ? '' : 'AND e.type = ?';
@@ -92,11 +92,8 @@ class ExerciseDao {
       final exerciseRows = await txn.getAll('''
         SELECT e.id
         FROM exercise e
-        WHERE NOT EXISTS (
-          SELECT 1
-          FROM exercise_history h
-          WHERE h.exercise_id = e.id
-        )
+        JOIN srs_state s ON s.exercise_id = e.id
+        WHERE s.last_review IS NULL
         $typeCondition
         ORDER BY e.id ASC
         LIMIT ?
@@ -129,8 +126,8 @@ class ExerciseDao {
         SELECT COUNT(*) AS count
         FROM exercise e
         JOIN srs_state s ON s.exercise_id = e.id
-        WHERE s.next_review IS NOT NULL
-          AND s.next_review <= ?
+        WHERE s.last_review IS NOT NULL
+          AND s.due <= ?
           $typeCondition
       ''', arguments);
 
@@ -138,7 +135,7 @@ class ExerciseDao {
     });
   }
 
-  /// Counts exercises with no history, optionally filtered by type.
+  /// Counts exercises that have not entered the FSRS schedule yet.
   Future<int> countNewExercises(String? type) {
     return database.readTransaction((txn) async {
       final typeCondition = type == null ? '' : 'AND e.type = ?';
@@ -147,11 +144,8 @@ class ExerciseDao {
       final rows = await txn.getAll('''
         SELECT COUNT(*) AS count
         FROM exercise e
-        WHERE NOT EXISTS (
-          SELECT 1
-          FROM exercise_history h
-          WHERE h.exercise_id = e.id
-        )
+        JOIN srs_state s ON s.exercise_id = e.id
+        WHERE s.last_review IS NULL
         $typeCondition
       ''', arguments);
 
@@ -208,25 +202,21 @@ class ExerciseDao {
       '''
     UPDATE srs_state
     SET
-      ease_factor = ?,
-      interval = ?,
-      kfactor = ?,
-      w = ?,
-      rbar = ?,
-      learning_step_index = ?,
-      last_review = ?,
-      next_review = ?
+      state = ?,
+      step = ?,
+      stability = ?,
+      difficulty = ?,
+      due = ?,
+      last_review = ?
     WHERE exercise_id = ?
     ''',
       [
-        srsState.easeFactor,
-        srsState.interval,
-        srsState.kFactor,
-        srsState.w,
-        srsState.rBar,
-        srsState.learningStepIndex,
+        srsState.state,
+        srsState.step,
+        srsState.stability,
+        srsState.difficulty,
+        srsState.due,
         srsState.lastReview,
-        srsState.nextReview,
         exerciseId,
       ],
     );
@@ -261,27 +251,23 @@ class ExerciseDao {
       '''
     INSERT INTO srs_state (
       exercise_id,
-      ease_factor,
-      interval,
-      kfactor,
-      w,
-      rbar,
-      learning_step_index,
-      last_review,
-      next_review
+      state,
+      step,
+      stability,
+      difficulty,
+      due,
+      last_review
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
     ''',
       [
         exerciseId,
-        srsState.easeFactor,
-        srsState.interval,
-        srsState.kFactor,
-        srsState.w,
-        srsState.rBar,
-        srsState.learningStepIndex,
+        srsState.state,
+        srsState.step,
+        srsState.stability,
+        srsState.difficulty,
+        srsState.due,
         srsState.lastReview,
-        srsState.nextReview,
       ],
     );
   }
@@ -380,14 +366,12 @@ class ExerciseDao {
     final rows = await txn.getAll(
       '''
     SELECT
-      ease_factor,
-      interval,
-      kfactor,
-      w,
-      rbar,
-      learning_step_index,
-      last_review,
-      next_review
+      state,
+      step,
+      stability,
+      difficulty,
+      due,
+      last_review
     FROM srs_state
     WHERE exercise_id = ?
     ''',

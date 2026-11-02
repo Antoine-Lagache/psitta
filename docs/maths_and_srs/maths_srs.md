@@ -1,6 +1,11 @@
 [Documentation index](../index.md)
 
-# SRS model mathematics
+# Legacy SM-2-derived model mathematics (Psitta 0.1)
+
+This document describes the retired scheduler retained for historical
+reference. The active scheduler is FSRS-6; see the
+[current SRS architecture](../architecture/domain_layer/srs.md) and
+[FSRS integration](../architecture/domain_layer/fsrs.md).
 
 ## Scope
 

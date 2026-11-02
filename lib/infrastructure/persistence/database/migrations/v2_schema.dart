@@ -42,8 +42,8 @@ class V2Schema implements DatabaseMigration {
         step INTEGER,
         stability REAL,
         difficulty REAL,
-        due TEXT,
-        last_review TEXT,
+        due INTEGER NOT NULL,
+        last_review INTEGER,
 
         FOREIGN KEY (exercise_id)
           REFERENCES exercise(id)
@@ -106,8 +106,8 @@ class V2Schema implements DatabaseMigration {
               card.step,
               card.stability,
               card.difficulty,
-              toIsoUtc(card.due),
-              toIsoUtc(card.lastReview),
+              card.due.microsecondsSinceEpoch,
+              card.lastReview?.microsecondsSinceEpoch,
             ],
           )
           .toList();

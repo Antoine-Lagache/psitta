@@ -1,6 +1,6 @@
 import 'package:fsrs/fsrs.dart' as fsrs;
 import 'package:psitta/domain/answer/exercise_answer.dart';
-import 'package:psitta/domain/srs/fsrs/srs_state.dart';
+import 'package:psitta/domain/srs/srs_state.dart';
 import 'package:test/test.dart';
 
 void main() {
