@@ -25,9 +25,7 @@ class V2Schema implements DatabaseMigration {
       ''',
       [ExerciseStatus.consolidating.code],
     );
-    final exerciseRows = await database.getAll(
-      'SELECT id FROM exercise ORDER BY id ASC',
-    );
+    final exerciseRows = await database.getAll('SELECT id FROM exercise ORDER BY id ASC');
 
     // Drop old SRS table
     await database.execute('''
@@ -54,19 +52,13 @@ class V2Schema implements DatabaseMigration {
     // Seed every exercise, including new cards with no review history.
     final cards = {
       for (final row in exerciseRows)
-        row['id'] as int: fsrs.Card(
-          cardId: row['id'] as int,
-          due: DateTime.utc(1970),
-        ),
+        row['id'] as int: fsrs.Card(cardId: row['id'] as int, due: DateTime.utc(1970)),
     };
     _replayHistory(cards, historyRows);
     await _insertCardsInBatches(database, cards.values.toList());
   }
 
-  void _replayHistory(
-    Map<int, fsrs.Card> cards,
-    List<Map<String, dynamic>> historyRows,
-  ) {
+  void _replayHistory(Map<int, fsrs.Card> cards, List<Map<String, dynamic>> historyRows) {
     final scheduler = fsrs.Scheduler(enableFuzzing: false);
     for (final row in historyRows) {
       final exerciseId = row['exercise_id'] as int;

@@ -86,9 +86,7 @@ void main() {
 
       await createMigrationRunner().migrate(database);
 
-      final rows = await database.getAll(
-        'SELECT * FROM srs_state ORDER BY exercise_id',
-      );
+      final rows = await database.getAll('SELECT * FROM srs_state ORDER BY exercise_id');
       expect(rows, hasLength(3));
 
       final scheduler = fsrs.Scheduler(enableFuzzing: false);
@@ -119,7 +117,7 @@ void main() {
         expect(row['last_review'], isNull);
       }
 
-      expect(await testDatabase.countRows('exercise_history'), 6);
+      expect(await testDatabase.countRows('exercise_history'), 7);
       expect((await database.get('PRAGMA user_version'))['user_version'], 2);
     });
 
@@ -147,11 +145,14 @@ void main() {
               row['on_delete'] == 'CASCADE',
         ),
         isTrue,
+        reason: 'Unexpected foreign key definition: $foreignKeys',
       );
 
       await database.execute('DELETE FROM exercise WHERE id = ?', [1]);
       expect(
-        await database.get('SELECT COUNT(*) AS count FROM srs_state WHERE exercise_id = 1'),
+        await database.get(
+          'SELECT COUNT(*) AS count FROM srs_state WHERE exercise_id = 1',
+        ),
         containsPair('count', 0),
       );
     });
@@ -180,10 +181,7 @@ void main() {
 }
 
 Future<void> _insertLegacyExercise(sqlite.SqliteWriteContext transaction, int id) async {
-  await transaction.execute(
-    "INSERT INTO exercise (id, type) VALUES (?, 'word')",
-    [id],
-  );
+  await transaction.execute("INSERT INTO exercise (id, type) VALUES (?, 'word')", [id]);
   await transaction.execute(
     '''
     INSERT INTO srs_state (
