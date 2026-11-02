@@ -280,6 +280,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
+  fsrs:
+    dependency: "direct main"
+    description:
+      path: "third_party/dart_fsrs"
+      relative: true
+    source: path
+    version: "2.0.1"
   fwfh_cached_network_image:
     dependency: transitive
     description:
@@ -328,13 +335,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.15.7"
-  fsrs:
-    dependency: "direct main"
-    description:
-      path: "third_party/dart_fsrs"
-      relative: true
-    source: path
-    version: "2.0.1"
   glob:
     dependency: transitive
     description:
