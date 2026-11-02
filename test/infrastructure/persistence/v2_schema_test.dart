@@ -3,7 +3,6 @@ import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/infrastructure/persistence/database/migration_registry.dart';
 import 'package:psitta/infrastructure/persistence/database/migration_runner.dart';
 import 'package:psitta/infrastructure/persistence/database/migrations/v1_initial_schema.dart';
-import 'package:psitta/infrastructure/persistence/database/migrations/v2_schema.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 import 'package:test/test.dart';
 
