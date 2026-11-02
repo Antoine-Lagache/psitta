@@ -9,7 +9,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('Session', () {
-    test('an invalid sentence grade does not mutate domain state', () {
+    test('Easy does not mutate sentence state because sentences disallow it', () {
       final sentenceState = SentenceState();
       final exercise = SentenceExercise(
         sentences: SentenceGroup(
@@ -31,7 +31,7 @@ void main() {
 
       expect(
         () => session.submitAnswer(
-          SubmittedExerciseAnswer(grade: Grade.hard, answeredAt: startedAt),
+          SubmittedExerciseAnswer(grade: Grade.easy, answeredAt: startedAt),
         ),
         throwsStateError,
       );

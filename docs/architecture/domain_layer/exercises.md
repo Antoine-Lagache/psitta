@@ -89,8 +89,8 @@ Before each answer, the exercise selects the sentence with the lowest state
 score. This prioritises unseen, failed, or less successful sentences while the
 group remains one scheduled exercise.
 
-Sentence exercises accept `again`, `medium`, and `good`; `hard` and `easy` are
-not available. Once the group-level SRS phase finishes, the exercise may enter
+Sentence exercises accept FSRS `again`, `hard`, and `good`; `easy` remains
+unavailable for sentence sessions. Once the group-level SRS phase finishes, the exercise may enter
 `consolidating` until the configured number of successful training answers has
 been reached. Consolidation updates sentence state but not the group SRS.
 

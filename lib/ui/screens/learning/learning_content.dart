@@ -107,8 +107,7 @@ class LearningContent extends StatelessWidget {
       spacing: 10,
       runSpacing: 10,
       children: [
-        for (final grade in allowedGrades)
-          if (grade != Grade.hard) _buildGradeButton(grade),
+        for (final grade in allowedGrades) _buildGradeButton(grade),
       ],
     );
   }
@@ -179,7 +178,6 @@ class LearningContent extends StatelessWidget {
     return switch (grade) {
       Grade.again => 'Again',
       Grade.hard => 'Hard',
-      Grade.medium => 'Hard',
       Grade.good => 'Good',
       Grade.easy => 'Easy',
     };

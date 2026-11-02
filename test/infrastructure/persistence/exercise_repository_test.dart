@@ -405,7 +405,7 @@ void main() {
       exercise.newHistoryEntry.add(
         ExerciseHistoryEntry(
           exerciseId: exerciseId,
-          grade: Grade.medium,
+          grade: Grade.hard,
           answeredAt: reviewedAt,
           status: ExerciseStatus.newExercise,
           sentenceInstanceId: sentenceInstanceId,

@@ -160,13 +160,11 @@ class StatisticsContent extends StatelessWidget {
       entries: [
         (
           label: 'Again',
-          value:
-              exerciseStatistics.getNumberOfAnswersByGrade(Grade.again) +
-              exerciseStatistics.getNumberOfAnswersByGrade(Grade.hard),
+          value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.again),
         ),
         (
           label: 'Hard',
-          value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.medium),
+          value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.hard),
         ),
         (label: 'Good', value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.good)),
         (label: 'Easy', value: exerciseStatistics.getNumberOfAnswersByGrade(Grade.easy)),

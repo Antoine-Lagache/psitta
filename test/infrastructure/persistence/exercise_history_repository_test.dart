@@ -75,7 +75,7 @@ void main() {
       );
       await insertHistory(
         exerciseId: secondExerciseId,
-        grade: Grade.medium,
+        grade: Grade.hard,
         answeredAt: middle.add(const Duration(minutes: 1)),
         status: ExerciseStatus.toReview,
       );
@@ -111,7 +111,7 @@ void main() {
       );
       await insertHistory(
         exerciseId: secondExerciseId,
-        grade: Grade.medium,
+        grade: Grade.hard,
         answeredAt: later,
         status: ExerciseStatus.toReview,
       );

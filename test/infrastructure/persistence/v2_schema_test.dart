@@ -20,7 +20,58 @@ void main() {
 
   tearDown(() => testDatabase.dispose());
 
-  group('V2Schema', () {
+  group('FSRS migrations', () {
+    test('migrates historical SM-2 grade codes to FSRS ratings', () async {
+      await database.writeTransaction((transaction) async {
+        await _insertLegacyExercise(transaction, 10);
+        for (final (int id, int legacyGrade) in [
+          (100, 0),
+          (101, 2),
+          (102, 3),
+          (103, 4),
+          (104, 5),
+        ]) {
+          await _insertHistory(
+            transaction,
+            id: id,
+            exerciseId: 10,
+            grade: legacyGrade,
+            answeredAt: DateTime.utc(2026, 1, id - 99).toIso8601String(),
+          );
+        }
+      });
+
+      await createMigrationRunner().migrate(database);
+
+      final rows = await database.getAll(
+        'SELECT grade FROM exercise_history ORDER BY id',
+      );
+      expect(rows.map((row) => row['grade']), [1, 1, 2, 3, 4]);
+      expect((await database.get('PRAGMA user_version'))['user_version'], 3);
+    });
+
+    test('rolls back invalid historical grade values in v3', () async {
+      await database.writeTransaction((transaction) async {
+        await _insertLegacyExercise(transaction, 10);
+        await _insertHistory(
+          transaction,
+          id: 1,
+          exerciseId: 10,
+          grade: 1,
+          answeredAt: '2026-01-01T00:00:00.000Z',
+          status: ExerciseStatus.consolidating.code,
+        );
+      });
+
+      await expectLater(createMigrationRunner().migrate(database), throwsStateError);
+
+      expect((await database.get('PRAGMA user_version'))['user_version'], 2);
+      expect(
+        (await database.get('SELECT grade FROM exercise_history WHERE id = 1'))['grade'],
+        1,
+      );
+    });
+
     test('replays graded history and seeds every exercise', () async {
       await database.writeTransaction((transaction) async {
         for (final exerciseId in [10, 20, 30]) {
@@ -117,7 +168,7 @@ void main() {
       }
 
       expect(await testDatabase.countRows('exercise_history'), 7);
-      expect((await database.get('PRAGMA user_version'))['user_version'], 2);
+      expect((await database.get('PRAGMA user_version'))['user_version'], 3);
     });
 
     test('inserts states in bounded batches and keeps the cascade foreign key', () async {

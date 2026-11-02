@@ -32,7 +32,7 @@ void main() {
           '''),
       );
 
-      expect(version['user_version'], 2);
+      expect(version['user_version'], 3);
       expect(
         tableRows.map((row) => row['name']),
         orderedEquals([
@@ -135,7 +135,7 @@ void main() {
       final contentRows = await database.get('SELECT COUNT(*) AS count FROM content');
       final foreignKeys = await database.get('PRAGMA foreign_keys;');
 
-      expect(version['user_version'], 2);
+      expect(version['user_version'], 3);
       expect(contentRows['count'], 1);
       expect(foreignKeys['foreign_keys'], 1);
     });

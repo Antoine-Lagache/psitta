@@ -1,14 +1,14 @@
 import 'package:fsrs/fsrs.dart' as fsrs;
 import 'package:psitta/domain/answer/exercise_answer.dart';
+import 'package:psitta/domain/srs/fsrs_scheduler_config.dart';
 
 /// Domain adapter around the vendored FSRS-6 card model.
 ///
 /// Only answers that affect scheduling belong here; callers exclude training.
-/// Uses upstream defaults, except fuzzing is disabled for reproducible previews
-/// and history replay. Session quantities and day boundaries are not SRS inputs.
+/// Uses the supplied scheduler configuration; its defaults disable fuzzing so
+/// previews are reproducible. Session limits and day boundaries are not FSRS
+/// inputs.
 class SRSState {
-  static final fsrs.Scheduler _scheduler = fsrs.Scheduler(enableFuzzing: false);
-
   fsrs.Card _card;
 
   SRSState({
@@ -25,8 +25,8 @@ class SRSState {
          step: step,
          stability: stability,
          difficulty: difficulty,
-         // Keep unseen exercises immediately eligible, as in the original
-         // adapter, unless a persisted due date was supplied.
+         // FSRS requires a concrete date even for unseen cards. This is only
+         // a deterministic placeholder; lastReview controls eligibility.
          due: due ?? DateTime.utc(1970),
          lastReview: lastReview,
        );
@@ -59,29 +59,25 @@ class SRSState {
     _card = other._card.copyWith();
   }
 
-  void applyAnswer(SubmittedExerciseAnswer answer) {
-    _card = _review(answer);
+  void applyAnswer(SubmittedExerciseAnswer answer, FsrsSchedulerConfig config) {
+    _card = _review(answer, config);
   }
 
-  Duration previewInterval(PreviewExerciseAnswer answer) {
-    final result = _review(answer);
+  Duration previewInterval(PreviewExerciseAnswer answer, FsrsSchedulerConfig config) {
+    final result = _review(answer, config);
     return result.due.difference(result.lastReview!);
   }
 
-  fsrs.Card _review(ExerciseAnswer answer) {
+  fsrs.Card _review(ExerciseAnswer answer, FsrsSchedulerConfig config) {
     final at = answer.at.toUtc();
     if (lastReview != null && at.isBefore(lastReview!)) {
       throw ArgumentError.value(answer.at, 'at', 'Answer precedes last review');
     }
-    return _scheduler.reviewCard(_card, _rating(answer.grade), reviewDateTime: at).card;
+    return config
+        .createScheduler()
+        .reviewCard(_card, _rating(answer.grade), reviewDateTime: at)
+        .card;
   }
 
-  /// Temporary bridge from the five legacy grades; never cast numeric values.
-  /// Remove this bridge when stored grades and the exercise/UI contract migrate.
-  static fsrs.Rating _rating(Grade grade) => switch (grade) {
-    Grade.again || Grade.hard => fsrs.Rating.again,
-    Grade.medium => fsrs.Rating.hard,
-    Grade.good => fsrs.Rating.good,
-    Grade.easy => fsrs.Rating.easy,
-  };
+  static fsrs.Rating _rating(Grade grade) => fsrs.Rating.fromValue(grade.toInt());
 }

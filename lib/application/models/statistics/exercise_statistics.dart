@@ -8,7 +8,7 @@ class ExerciseStatistics {
   final List<int> numberOfAnswersByGrade;
 
   int getNumberOfAnswersByGrade(Grade grade) {
-    return numberOfAnswersByGrade[grade.index];
+    return numberOfAnswersByGrade[grade.toInt() - 1];
   }
 
   final List<int> numberOfAnswersByStatus;

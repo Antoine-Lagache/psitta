@@ -29,7 +29,7 @@ void main() {
             Grade.again: Duration.zero,
             Grade.good: Duration(days: 2),
             Grade.hard: Duration(minutes: 10),
-            Grade.medium: Duration(days: 1),
+            Grade.easy: Duration(days: 1),
           },
           showPreviewIntervals: showPreviewIntervals,
           onRevealAnswer: onRevealAnswer,
@@ -88,13 +88,13 @@ void main() {
     expect(selectedGrade, Grade.good);
   });
 
-  testWidgets('hides the legacy hard grade and presents medium as Hard', (tester) async {
+  testWidgets('shows the four FSRS grades, including Hard', (tester) async {
     Grade? selectedGrade;
 
     await tester.pumpWidget(
       buildContent(
         showingAnswer: true,
-        allowedGrades: const [Grade.again, Grade.hard, Grade.medium, Grade.good],
+        allowedGrades: Grade.values,
         onRevealAnswer: () {},
         onGradeSelected: (grade) => selectedGrade = grade,
       ),
@@ -102,9 +102,9 @@ void main() {
 
     expect(find.text('Hard'), findsOneWidget);
     expect(find.text('Medium'), findsNothing);
-    expect(find.text('10 min'), findsNothing);
+    expect(find.text('10 min'), findsOneWidget);
     await tester.tap(find.text('Hard'));
-    expect(selectedGrade, Grade.medium);
+    expect(selectedGrade, Grade.hard);
   });
 
   testWidgets('keeps the selected answer pending until the next exercise', (

@@ -1,13 +1,15 @@
 import 'package:fsrs/fsrs.dart' as fsrs;
 import 'package:psitta/domain/answer/exercise_answer.dart';
+import 'package:psitta/domain/srs/fsrs_scheduler_config.dart';
 import 'package:psitta/domain/srs/srs_state.dart';
 import 'package:test/test.dart';
 
 void main() {
   final start = DateTime.utc(2026, 11, 2, 10);
+  final config = FsrsSchedulerConfig();
 
   void answer(SRSState state, Grade grade, DateTime at) {
-    state.applyAnswer(SubmittedExerciseAnswer(grade: grade, answeredAt: at));
+    state.applyAnswer(SubmittedExerciseAnswer(grade: grade, answeredAt: at), config);
   }
 
   test('new state has no scheduled review or model estimates', () {
@@ -20,19 +22,17 @@ void main() {
     expect(state.isInLearning, isTrue);
   });
 
-  test('all legacy grades match upstream semantics without mutating previews', () {
+  test('all FSRS grades match upstream semantics without mutating previews', () {
     final ratings = {
       Grade.again: fsrs.Rating.again,
-      Grade.hard: fsrs.Rating.again,
-      Grade.medium: fsrs.Rating.hard,
+      Grade.hard: fsrs.Rating.hard,
       Grade.good: fsrs.Rating.good,
       Grade.easy: fsrs.Rating.easy,
     };
     final scheduler = fsrs.Scheduler(enableFuzzing: false);
     final initialIntervals = {
       Grade.again: const Duration(minutes: 1),
-      Grade.hard: const Duration(minutes: 1),
-      Grade.medium: const Duration(minutes: 5, seconds: 30),
+      Grade.hard: const Duration(minutes: 5, seconds: 30),
       Grade.good: const Duration(minutes: 10),
       Grade.easy: const Duration(days: 16),
     };
@@ -43,6 +43,7 @@ void main() {
           .card;
       final preview = state.previewInterval(
         PreviewExerciseAnswer(grade: entry.key, at: start),
+        config,
       );
       expect(state.lastReview, isNull);
       expect(state.stability, isNull);
@@ -68,6 +69,7 @@ void main() {
     final before = SRSState.clone(state);
     final preview = state.previewInterval(
       PreviewExerciseAnswer(grade: Grade.again, at: due),
+      config,
     );
     expect(state.nextReview, before.nextReview);
     expect(state.stability, before.stability);
@@ -105,7 +107,10 @@ void main() {
     final earlier = start.subtract(const Duration(seconds: 1));
     expect(() => answer(state, Grade.good, earlier), throwsArgumentError);
     expect(
-      () => state.previewInterval(PreviewExerciseAnswer(grade: Grade.good, at: earlier)),
+      () => state.previewInterval(
+        PreviewExerciseAnswer(grade: Grade.good, at: earlier),
+        config,
+      ),
       throwsArgumentError,
     );
     expect(state.nextReview, due);
@@ -117,9 +122,15 @@ void main() {
     final first = SRSState(exerciseId: 7);
     final replay = SRSState(exerciseId: 7);
     var at = start;
-    for (final grade in [Grade.easy, Grade.good, Grade.medium, Grade.again, Grade.good]) {
-      final preview = first.previewInterval(PreviewExerciseAnswer(grade: grade, at: at));
-      expect(first.previewInterval(PreviewExerciseAnswer(grade: grade, at: at)), preview);
+    for (final grade in [Grade.easy, Grade.good, Grade.hard, Grade.again, Grade.good]) {
+      final preview = first.previewInterval(
+        PreviewExerciseAnswer(grade: grade, at: at),
+        config,
+      );
+      expect(
+        first.previewInterval(PreviewExerciseAnswer(grade: grade, at: at), config),
+        preview,
+      );
       answer(first, grade, at);
       answer(replay, grade, at);
       expect(first.interval, preview);

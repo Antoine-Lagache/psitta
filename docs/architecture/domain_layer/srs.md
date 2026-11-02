@@ -16,11 +16,12 @@ optional step index, stability, difficulty, due time, and last-review time.
 `nextReview`.
 
 FSRS computes the next card state and due time from the current card, a rating,
-and the answer timestamp. The adapter uses the upstream default parameters,
-0.9 desired retention, 1- and 10-minute learning steps, a 10-minute relearning
-step, a 36,500-day maximum interval, and disabled fuzzing. These are fixed
-defaults for now; user-configurable FSRS settings and parameter optimization
-are outside this migration.
+and the answer timestamp. `FsrsSchedulerConfig` exposes the 21 model weights,
+desired retention, learning and relearning steps, maximum interval, and
+fuzzing option. Its defaults use the FSRS defaults, except fuzzing is disabled
+so a preview and its submitted answer have the same interval. `SRSConfig`
+contains this scheduler configuration as well as session limits and the day
+boundary. Parameter optimization is not integrated.
 
 The scheduler owns card memory state. `ExerciseStatus` separately controls the
 current session, and `SessionScheduler` decides which exercise is presented
@@ -29,20 +30,20 @@ sentences while the containing sentence exercise has one FSRS card.
 
 ## Grades
 
-FSRS accepts four ratings: Again, Hard, Good, and Easy. Psitta's existing
-five-value grade enum is temporarily mapped as follows while the database and
-UI contract are migrated:
+The active `Grade` enum contains the four FSRS ratings and uses their stable
+numeric values in history:
 
-| Stored Psitta grade | FSRS rating | Interpretation |
-|---|---|---|
-| `again` (q=0) | Again | Failure |
-| legacy `hard` (q=2) | Again | Failure |
-| `medium` (q=3) | Hard | Successful recall |
-| `good` (q=4) | Good | Successful recall |
-| `easy` (q=5) | Easy | Successful recall |
+| Grade | Stored value | Interpretation |
+|---|---:|---|
+| Again | 1 | Failed recall |
+| Hard | 2 | Successful recall |
+| Good | 3 | Successful recall |
+| Easy | 4 | Successful recall |
 
-This is an explicit semantic mapping; numeric values are not cast between
-enums. Sentence exercises continue to reject the grades they do not expose.
+The v3 data migration converts legacy grades before application code reads
+them: old Again and hidden legacy Hard both become FSRS Again; old Medium,
+Good, and Easy become FSRS Hard, Good, and Easy. Sentence exercises retain
+their prior restriction on Easy but now expose FSRS Hard.
 
 ## Session behavior
 
@@ -55,8 +56,9 @@ configuration.
 
 ## Persistence
 
-The migration replays non-training answer history chronologically to derive
-each FSRS card. Equal timestamps are ordered by history ID. Original grade and
-timestamp events remain in `exercise_history`; the card table stores only the
-current derived FSRS state. See [FSRS-6 integration](fsrs.md) and the
+The v2 migration replays non-training answer history chronologically to derive
+each FSRS card. Equal timestamps are ordered by history ID. The v3 migration
+then converts historical grade codes to the four FSRS values; timestamps and
+history rows remain intact. The card table stores only the current derived
+FSRS state. See [FSRS-6 integration](fsrs.md) and the
 [database architecture](../persistence_layer/database.md).

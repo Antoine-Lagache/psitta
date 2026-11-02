@@ -42,10 +42,10 @@ class SentenceExercise extends Exercise {
 
   @override
   bool isGradeAllowed(Grade grade) {
-    if (grade == Grade.easy || grade == Grade.hard) {
+    if (grade == Grade.easy) {
       return false;
     }
-    return true; // allowed : q = 0, 3, 4
+    return true; // Again, Hard, and Good are allowed.
   }
 
   @override

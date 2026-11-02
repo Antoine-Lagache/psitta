@@ -1,28 +1,27 @@
-/// Grades accepted by exercises during an SRS session.
-/// [q] is the answer quality consumed by the SM-2 calculation.
-/// The SM-2 algorithm takes a grade between 0 and 5.
+/// Four ratings accepted by FSRS when reviewing a card.
 enum Grade {
-  again(0),
+  again(1),
   hard(2),
-  medium(3),
-  good(4),
-  easy(5);
+  good(3),
+  easy(4);
 
-  final int q;
-  bool get isFail => q < 3;
+  /// Stable persisted value matching `fsrs.Rating.value`.
+  final int value;
 
-  const Grade(this.q);
+  const Grade(this.value);
 
-  int toInt() => q;
+  /// Again is the only FSRS rating that records a failed recall.
+  bool get isFail => this == Grade.again;
 
-  static Grade fromInt(int q) {
-    return switch (q) {
-      0 => Grade.again,
+  int toInt() => value;
+
+  static Grade fromInt(int value) {
+    return switch (value) {
+      1 => Grade.again,
       2 => Grade.hard,
-      3 => Grade.medium,
-      4 => Grade.good,
-      5 => Grade.easy,
-      _ => throw ArgumentError('Invalid grade value: $q'),
+      3 => Grade.good,
+      4 => Grade.easy,
+      _ => throw ArgumentError('Invalid grade value: $value'),
     };
   }
 }

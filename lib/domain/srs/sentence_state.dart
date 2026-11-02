@@ -12,12 +12,10 @@ class SentenceState {
   static const double scoreDecayFactor = 1.1;
 
   static const List<double> gradeWeights = [
-    0.0, // allowed q=0
-    0.0,
-    0.0,
-    0.7, // allowed q=3
-    1.0, // allowed q=4
-    1.4,
+    0.0, // Again
+    0.7, // Hard
+    1.0, // Good
+    1.4, // Easy
   ]; // Callers are responsible for enforcing exercise-specific grade rules.
 
   SentenceState({
@@ -28,10 +26,11 @@ class SentenceState {
 
   /// Incorporates one answer into this sentence's selection state.
   void updateChosenState(Grade grade) {
-    assert(grade.q >= 0 && grade.q < gradeWeights.length);
+    final gradeIndex = grade.toInt() - 1;
+    assert(gradeIndex >= 0 && gradeIndex < gradeWeights.length);
 
     shownCount += 1;
-    accumulatedScore += gradeWeights[grade.q];
+    accumulatedScore += gradeWeights[gradeIndex];
     if (grade.isFail) {
       isInLearning = true;
     } else {

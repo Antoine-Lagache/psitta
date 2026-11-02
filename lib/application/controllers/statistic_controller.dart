@@ -94,7 +94,7 @@ class StatisticController {
     final exerciseIds = <int>{};
 
     for (final entry in history) {
-      numberOfAnswersByGrade[entry.grade.index]++;
+      numberOfAnswersByGrade[entry.grade.toInt() - 1]++;
       numberOfAnswersByStatus[entry.status.index]++;
       exerciseIds.add(entry.exerciseId);
     }
