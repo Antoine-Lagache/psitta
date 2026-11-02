@@ -32,7 +32,7 @@ void main() {
           '''),
       );
 
-      expect(version['user_version'], 1);
+      expect(version['user_version'], 2);
       expect(
         tableRows.map((row) => row['name']),
         orderedEquals([
@@ -55,7 +55,7 @@ void main() {
       );
     });
 
-    test('creates every column required by the persistence layer', () async {
+    test('creates every column in the latest schema', () async {
       await createMigrationRunner().migrate(database);
 
       const expectedColumns = {
@@ -66,14 +66,12 @@ void main() {
         'sentence_group': ['id'],
         'srs_state': [
           'exercise_id',
-          'ease_factor',
-          'interval',
-          'kfactor',
-          'w',
-          'rbar',
-          'learning_step_index',
+          'state',
+          'step',
+          'stability',
+          'difficulty',
+          'due',
           'last_review',
-          'next_review',
         ],
         'word_exercise': ['exercise_id', 'content_id'],
         'sentence_exercise': ['exercise_id', 'sentence_group_id', 'training_count'],
@@ -137,7 +135,7 @@ void main() {
       final contentRows = await database.get('SELECT COUNT(*) AS count FROM content');
       final foreignKeys = await database.get('PRAGMA foreign_keys;');
 
-      expect(version['user_version'], 1);
+      expect(version['user_version'], 2);
       expect(contentRows['count'], 1);
       expect(foreignKeys['foreign_keys'], 1);
     });

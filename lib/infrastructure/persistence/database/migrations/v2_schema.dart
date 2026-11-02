@@ -15,15 +15,18 @@ class V2Schema implements DatabaseMigration {
 
   @override
   Future<void> migrate(sqlite.SqliteWriteContext database) async {
-    // get all history entrys to calculate the new SRS state for each exercise
+    // Read history and exercise IDs before replacing the old SRS table.
     final historyRows = await database.getAll(
       '''
-      SELECT * 
+      SELECT id, exercise_id, grade, answered_at
       FROM exercise_history
       WHERE status != ?
-      ORDER BY exercise_id, answered_at ASC
+      ORDER BY exercise_id, answered_at ASC, id ASC
       ''',
       [ExerciseStatus.consolidating.code],
+    );
+    final exerciseRows = await database.getAll(
+      'SELECT id FROM exercise ORDER BY id ASC',
     );
 
     // Drop old SRS table
@@ -40,42 +43,37 @@ class V2Schema implements DatabaseMigration {
         stability REAL,
         difficulty REAL,
         due TEXT,
-        last_review TEXT
+        last_review TEXT,
+
+        FOREIGN KEY (exercise_id)
+          REFERENCES exercise(id)
+          ON DELETE CASCADE
       );
     ''');
 
-    // Create new SRS state for each exercise based on the history
-    final cards = _createCardFromHistory(historyRows);
-    if (cards.isNotEmpty) {
-      final values = List.filled(cards.length, '(?, ?, ?, ?, ?, ?, ?)').join(', ');
-      final parameters = cards
-          .expand(
-            (card) => [
-              card.cardId,
-              card.state.index,
-              card.step,
-              card.stability,
-              card.difficulty,
-              toIsoUtc(card.due),
-              toIsoUtc(card.lastReview),
-            ],
-          )
-          .toList();
-
-      // Insert the new SRS state into the database
-      await database.execute('''
-        INSERT INTO srs_state (
-          exercise_id, state, step, stability, difficulty, due, last_review
-        ) VALUES $values
-        ''', parameters);
-    }
+    // Seed every exercise, including new cards with no review history.
+    final cards = {
+      for (final row in exerciseRows)
+        row['id'] as int: fsrs.Card(
+          cardId: row['id'] as int,
+          due: DateTime.utc(1970),
+        ),
+    };
+    _replayHistory(cards, historyRows);
+    await _insertCardsInBatches(database, cards.values.toList());
   }
 
-  List<fsrs.Card> _createCardFromHistory(List<Map<String, dynamic>> historyRows) {
-    final Map<int, fsrs.Card> cards = {};
+  void _replayHistory(
+    Map<int, fsrs.Card> cards,
+    List<Map<String, dynamic>> historyRows,
+  ) {
+    final scheduler = fsrs.Scheduler(enableFuzzing: false);
     for (final row in historyRows) {
       final exerciseId = row['exercise_id'] as int;
-      final card = cards.putIfAbsent(exerciseId, () => fsrs.Card(cardId: exerciseId));
+      final card = cards[exerciseId];
+      if (card == null) {
+        throw StateError('History references missing exercise $exerciseId');
+      }
 
       final answeredAt = safeParseDate(row['answered_at'] as String)!;
       final grade = switch (row['grade'] as int) {
@@ -86,12 +84,39 @@ class V2Schema implements DatabaseMigration {
         _ => throw ArgumentError('Invalid grade value: ${row['grade']}'),
       };
 
-      final scheduler = fsrs.Scheduler(enableFuzzing: false);
       cards[exerciseId] = scheduler
           .reviewCard(card, grade, reviewDateTime: answeredAt.toUtc())
           .card;
     }
+  }
 
-    return cards.values.toList();
+  Future<void> _insertCardsInBatches(
+    sqlite.SqliteWriteContext database,
+    List<fsrs.Card> cards,
+  ) async {
+    const batchSize = 100;
+    for (var start = 0; start < cards.length; start += batchSize) {
+      final batch = cards.skip(start).take(batchSize).toList();
+      final values = List.filled(batch.length, '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+      final parameters = batch
+          .expand(
+            (card) => [
+              card.cardId,
+              card.state.value,
+              card.step,
+              card.stability,
+              card.difficulty,
+              toIsoUtc(card.due),
+              toIsoUtc(card.lastReview),
+            ],
+          )
+          .toList();
+
+      await database.execute('''
+        INSERT INTO srs_state (
+          exercise_id, state, step, stability, difficulty, due, last_review
+        ) VALUES $values
+        ''', parameters);
+    }
   }
 }
