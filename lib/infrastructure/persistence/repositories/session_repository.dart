@@ -139,7 +139,10 @@ class SessionRepository {
           trainingCount: resume.trainingCount!,
           id: sentence.id!,
           status: resume.status,
-          srsState: SRSStateMapper.toDomainSrsState(sentence.srsState, exerciseId: sentence.id!),
+          srsState: SRSStateMapper.toDomainSrsState(
+            sentence.srsState,
+            exerciseId: sentence.id!,
+          ),
         );
     }
   }

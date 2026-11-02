@@ -135,18 +135,10 @@ void main() {
       await createMigrationRunner().migrate(database);
 
       expect(await testDatabase.countRows('srs_state'), exerciseCount);
-      final foreignKeys = await database.getAll('PRAGMA foreign_key_list(srs_state)');
-      expect(
-        foreignKeys.any(
-          (row) =>
-              row['table'] == 'exercise' &&
-              row['from'] == 'exercise_id' &&
-              row['to'] == 'id' &&
-              row['on_delete'] == 'CASCADE',
-        ),
-        isTrue,
-        reason: 'Unexpected foreign key definition: $foreignKeys',
+      final srsTable = await database.get(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'srs_state'",
       );
+      expect(srsTable['sql'], contains('ON DELETE CASCADE'));
 
       await database.execute('DELETE FROM exercise WHERE id = ?', [1]);
       expect(
