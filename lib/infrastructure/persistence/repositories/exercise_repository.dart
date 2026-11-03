@@ -2,6 +2,7 @@ import 'package:psitta/infrastructure/persistence/mappers/exercise/word_exercise
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:psitta/domain/exercise/exercise.dart';
+import 'package:psitta/domain/exercise/kana_exercise.dart';
 
 import 'package:psitta/infrastructure/persistence/dao/exercise_dao.dart';
 import 'package:psitta/infrastructure/persistence/dao/exercise_history_dao.dart';
@@ -9,6 +10,7 @@ import 'package:psitta/infrastructure/persistence/dao/sentence_group_dao.dart';
 
 import 'package:psitta/infrastructure/persistence/mappers/exercise_history_mapper.dart';
 import 'package:psitta/infrastructure/persistence/mappers/exercise/sentence_exercise_mapper.dart';
+import 'package:psitta/infrastructure/persistence/mappers/exercise/kana_exercise_mapper.dart';
 import 'package:psitta/infrastructure/persistence/mappers/sentence_mapper.dart';
 
 /// Reconstructs and persists complete exercise aggregates across their tables.
@@ -40,6 +42,16 @@ class ExerciseRepository {
       SentenceExerciseMapper.newSentenceExercise(sentenceGroupId, trainingCount),
     );
   }
+
+  Future<int> createKanaExercise(
+    int contentId, {
+    int trainingCountMax = 0,
+  }) => _exerciseDao.insert(
+    KanaExerciseMapper.newKanaExercise(
+      contentId,
+      trainingCountMax: trainingCountMax,
+    ),
+  );
 
   Future<Exercise?> getById(int id) async {
     final ExercisePersistence? persistence = await _exerciseDao.getById(id);
@@ -106,6 +118,9 @@ class ExerciseRepository {
         final group = SentenceMapper.toPersistence(sentence.sentences);
         await _sentencesDao.updateSentencesState(txn, group);
         break;
+      case KanaExercise kana:
+        persistence = KanaExerciseMapper.kanaToPersistence(kana);
+        break;
       default:
         throw StateError("Unknown Exercise type");
     }
@@ -158,6 +173,13 @@ class ExerciseRepository {
           }
           await _sentencesDao.update(txn, SentenceMapper.resetGroupProgress(group));
           break;
+        case KanaExercisePersistence kana:
+          resetExercise = KanaExerciseMapper.newKanaExercise(
+            kana.contentId,
+            trainingCountMax: kana.trainingCountMax,
+            id: exerciseId,
+          );
+          break;
       }
 
       await _historyDao.deleteAll(txn, exerciseId);
@@ -185,6 +207,8 @@ class ExerciseRepository {
         final sentences = SentenceMapper.toDomain(sentencesPersistence);
 
         return SentenceExerciseMapper.sentenceToDomain(sentence, hasHistory, sentences);
+      case KanaExercisePersistence kana:
+        return KanaExerciseMapper.kanaToDomain(kana, hasHistory);
     }
   }
 }

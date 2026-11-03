@@ -32,6 +32,9 @@ class ExerciseDao {
 
       case SentenceExercisePersistence():
         await _insertSentenceExercise(txn, exerciseId, exercise);
+
+      case KanaExercisePersistence():
+        await _insertKanaExercise(txn, exerciseId, exercise);
     }
 
     return exerciseId;
@@ -177,6 +180,9 @@ class ExerciseDao {
 
       case SentenceExercisePersistence():
         await _updateSentenceExercise(txn, exerciseId, exercise);
+
+      case KanaExercisePersistence():
+        await _updateKanaExercise(txn, exerciseId, exercise);
     }
   }
 
@@ -231,12 +237,13 @@ class ExerciseDao {
     final result = await txn.execute(
       '''
     INSERT INTO exercise (
-      type
+      type,
+      training_count_max
     )
-    VALUES (?)
+    VALUES (?, ?)
     RETURNING id
     ''',
-      [exercise.type],
+      [exercise.type, exercise.trainingCountMax],
     );
 
     return result.first['id'] as int;
@@ -298,12 +305,22 @@ class ExerciseDao {
       '''
     INSERT INTO sentence_exercise (
       exercise_id,
-      sentence_group_id,
-      training_count
+      sentence_group_id
     )
-    VALUES (?, ?, ?)
+    VALUES (?, ?)
     ''',
-      [exerciseId, sentenceExercise.sentenceGroupId, sentenceExercise.trainingCountMax],
+      [exerciseId, sentenceExercise.sentenceGroupId],
+    );
+  }
+
+  Future<void> _insertKanaExercise(
+    sqlite.SqliteWriteContext txn,
+    int exerciseId,
+    KanaExercisePersistence kanaExercise,
+  ) async {
+    await txn.execute(
+      'INSERT INTO kana_exercise (exercise_id, content_id) VALUES (?, ?)',
+      [exerciseId, kanaExercise.contentId],
     );
   }
 
@@ -332,6 +349,13 @@ class ExerciseDao {
         }
         return SentenceExercisePersistence.fromRow(exerciseRow, sentenceRow, srsState);
 
+      case 'kana':
+        final kanaRow = await _getKanaExerciseRow(txn, id);
+        if (kanaRow == null) {
+          throw StateError('Missing kana_exercise for exercise $id');
+        }
+        return KanaExercisePersistence.fromRow(exerciseRow, kanaRow, srsState);
+
       default:
         throw StateError('Unknown exercise type: ${exerciseRow['type']}');
     }
@@ -345,7 +369,8 @@ class ExerciseDao {
       '''
     SELECT
       id,
-      type
+      type,
+      training_count_max
     FROM exercise
     WHERE id = ?
     ''',
@@ -413,8 +438,7 @@ class ExerciseDao {
     final rows = await txn.getAll(
       '''
     SELECT
-      sentence_group_id,
-      training_count
+      sentence_group_id
     FROM sentence_exercise
     WHERE exercise_id = ?
     ''',
@@ -426,6 +450,17 @@ class ExerciseDao {
     }
 
     return rows.first;
+  }
+
+  Future<Map<String, Object?>?> _getKanaExerciseRow(
+    sqlite.SqliteReadContext txn,
+    int exerciseId,
+  ) async {
+    final rows = await txn.getAll(
+      'SELECT content_id FROM kana_exercise WHERE exercise_id = ?',
+      [exerciseId],
+    );
+    return rows.isEmpty ? null : rows.first;
   }
 
   // Private update operations
@@ -443,7 +478,12 @@ class ExerciseDao {
   Future<void> _updateExercise(
     sqlite.SqliteWriteContext txn,
     ExercisePersistence exercise,
-  ) async {}
+  ) async {
+    await txn.execute(
+      'UPDATE exercise SET training_count_max = ? WHERE id = ?',
+      [exercise.trainingCountMax, exercise.id],
+    );
+  }
 
   Future<void> _updateWordExercise(
     sqlite.SqliteWriteContext txn,
@@ -470,11 +510,21 @@ class ExerciseDao {
       '''
     UPDATE sentence_exercise
     SET
-      sentence_group_id = ?,
-      training_count = ?
+      sentence_group_id = ?
     WHERE exercise_id = ?
     ''',
-      [sentenceExercise.sentenceGroupId, sentenceExercise.trainingCountMax, exerciseId],
+      [sentenceExercise.sentenceGroupId, exerciseId],
+    );
+  }
+
+  Future<void> _updateKanaExercise(
+    sqlite.SqliteWriteContext txn,
+    int exerciseId,
+    KanaExercisePersistence kanaExercise,
+  ) async {
+    await txn.execute(
+      'UPDATE kana_exercise SET content_id = ? WHERE exercise_id = ?',
+      [kanaExercise.contentId, exerciseId],
     );
   }
 }

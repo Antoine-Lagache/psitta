@@ -15,6 +15,9 @@ final class WordExercisePersistence extends ExercisePersistence {
     Map<String, Object?> wordRow,
     SrsStatePersistence srsState,
   ) {
+    if (exerciseRow['training_count_max'] != 0) {
+      throw StateError('Word exercises must not have additional training');
+    }
     return WordExercisePersistence(
       id: exerciseRow['id'] as int?,
       srsState: srsState,

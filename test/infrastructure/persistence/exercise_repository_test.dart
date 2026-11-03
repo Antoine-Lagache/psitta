@@ -1,5 +1,6 @@
 import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/exercise/sentence_exercise.dart';
+import 'package:psitta/domain/exercise/kana_exercise.dart';
 import 'package:psitta/domain/history/exercise_history_entry.dart';
 import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
@@ -54,6 +55,8 @@ void main() {
       expect(wordExercise.id, exerciseId);
       expect(wordExercise.contentId, contentId);
       expect(wordExercise.status, ExerciseStatus.newExercise);
+      expect(wordExercise.trainingCountMax, 0);
+      expect(wordExercise.trainingCount, 0);
       expect(wordExercise.srsState.learningStepIndex, 0);
       expect(wordExercise.srsState.lastReview, isNull);
     });
@@ -91,6 +94,24 @@ void main() {
       expect(sentenceExercise.sentences.sentences, hasLength(1));
       expect(sentenceExercise.sentences.sentences.single.id, sentenceInstanceId);
       expect(sentenceExercise.sentences.sentences.single.contentId, contentId);
+    });
+
+    test('createKanaExercise stores and reloads the common training configuration', () async {
+      final contentId = await testDatabase.insertContent();
+
+      final exerciseId = await repository.createKanaExercise(
+        contentId,
+        trainingCountMax: 1,
+      );
+      final exercise = await repository.getById(exerciseId);
+
+      expect(exercise, isA<KanaExercise>());
+      final kanaExercise = exercise! as KanaExercise;
+      expect(kanaExercise.id, exerciseId);
+      expect(kanaExercise.contentId, contentId);
+      expect(kanaExercise.trainingCountMax, 1);
+      expect(kanaExercise.trainingCount, 1);
+      expect(kanaExercise.status, ExerciseStatus.newExercise);
     });
 
     test('prevents deleting a sentence group used by an exercise', () async {

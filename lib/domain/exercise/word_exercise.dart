@@ -13,17 +13,4 @@ class WordExercise extends Exercise {
 
   @override
   int getContentId() => contentId;
-
-  @override
-  ExerciseResume getResume() {
-    return ExerciseResume(exerciseId: id, status: status);
-  }
-
-  @override
-  void applyAnswer(SubmittedExerciseAnswer answer, SRSConfig config) {
-    newHistoryEntry.add(
-      ExerciseHistoryEntry.fromAnswer(answer: answer, exerciseId: id, status: status),
-    );
-    super.applyAnswer(answer, config);
-  }
 }

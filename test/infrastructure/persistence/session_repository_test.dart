@@ -67,7 +67,7 @@ void main() {
       final resume = restored.getResumeList().single;
       expect(resume.exerciseId, exercise.id);
       expect(resume.status, ExerciseStatus.newExercise);
-      expect(resume.trainingCount, isNull);
+      expect(resume.trainingCount, 0);
 
       restored.resumeSession(startedAt.add(const Duration(minutes: 5)));
       expect(restored.currentExercise.id, exercise.id);

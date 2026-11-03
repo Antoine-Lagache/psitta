@@ -10,6 +10,7 @@ import 'database_migration.dart';
 /// This includes:
 /// - Migration of the old SRS to the FSRS-6 algorithm
 /// - Conversion of historical grades to FSRS rating values
+/// - Shared exercise training state and kana exercise persistence
 class V2Schema implements DatabaseMigration {
   @override
   int get version => 2;
@@ -31,6 +32,8 @@ class V2Schema implements DatabaseMigration {
     );
     final exerciseRows = await database.getAll('SELECT id FROM exercise ORDER BY id ASC');
     _validateLegacyGrades(allHistoryGrades);
+
+    await _migrateSharedExerciseSchema(database);
 
     // Drop old SRS table
     await database.execute('''
@@ -62,6 +65,60 @@ class V2Schema implements DatabaseMigration {
     _replayHistory(cards, historyRows);
     await _insertCardsInBatches(database, cards.values.toList());
     await _migrateHistoryGrades(database);
+  }
+
+  Future<void> _migrateSharedExerciseSchema(
+    sqlite.SqliteWriteContext database,
+  ) async {
+    await database.execute('''
+      ALTER TABLE exercise
+      ADD COLUMN training_count_max INTEGER NOT NULL DEFAULT 0
+      ''');
+    await database.execute('''
+      UPDATE exercise
+      SET training_count_max = COALESCE((
+        SELECT training_count
+        FROM sentence_exercise
+        WHERE sentence_exercise.exercise_id = exercise.id
+      ), 0)
+      WHERE type = 'sentence'
+      ''');
+
+    await database.execute('''
+      CREATE TABLE sentence_exercise_v2 (
+        exercise_id INTEGER PRIMARY KEY,
+        sentence_group_id INTEGER NOT NULL,
+
+        FOREIGN KEY (exercise_id)
+          REFERENCES exercise(id)
+          ON DELETE CASCADE,
+
+        FOREIGN KEY (sentence_group_id)
+          REFERENCES sentence_group(id),
+
+        UNIQUE (sentence_group_id)
+      )
+      ''');
+    await database.execute('''
+      INSERT INTO sentence_exercise_v2 (exercise_id, sentence_group_id)
+      SELECT exercise_id, sentence_group_id FROM sentence_exercise
+      ''');
+    await database.execute('DROP TABLE sentence_exercise');
+    await database.execute('ALTER TABLE sentence_exercise_v2 RENAME TO sentence_exercise');
+
+    await database.execute('''
+      CREATE TABLE kana_exercise (
+        exercise_id INTEGER PRIMARY KEY,
+        content_id INTEGER NOT NULL,
+
+        FOREIGN KEY (exercise_id)
+          REFERENCES exercise(id)
+          ON DELETE CASCADE,
+
+        FOREIGN KEY (content_id)
+          REFERENCES content(id)
+      )
+      ''');
   }
 
   void _validateLegacyGrades(List<Map<String, dynamic>> historyRows) {

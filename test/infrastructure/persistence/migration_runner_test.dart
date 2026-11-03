@@ -42,6 +42,7 @@ void main() {
           'exercise_history',
           'field_definition',
           'field_value',
+          'kana_exercise',
           'media',
           'sentence_exercise',
           'sentence_group',
@@ -59,7 +60,7 @@ void main() {
       await createMigrationRunner().migrate(database);
 
       const expectedColumns = {
-        'exercise': ['id', 'type'],
+        'exercise': ['id', 'type', 'training_count_max'],
         'content': ['id'],
         'field_definition': ['id', 'value_type', 'side'],
         'media': ['id', 'path', 'mime_type', 'size', 'sha256'],
@@ -74,7 +75,8 @@ void main() {
           'last_review',
         ],
         'word_exercise': ['exercise_id', 'content_id'],
-        'sentence_exercise': ['exercise_id', 'sentence_group_id', 'training_count'],
+        'sentence_exercise': ['exercise_id', 'sentence_group_id'],
+        'kana_exercise': ['exercise_id', 'content_id'],
         'sentence_instance': ['id', 'sentence_group_id', 'content_id'],
         'sentence_state': [
           'sentence_instance_id',
