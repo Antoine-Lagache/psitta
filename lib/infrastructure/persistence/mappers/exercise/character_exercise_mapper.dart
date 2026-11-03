@@ -7,7 +7,10 @@ import 'package:psitta/infrastructure/persistence/models/exercise/exercise_persi
 class CharacterExerciseMapper {
   const CharacterExerciseMapper();
 
-  static CharacterExercise characterToDomain(CharacterExercisePersistence persistence, bool hasHistory) {
+  static CharacterExercise characterToDomain(
+    CharacterExercisePersistence persistence,
+    bool hasHistory,
+  ) {
     return CharacterExercise(
       id: persistence.id!,
       status: hasHistory ? ExerciseStatus.toReview : ExerciseStatus.newExercise,

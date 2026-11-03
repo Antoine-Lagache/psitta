@@ -37,12 +37,12 @@ void main() {
         tableRows.map((row) => row['name']),
         orderedEquals([
           'active_session_exercise',
+          'character_exercise',
           'content',
           'exercise',
           'exercise_history',
           'field_definition',
           'field_value',
-          'character_exercise',
           'media',
           'sentence_exercise',
           'sentence_group',

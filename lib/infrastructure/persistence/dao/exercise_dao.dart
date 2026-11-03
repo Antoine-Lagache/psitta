@@ -354,11 +354,7 @@ class ExerciseDao {
         if (characterRow == null) {
           throw StateError('Missing character_exercise for exercise $id');
         }
-        return CharacterExercisePersistence.fromRow(
-          exerciseRow,
-          characterRow,
-          srsState,
-        );
+        return CharacterExercisePersistence.fromRow(exerciseRow, characterRow, srsState);
 
       default:
         throw StateError('Unknown exercise type: ${exerciseRow['type']}');
@@ -526,9 +522,9 @@ class ExerciseDao {
     int exerciseId,
     CharacterExercisePersistence characterExercise,
   ) async {
-    await txn.execute('UPDATE character_exercise SET content_id = ? WHERE exercise_id = ?', [
-      characterExercise.contentId,
-      exerciseId,
-    ]);
+    await txn.execute(
+      'UPDATE character_exercise SET content_id = ? WHERE exercise_id = ?',
+      [characterExercise.contentId, exerciseId],
+    );
   }
 }
