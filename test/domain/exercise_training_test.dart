@@ -1,4 +1,3 @@
-import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/exercise/exercise.dart';
 import 'package:psitta/domain/exercise/character_exercise.dart';
 import 'package:psitta/domain/exercise/word_exercise.dart';

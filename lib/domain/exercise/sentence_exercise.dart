@@ -1,6 +1,4 @@
 import 'package:psitta/domain/exercise/exercise.dart';
-import 'package:psitta/domain/exercise/exercise_status.dart';
-import 'package:psitta/domain/history/exercise_history_entry.dart';
 import 'package:psitta/domain/sentences/sentence_group.dart';
 
 export 'package:psitta/domain/sentences/sentence_group.dart';
@@ -13,19 +11,12 @@ class SentenceExercise extends Exercise {
 
   SentenceExercise({
     required SentenceGroup sentences,
-    required int trainingCountMax,
-    int? trainingCount,
-    required int id,
-    required ExerciseStatus status,
-    required SRSState srsState,
-  }) : _sentences = sentences,
-       super(
-         id: id,
-         status: status,
-         srsState: srsState,
-         trainingCountMax: trainingCountMax,
-         trainingCount: trainingCount,
-       ) {
+    required super.trainingCountMax,
+    super.trainingCount,
+    required super.id,
+    required super.status,
+    required super.srsState,
+  }) : _sentences = sentences {
     if (_sentences.sentences.isEmpty) {
       throw ArgumentError('A SentenceExercise requires at least one sentence');
     }
