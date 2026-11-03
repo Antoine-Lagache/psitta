@@ -9,6 +9,7 @@ import 'database_migration.dart';
 ///
 /// This includes:
 /// - Migration of the old SRS to the FSRS-6 algorithm
+/// - Conversion of historical grades to FSRS rating values
 class V2Schema implements DatabaseMigration {
   @override
   int get version => 2;

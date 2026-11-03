@@ -62,10 +62,12 @@ signature against a malicious modification of both packaged files.
 
 ## Future schema and content changes
 
-For a schema change, add a versioned migration to `createMigrationRunner()` and
-regenerate the snapshot. Fresh installations receive the new schema directly;
-existing installations run the migration against their own database. Do not
-replace a user's database with the newer snapshot.
+For a schema-changing version, add one migration file/class for that database
+version, include all of that version's schema and data changes in it, register
+it in `createMigrationRunner()`, and regenerate the snapshot. Releases without
+database changes do not need a migration file. Fresh installations receive the
+new schema directly; existing installations run the migration against their
+own database. Do not replace a user's database with the newer snapshot.
 
 For a content change, update the JSONL archives and their content manifest, then
 regenerate. This updates **new installations only**. Updating existing learners

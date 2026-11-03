@@ -91,8 +91,12 @@ in timestamp and history-ID order, excluding sentence-training answers, then
 converts all retained history grades to the four FSRS rating codes. This keeps
 the Psitta 0.2.0 data migration in one versioned, atomic step. The runner
 applies each migration in a transaction and advances `user_version` atomically.
-Future schema changes must be added as new ordered migrations rather than by
-editing databases that may already exist.
+The project uses one migration file/class for each database schema version;
+all schema and data changes required by a version belong in that migration.
+V2 covers Psitta 0.2.0, and there is no V3 migration at present. A future
+schema-changing version will receive the next migration file. Future schema
+changes must be added as new ordered migrations rather than by editing
+databases that may already exist.
 
 Initial release content is built into a bundled database using this same migration
 registry and the release importer. See [bundled database generation](../../content/bundled_database.md)
