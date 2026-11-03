@@ -21,7 +21,7 @@ void main() {
   tearDown(() => testDatabase.dispose());
 
   group('FSRS migrations', () {
-    test('migrates historical SM-2 grade codes to FSRS ratings', () async {
+    test('replays history then converts its grades to FSRS ratings in V2', () async {
       await database.writeTransaction((transaction) async {
         await _insertLegacyExercise(transaction, 10);
         for (final (int id, int legacyGrade) in [
@@ -47,10 +47,10 @@ void main() {
         'SELECT grade FROM exercise_history ORDER BY id',
       );
       expect(rows.map((row) => row['grade']), [1, 1, 2, 3, 4]);
-      expect((await database.get('PRAGMA user_version'))['user_version'], 3);
+      expect((await database.get('PRAGMA user_version'))['user_version'], 2);
     });
 
-    test('rolls back invalid historical grade values in v3', () async {
+    test('rejects invalid grades even in history excluded from replay', () async {
       await database.writeTransaction((transaction) async {
         await _insertLegacyExercise(transaction, 10);
         await _insertHistory(
@@ -63,9 +63,9 @@ void main() {
         );
       });
 
-      await expectLater(createMigrationRunner().migrate(database), throwsStateError);
+      await expectLater(createMigrationRunner().migrate(database), throwsArgumentError);
 
-      expect((await database.get('PRAGMA user_version'))['user_version'], 2);
+      expect((await database.get('PRAGMA user_version'))['user_version'], 1);
       expect(
         (await database.get('SELECT grade FROM exercise_history WHERE id = 1'))['grade'],
         1,
@@ -168,7 +168,11 @@ void main() {
       }
 
       expect(await testDatabase.countRows('exercise_history'), 7);
-      expect((await database.get('PRAGMA user_version'))['user_version'], 3);
+      final trainingGrades = await database.getAll(
+        'SELECT id, grade FROM exercise_history WHERE id IN (105, 106) ORDER BY id',
+      );
+      expect(trainingGrades.map((row) => row['grade']), [1, 3]);
+      expect((await database.get('PRAGMA user_version'))['user_version'], 2);
     });
 
     test('inserts states in bounded batches and keeps the cascade foreign key', () async {

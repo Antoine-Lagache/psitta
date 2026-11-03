@@ -5,7 +5,7 @@ import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 import 'package:fsrs/fsrs.dart' as fsrs;
 import 'database_migration.dart';
 
-/// Update all table for the version 0.2.0 of Psitta
+/// Updates all tables for Psitta version 0.2.0.
 ///
 /// This includes:
 /// - Migration of the old SRS to the FSRS-6 algorithm
@@ -25,7 +25,11 @@ class V2Schema implements DatabaseMigration {
       ''',
       [ExerciseStatus.consolidating.code],
     );
+    final allHistoryGrades = await database.getAll(
+      'SELECT grade FROM exercise_history ORDER BY id ASC',
+    );
     final exerciseRows = await database.getAll('SELECT id FROM exercise ORDER BY id ASC');
+    _validateLegacyGrades(allHistoryGrades);
 
     // Drop old SRS table
     await database.execute('''
@@ -56,6 +60,31 @@ class V2Schema implements DatabaseMigration {
     };
     _replayHistory(cards, historyRows);
     await _insertCardsInBatches(database, cards.values.toList());
+    await _migrateHistoryGrades(database);
+  }
+
+  void _validateLegacyGrades(List<Map<String, dynamic>> historyRows) {
+    for (final row in historyRows) {
+      switch (row['grade'] as int) {
+        case 0 || 2 || 3 || 4 || 5:
+          break;
+        default:
+          throw ArgumentError('Invalid legacy grade value: ${row['grade']}');
+      }
+    }
+  }
+
+  Future<void> _migrateHistoryGrades(sqlite.SqliteWriteContext database) async {
+    await database.execute('''
+      UPDATE exercise_history
+      SET grade = CASE grade
+        WHEN 0 THEN 1
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 4
+      END
+      ''');
   }
 
   void _replayHistory(Map<int, fsrs.Card> cards, List<Map<String, dynamic>> historyRows) {

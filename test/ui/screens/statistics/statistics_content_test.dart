@@ -22,7 +22,7 @@ void main() {
     );
     final exercises = ExerciseStatistics(
       totalNumberAnswers: 15,
-      numberOfAnswersByGrade: [1, 2, 3, 4, 5],
+      numberOfAnswersByGrade: [1, 2, 3, 9],
       numberOfAnswersByStatus: List.filled(ExerciseStatus.values.length, 0),
       numberOfDistinctExercisesAnswered: 6,
     );
@@ -73,7 +73,7 @@ void main() {
     );
     final exercises = ExerciseStatistics(
       totalNumberAnswers: 2,
-      numberOfAnswersByGrade: [1, 1, 0, 0, 0],
+      numberOfAnswersByGrade: [1, 1, 0, 0],
       numberOfAnswersByStatus: List.filled(ExerciseStatus.values.length, 0),
       numberOfDistinctExercisesAnswered: 1,
     );

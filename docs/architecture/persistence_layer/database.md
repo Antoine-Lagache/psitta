@@ -86,13 +86,13 @@ closed and the error is rethrown. `close()` releases it and resets the wrapper,
 allowing a later call to reopen the database.
 
 `V1InitialSchema` creates the original schema. `V2Schema` replaces the legacy
-SRS table and reconstructs one FSRS card per exercise by replaying answer
-history in timestamp and history-ID order, excluding sentence-training
-answers. `V3GradeValues` converts retained legacy grade codes into the four
-FSRS rating codes after replay. The runner applies each migration in a
-transaction and advances `user_version` atomically. Future schema changes must
-be added as new ordered migrations rather than by editing databases that may
-already exist.
+SRS table, reconstructs one FSRS card per exercise by replaying answer history
+in timestamp and history-ID order, excluding sentence-training answers, then
+converts all retained history grades to the four FSRS rating codes. This keeps
+the Psitta 0.2.0 data migration in one versioned, atomic step. The runner
+applies each migration in a transaction and advances `user_version` atomically.
+Future schema changes must be added as new ordered migrations rather than by
+editing databases that may already exist.
 
 Initial release content is built into a bundled database using this same migration
 registry and the release importer. See [bundled database generation](../../content/bundled_database.md)

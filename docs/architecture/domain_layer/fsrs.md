@@ -25,14 +25,16 @@ V2 reads the exercise IDs and answer history before replacing the legacy SRS
 table, then writes one card per exercise. It excludes `consolidating` training
 events and replays the remaining events by `(exercise_id, answered_at, id)`.
 Legacy q=0 and q=2 map to FSRS Again; q=3, 4, and 5 map to Hard, Good, and
-Easy. V3 updates the retained history rows to the new stable rating values
-1–4 after V2 has replayed them. New cards without review history keep FSRS's
-initial learning state.
+Easy. After replay, the same V2 migration updates every retained history row
+to the stable rating values 1–4. It validates rows excluded from replay too,
+including sentence-training answers, before changing the schema. New cards
+without review history keep FSRS's initial learning state.
 
 The new persistence row stores the FSRS state value, nullable step, stability,
 difficulty, and due/last-review timestamps as UTC microseconds. Persisted due is
-always present; last review is null until the first answer. The card's current state is derived from the immutable
-answer history at migration time; history itself is not rewritten.
+always present; last review is null until the first answer. The card's current
+state is derived from legacy answer history at migration time; history grades
+are re-encoded after replay while timestamps and rows remain intact.
 
 Parameter optimization is not integrated. The configuration can override
 weights and scheduler settings, but no optimizer computes personalized weights.

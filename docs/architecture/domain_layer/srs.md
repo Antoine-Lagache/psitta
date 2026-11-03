@@ -40,10 +40,11 @@ numeric values in history:
 | Good | 3 | Successful recall |
 | Easy | 4 | Successful recall |
 
-The v3 data migration converts legacy grades before application code reads
-them: old Again and hidden legacy Hard both become FSRS Again; old Medium,
-Good, and Easy become FSRS Hard, Good, and Easy. Sentence exercises retain
-their prior restriction on Easy but now expose FSRS Hard.
+The v2 migration replays legacy grades using their old meanings, then converts
+all stored grades before application code reads them: old Again and hidden
+legacy Hard both become FSRS Again; old Medium, Good, and Easy become FSRS
+Hard, Good, and Easy. Sentence exercises retain their prior restriction on
+Easy but now expose FSRS Hard.
 
 ## Session behavior
 
@@ -57,7 +58,7 @@ configuration.
 ## Persistence
 
 The v2 migration replays non-training answer history chronologically to derive
-each FSRS card. Equal timestamps are ordered by history ID. The v3 migration
+each FSRS card. Equal timestamps are ordered by history ID. The v2 migration
 then converts historical grade codes to the four FSRS values; timestamps and
 history rows remain intact. The card table stores only the current derived
 FSRS state. See [FSRS-6 integration](fsrs.md) and the
