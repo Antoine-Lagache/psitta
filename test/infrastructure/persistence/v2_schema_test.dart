@@ -31,16 +31,13 @@ void main() {
         await transaction.execute('''
           INSERT INTO sentence_exercise (exercise_id, sentence_group_id, training_count)
           VALUES (10, 30, 2)
-          ''',
-        );
-        await transaction.execute(
-          '''
+          ''');
+        await transaction.execute('''
           INSERT INTO srs_state (
             exercise_id, ease_factor, interval, kfactor, w, rbar,
             learning_step_index, last_review, next_review
           ) VALUES (10, 2.5, 1, 1.0, 1.0, 0.9, 0, NULL, NULL)
-          ''',
-        );
+          ''');
       });
 
       await createMigrationRunner().migrate(database);
