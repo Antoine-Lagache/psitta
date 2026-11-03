@@ -1,5 +1,5 @@
 import 'package:psitta/domain/exercise/exercise.dart';
-import 'package:psitta/domain/exercise/kana_exercise.dart';
+import 'package:psitta/domain/exercise/character_exercise.dart';
 import 'package:psitta/domain/exercise/sentence_exercise.dart';
 import 'package:psitta/domain/exercise/word_exercise.dart';
 import 'package:psitta/domain/sessions/session.dart';
@@ -145,14 +145,17 @@ class SessionRepository {
             exerciseId: sentence.id!,
           ),
         );
-      case KanaExercisePersistence kana:
-        return KanaExercise(
-          contentId: kana.contentId,
-          trainingCountMax: kana.trainingCountMax,
+      case CharacterExercisePersistence character:
+        return CharacterExercise(
+          contentId: character.contentId,
+          trainingCountMax: character.trainingCountMax,
           trainingCount: resume.trainingCount,
-          id: kana.id!,
+          id: character.id!,
           status: resume.status,
-          srsState: SRSStateMapper.toDomainSrsState(kana.srsState, exerciseId: kana.id!),
+          srsState: SRSStateMapper.toDomainSrsState(
+            character.srsState,
+            exerciseId: character.id!,
+          ),
         );
     }
   }

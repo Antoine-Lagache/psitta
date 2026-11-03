@@ -1,14 +1,14 @@
 import 'package:psitta/domain/exercise/exercise_status.dart';
-import 'package:psitta/domain/exercise/kana_exercise.dart';
+import 'package:psitta/domain/exercise/character_exercise.dart';
 import 'package:psitta/infrastructure/persistence/mappers/exercise/srs_state_mapper.dart';
 import 'package:psitta/infrastructure/persistence/models/exercise/exercise_persistence.dart';
 
-/// Translates kana exercises and initializes their FSRS and training state.
-class KanaExerciseMapper {
-  const KanaExerciseMapper();
+/// Translates character exercises and initializes their FSRS and training state.
+class CharacterExerciseMapper {
+  const CharacterExerciseMapper();
 
-  static KanaExercise kanaToDomain(KanaExercisePersistence persistence, bool hasHistory) {
-    return KanaExercise(
+  static CharacterExercise characterToDomain(CharacterExercisePersistence persistence, bool hasHistory) {
+    return CharacterExercise(
       id: persistence.id!,
       status: hasHistory ? ExerciseStatus.toReview : ExerciseStatus.newExercise,
       srsState: SRSStateMapper.toDomainSrsState(
@@ -20,8 +20,8 @@ class KanaExerciseMapper {
     );
   }
 
-  static KanaExercisePersistence kanaToPersistence(KanaExercise domain) {
-    return KanaExercisePersistence(
+  static CharacterExercisePersistence characterToPersistence(CharacterExercise domain) {
+    return CharacterExercisePersistence(
       id: domain.id,
       srsState: SRSStateMapper.toPersistenceSrsState(domain.srsState),
       trainingCountMax: domain.trainingCountMax,
@@ -29,12 +29,12 @@ class KanaExerciseMapper {
     );
   }
 
-  static KanaExercisePersistence newKanaExercise(
+  static CharacterExercisePersistence newCharacterExercise(
     int contentId, {
     int trainingCountMax = 0,
     int? id,
   }) {
-    return KanaExercisePersistence(
+    return CharacterExercisePersistence(
       id: id,
       srsState: SRSStateMapper.toPersistenceSrsState(SRSState()),
       trainingCountMax: trainingCountMax,

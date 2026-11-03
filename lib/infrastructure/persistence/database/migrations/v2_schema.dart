@@ -10,7 +10,7 @@ import 'database_migration.dart';
 /// This includes:
 /// - Migration of the old SRS to the FSRS-6 algorithm
 /// - Conversion of historical grades to FSRS rating values
-/// - Shared exercise training state and kana exercise persistence
+/// - Shared exercise training state and character exercise persistence
 class V2Schema implements DatabaseMigration {
   @override
   int get version => 2;
@@ -67,9 +67,7 @@ class V2Schema implements DatabaseMigration {
     await _migrateHistoryGrades(database);
   }
 
-  Future<void> _migrateSharedExerciseSchema(
-    sqlite.SqliteWriteContext database,
-  ) async {
+  Future<void> _migrateSharedExerciseSchema(sqlite.SqliteWriteContext database) async {
     await database.execute('''
       ALTER TABLE exercise
       ADD COLUMN training_count_max INTEGER NOT NULL DEFAULT 0
@@ -104,10 +102,12 @@ class V2Schema implements DatabaseMigration {
       SELECT exercise_id, sentence_group_id FROM sentence_exercise
       ''');
     await database.execute('DROP TABLE sentence_exercise');
-    await database.execute('ALTER TABLE sentence_exercise_v2 RENAME TO sentence_exercise');
+    await database.execute(
+      'ALTER TABLE sentence_exercise_v2 RENAME TO sentence_exercise',
+    );
 
     await database.execute('''
-      CREATE TABLE kana_exercise (
+      CREATE TABLE character_exercise (
         exercise_id INTEGER PRIMARY KEY,
         content_id INTEGER NOT NULL,
 

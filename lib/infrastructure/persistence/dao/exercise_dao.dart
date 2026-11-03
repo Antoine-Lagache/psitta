@@ -33,8 +33,8 @@ class ExerciseDao {
       case SentenceExercisePersistence():
         await _insertSentenceExercise(txn, exerciseId, exercise);
 
-      case KanaExercisePersistence():
-        await _insertKanaExercise(txn, exerciseId, exercise);
+      case CharacterExercisePersistence():
+        await _insertCharacterExercise(txn, exerciseId, exercise);
     }
 
     return exerciseId;
@@ -181,8 +181,8 @@ class ExerciseDao {
       case SentenceExercisePersistence():
         await _updateSentenceExercise(txn, exerciseId, exercise);
 
-      case KanaExercisePersistence():
-        await _updateKanaExercise(txn, exerciseId, exercise);
+      case CharacterExercisePersistence():
+        await _updateCharacterExercise(txn, exerciseId, exercise);
     }
   }
 
@@ -313,14 +313,14 @@ class ExerciseDao {
     );
   }
 
-  Future<void> _insertKanaExercise(
+  Future<void> _insertCharacterExercise(
     sqlite.SqliteWriteContext txn,
     int exerciseId,
-    KanaExercisePersistence kanaExercise,
+    CharacterExercisePersistence characterExercise,
   ) async {
     await txn.execute(
-      'INSERT INTO kana_exercise (exercise_id, content_id) VALUES (?, ?)',
-      [exerciseId, kanaExercise.contentId],
+      'INSERT INTO character_exercise (exercise_id, content_id) VALUES (?, ?)',
+      [exerciseId, characterExercise.contentId],
     );
   }
 
@@ -349,12 +349,16 @@ class ExerciseDao {
         }
         return SentenceExercisePersistence.fromRow(exerciseRow, sentenceRow, srsState);
 
-      case 'kana':
-        final kanaRow = await _getKanaExerciseRow(txn, id);
-        if (kanaRow == null) {
-          throw StateError('Missing kana_exercise for exercise $id');
+      case 'character':
+        final characterRow = await _getCharacterExerciseRow(txn, id);
+        if (characterRow == null) {
+          throw StateError('Missing character_exercise for exercise $id');
         }
-        return KanaExercisePersistence.fromRow(exerciseRow, kanaRow, srsState);
+        return CharacterExercisePersistence.fromRow(
+          exerciseRow,
+          characterRow,
+          srsState,
+        );
 
       default:
         throw StateError('Unknown exercise type: ${exerciseRow['type']}');
@@ -452,12 +456,12 @@ class ExerciseDao {
     return rows.first;
   }
 
-  Future<Map<String, Object?>?> _getKanaExerciseRow(
+  Future<Map<String, Object?>?> _getCharacterExerciseRow(
     sqlite.SqliteReadContext txn,
     int exerciseId,
   ) async {
     final rows = await txn.getAll(
-      'SELECT content_id FROM kana_exercise WHERE exercise_id = ?',
+      'SELECT content_id FROM character_exercise WHERE exercise_id = ?',
       [exerciseId],
     );
     return rows.isEmpty ? null : rows.first;
@@ -479,10 +483,10 @@ class ExerciseDao {
     sqlite.SqliteWriteContext txn,
     ExercisePersistence exercise,
   ) async {
-    await txn.execute(
-      'UPDATE exercise SET training_count_max = ? WHERE id = ?',
-      [exercise.trainingCountMax, exercise.id],
-    );
+    await txn.execute('UPDATE exercise SET training_count_max = ? WHERE id = ?', [
+      exercise.trainingCountMax,
+      exercise.id,
+    ]);
   }
 
   Future<void> _updateWordExercise(
@@ -517,14 +521,14 @@ class ExerciseDao {
     );
   }
 
-  Future<void> _updateKanaExercise(
+  Future<void> _updateCharacterExercise(
     sqlite.SqliteWriteContext txn,
     int exerciseId,
-    KanaExercisePersistence kanaExercise,
+    CharacterExercisePersistence characterExercise,
   ) async {
-    await txn.execute(
-      'UPDATE kana_exercise SET content_id = ? WHERE exercise_id = ?',
-      [kanaExercise.contentId, exerciseId],
-    );
+    await txn.execute('UPDATE character_exercise SET content_id = ? WHERE exercise_id = ?', [
+      characterExercise.contentId,
+      exerciseId,
+    ]);
   }
 }

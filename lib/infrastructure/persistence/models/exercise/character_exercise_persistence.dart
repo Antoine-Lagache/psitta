@@ -1,30 +1,30 @@
 part of 'exercise_persistence.dart';
 
-/// Persistence shape of a kana character or reading exercise.
-final class KanaExercisePersistence extends ExercisePersistence {
+/// Persistence shape of a character or reading exercise.
+final class CharacterExercisePersistence extends ExercisePersistence {
   final int contentId;
 
-  const KanaExercisePersistence({
+  const CharacterExercisePersistence({
     super.id,
     required super.srsState,
     required super.trainingCountMax,
     required this.contentId,
   });
 
-  factory KanaExercisePersistence.fromRow(
+  factory CharacterExercisePersistence.fromRow(
     Map<String, Object?> exerciseRow,
-    Map<String, Object?> kanaRow,
+    Map<String, Object?> characterRow,
     SrsStatePersistence srsState,
   ) {
-    return KanaExercisePersistence(
+    return CharacterExercisePersistence(
       id: exerciseRow['id'] as int?,
       srsState: srsState,
       trainingCountMax: exerciseRow['training_count_max'] as int,
-      contentId: kanaRow['content_id'] as int,
+      contentId: characterRow['content_id'] as int,
     );
   }
 
-  Map<String, Object?> toKanaExerciseRow(int exerciseId) => {
+  Map<String, Object?> toCharacterExerciseRow(int exerciseId) => {
     'exercise_id': exerciseId,
     'content_id': contentId,
   };

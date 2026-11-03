@@ -21,50 +21,49 @@ void main() {
   tearDown(() => testDatabase.dispose());
 
   group('FSRS migrations', () {
-    test('moves sentence training configuration to exercise and creates kana table', () async {
-      await database.writeTransaction((transaction) async {
-        await transaction.execute('INSERT INTO content (id) VALUES (20)');
-        await transaction.execute('INSERT INTO sentence_group (id) VALUES (30)');
-        await transaction.execute(
-          "INSERT INTO exercise (id, type) VALUES (10, 'sentence')",
-        );
-        await transaction.execute(
-          '''
+    test(
+      'moves sentence training configuration and creates character table',
+      () async {
+        await database.writeTransaction((transaction) async {
+          await transaction.execute('INSERT INTO content (id) VALUES (20)');
+          await transaction.execute('INSERT INTO sentence_group (id) VALUES (30)');
+          await transaction.execute(
+            "INSERT INTO exercise (id, type) VALUES (10, 'sentence')",
+          );
+          await transaction.execute('''
           INSERT INTO sentence_exercise (exercise_id, sentence_group_id, training_count)
           VALUES (10, 30, 2)
-          ''',
-        );
-        await transaction.execute(
-          '''
+          ''');
+          await transaction.execute('''
           INSERT INTO srs_state (
             exercise_id, ease_factor, interval, kfactor, w, rbar,
             learning_step_index, last_review, next_review
           ) VALUES (10, 2.5, 1, 1.0, 1.0, 0.9, 0, NULL, NULL)
-          ''',
+          ''');
+        });
+
+        await createMigrationRunner().migrate(database);
+
+        final exercise = await database.get(
+          'SELECT training_count_max FROM exercise WHERE id = 10',
         );
-      });
+        final sentence = await database.get(
+          'SELECT exercise_id, sentence_group_id FROM sentence_exercise WHERE exercise_id = 10',
+        );
+        final sentenceColumns = await database.readTransaction((transaction) async {
+          final rows = await transaction.getAll('PRAGMA table_info(sentence_exercise)');
+          return rows.map((row) => row['name']).toList();
+        });
+        final characterTable = await database.get(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'character_exercise'",
+        );
 
-      await createMigrationRunner().migrate(database);
-
-      final exercise = await database.get(
-        'SELECT training_count_max FROM exercise WHERE id = 10',
-      );
-      final sentence = await database.get(
-        'SELECT exercise_id, sentence_group_id FROM sentence_exercise WHERE exercise_id = 10',
-      );
-      final sentenceColumns = await database.readTransaction((transaction) async {
-        final rows = await transaction.getAll('PRAGMA table_info(sentence_exercise)');
-        return rows.map((row) => row['name']).toList();
-      });
-      final kanaTable = await database.get(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'kana_exercise'",
-      );
-
-      expect(exercise['training_count_max'], 2);
-      expect(sentence, {'exercise_id': 10, 'sentence_group_id': 30});
-      expect(sentenceColumns, ['exercise_id', 'sentence_group_id']);
-      expect(kanaTable['name'], 'kana_exercise');
-    });
+        expect(exercise['training_count_max'], 2);
+        expect(sentence, {'exercise_id': 10, 'sentence_group_id': 30});
+        expect(sentenceColumns, ['exercise_id', 'sentence_group_id']);
+        expect(characterTable['name'], 'character_exercise');
+      },
+    );
 
     test('replays history then converts its grades to FSRS ratings in V2', () async {
       await database.writeTransaction((transaction) async {

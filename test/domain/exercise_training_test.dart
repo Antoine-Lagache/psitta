@@ -1,13 +1,13 @@
 import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/exercise/exercise.dart';
-import 'package:psitta/domain/exercise/kana_exercise.dart';
+import 'package:psitta/domain/exercise/character_exercise.dart';
 import 'package:psitta/domain/exercise/word_exercise.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('Exercise training', () {
     test('the shared consolidation phase does not update FSRS and counts successes', () {
-      final exercise = KanaExercise(
+      final exercise = CharacterExercise(
         contentId: 1,
         id: 1,
         status: ExerciseStatus.consolidating,

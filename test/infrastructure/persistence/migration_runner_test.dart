@@ -42,7 +42,7 @@ void main() {
           'exercise_history',
           'field_definition',
           'field_value',
-          'kana_exercise',
+          'character_exercise',
           'media',
           'sentence_exercise',
           'sentence_group',
@@ -76,7 +76,7 @@ void main() {
         ],
         'word_exercise': ['exercise_id', 'content_id'],
         'sentence_exercise': ['exercise_id', 'sentence_group_id'],
-        'kana_exercise': ['exercise_id', 'content_id'],
+        'character_exercise': ['exercise_id', 'content_id'],
         'sentence_instance': ['id', 'sentence_group_id', 'content_id'],
         'sentence_state': [
           'sentence_instance_id',

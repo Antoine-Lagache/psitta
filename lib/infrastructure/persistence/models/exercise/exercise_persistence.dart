@@ -4,7 +4,7 @@ export 'package:psitta/infrastructure/persistence/models/exercise/srs_state_pers
 
 part 'sentence_exercise_persistence.dart';
 part 'word_exercise_persistence.dart';
-part 'kana_exercise_persistence.dart';
+part 'character_exercise_persistence.dart';
 
 /// Shared persistence shape for exercise subtypes and their SRS state.
 sealed class ExercisePersistence {
@@ -15,7 +15,7 @@ sealed class ExercisePersistence {
   String get type => switch (this) {
     WordExercisePersistence() => 'word',
     SentenceExercisePersistence() => 'sentence',
-    KanaExercisePersistence() => 'kana',
+    CharacterExercisePersistence() => 'character',
   };
 
   const ExercisePersistence({this.id, required this.srsState, this.trainingCountMax = 0});

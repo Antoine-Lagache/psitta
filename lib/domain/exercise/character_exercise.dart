@@ -1,10 +1,10 @@
 import 'package:psitta/domain/exercise/exercise.dart';
 
-/// Practices kana recognition and recall using a character or JMdict word card.
-class KanaExercise extends Exercise {
+/// Provides reading and writing practice for a character or word.
+class CharacterExercise extends Exercise {
   final int contentId;
 
-  KanaExercise({
+  CharacterExercise({
     required this.contentId,
     required super.id,
     required super.status,
