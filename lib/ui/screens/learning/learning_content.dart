@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:psitta/domain/srs/grade.dart';
 
@@ -236,17 +237,12 @@ class _KanaWritingAreaState extends State<_KanaWritingArea> {
           builder: (context, constraints) {
             final size = Size(constraints.maxWidth, 160);
             return GestureDetector(
-              onPanStart: (details) => setState(
-                () => _points.add(_normalized(details.localPosition, size)),
-              ),
-              onPanUpdate: (details) => setState(
-                () => _points.add(_normalized(details.localPosition, size)),
-              ),
+              onPanStart: (details) =>
+                  setState(() => _points.add(_normalized(details.localPosition, size))),
+              onPanUpdate: (details) =>
+                  setState(() => _points.add(_normalized(details.localPosition, size))),
               onPanEnd: (_) => setState(() => _points.add(null)),
-              child: CustomPaint(
-                size: size,
-                painter: _KanaWritingPainter(_points),
-              ),
+              child: CustomPaint(size: size, painter: _KanaWritingPainter(_points)),
             );
           },
         ),

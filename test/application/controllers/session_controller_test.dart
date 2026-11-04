@@ -143,6 +143,10 @@ void main() {
         final overviews = await controller.getSessionOverviews();
         final wordOverview = overviewOf(overviews, SessionType.wordSession);
         final sentenceOverview = overviewOf(overviews, SessionType.sentenceSession);
+        final characterOverview = overviewOf(
+          overviews,
+          SessionType.characterSession,
+        );
 
         expect(overviews, hasLength(SessionType.values.length));
         expect(wordOverview.hasActiveSession, isFalse);
@@ -151,7 +155,9 @@ void main() {
         expect(sentenceOverview.hasActiveSession, isFalse);
         expect(sentenceOverview.newExerciseCount, 0);
         expect(sentenceOverview.reviewExerciseCount, 0);
-        expect(clockCalls, 2);
+        expect(characterOverview.newExerciseCount, 0);
+        expect(characterOverview.reviewExerciseCount, 0);
+        expect(clockCalls, 3);
         expect(() => overviews.add(wordOverview), throwsUnsupportedError);
       },
     );

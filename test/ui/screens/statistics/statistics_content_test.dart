@@ -11,7 +11,7 @@ void main() {
   ) async {
     final sessions = SessionStatistics(
       numberOfSessions: 3,
-      numberOfSessionsBySessionType: [2, 1],
+      numberOfSessionsBySessionType: [2, 1, 0],
       numberOfAnswers: 15,
       numberOfExercisesCompleted: 4,
       numberOfAnswersByStatus: List.filled(ExerciseStatus.values.length, 0),
@@ -51,6 +51,7 @@ void main() {
 
     expect(find.text('Words'), findsOneWidget);
     expect(find.text('Sentences'), findsOneWidget);
+    expect(find.text('Kana'), findsOneWidget);
     expect(find.text('Again'), findsOneWidget);
     expect(find.text('Hard'), findsOneWidget);
     expect(find.text('Medium'), findsNothing);
@@ -62,7 +63,7 @@ void main() {
   ) async {
     final sessions = SessionStatistics(
       numberOfSessions: 0,
-      numberOfSessionsBySessionType: [0, 0],
+      numberOfSessionsBySessionType: [0, 0, 0],
       numberOfAnswers: 0,
       numberOfExercisesCompleted: 0,
       numberOfAnswersByStatus: List.filled(ExerciseStatus.values.length, 0),
