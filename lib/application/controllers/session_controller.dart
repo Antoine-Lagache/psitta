@@ -18,7 +18,7 @@ class SessionController {
   Session? _activeSession;
   bool get hasActiveSession => _activeSession != null;
 
-  /// Counts exercises that are not completed or in sentence training.
+  /// Counts exercises that are not completed or in training.
   int get remainingExerciseCount {
     final session = _requireActiveSession();
     return ExerciseStatus.values
@@ -30,7 +30,7 @@ class SessionController {
         .fold(0, (count, status) => count + session.countExerciseByStatus(status));
   }
 
-  /// Counts exercises still undergoing in-session sentence training.
+  /// Counts exercises still undergoing in-session training.
   int get remainingTrainingCount {
     return _requireActiveSession().getResumeList().fold(
       0,
@@ -205,6 +205,7 @@ class SessionController {
   int _newExerciseLimit(SessionType sessionType) => switch (sessionType) {
     SessionType.wordSession => config.newCount,
     SessionType.sentenceSession => config.newSentenceCount,
+    SessionType.characterSession => config.newCharacterCount,
   };
 
   /// Temporary MVP selection rule, not a Domain-level type correspondence.
@@ -213,6 +214,7 @@ class SessionController {
     return switch (sessionType) {
       SessionType.wordSession => 'word',
       SessionType.sentenceSession => 'sentence',
+      SessionType.characterSession => 'character',
     };
   }
 
@@ -233,6 +235,10 @@ class SessionController {
 
   bool get currentExerciseHasPreviewInterval {
     return _requireActiveSession().currentExerciseHasPreviewInterval;
+  }
+
+  bool get currentExerciseHasDrawingArea {
+    return _requireActiveSession().currentExerciseHasDrawingArea;
   }
 
   /// Previews every allowed grade using the same reference timestamp.

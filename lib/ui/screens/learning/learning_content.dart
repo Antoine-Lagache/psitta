@@ -11,6 +11,7 @@ class LearningContent extends StatelessWidget {
   final List<Grade> allowedGrades;
   final Map<Grade, Duration> previewIntervals;
   final bool showPreviewIntervals;
+  final bool showDrawingArea;
   final VoidCallback onRevealAnswer;
   final ValueChanged<Grade> onGradeSelected;
   final VoidCallback onToggleSide;
@@ -26,6 +27,7 @@ class LearningContent extends StatelessWidget {
     required this.allowedGrades,
     required this.previewIntervals,
     required this.showPreviewIntervals,
+    this.showDrawingArea = false,
     required this.onRevealAnswer,
     required this.onGradeSelected,
     required this.onToggleSide,
@@ -71,6 +73,18 @@ class LearningContent extends StatelessWidget {
               _buildSideLabel(context),
               const SizedBox(height: 24),
               Center(child: _buildVisibleSide()),
+              if (showDrawingArea) ...[
+                const SizedBox(height: 24),
+                Text(
+                  'Practice writing',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: const Color(0xFF616161),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _KanaWritingArea(key: ValueKey(front)),
+              ],
             ],
           ),
         ),
@@ -198,4 +212,88 @@ class LearningContent extends StatelessWidget {
     final days = duration.inMinutes / Duration.minutesPerDay;
     return '${days.toStringAsFixed(1)} ${days == 1 ? 'day' : 'days'}';
   }
+}
+
+class _KanaWritingArea extends StatefulWidget {
+  const _KanaWritingArea({super.key});
+
+  @override
+  State<_KanaWritingArea> createState() => _KanaWritingAreaState();
+}
+
+class _KanaWritingAreaState extends State<_KanaWritingArea> {
+  final List<Offset?> _points = [];
+
+  Offset _normalized(Offset local, Size size) =>
+      Offset(local.dx / size.width, local.dy / size.height);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final size = Size(constraints.maxWidth, 160);
+            return GestureDetector(
+              onPanStart: (details) => setState(
+                () => _points.add(_normalized(details.localPosition, size)),
+              ),
+              onPanUpdate: (details) => setState(
+                () => _points.add(_normalized(details.localPosition, size)),
+              ),
+              onPanEnd: (_) => setState(() => _points.add(null)),
+              child: CustomPaint(
+                size: size,
+                painter: _KanaWritingPainter(_points),
+              ),
+            );
+          },
+        ),
+        TextButton.icon(
+          onPressed: _points.isEmpty ? null : () => setState(_points.clear),
+          icon: const Icon(Icons.clear),
+          label: const Text('Clear'),
+        ),
+      ],
+    );
+  }
+}
+
+class _KanaWritingPainter extends CustomPainter {
+  final List<Offset?> points;
+
+  _KanaWritingPainter(List<Offset?> points) : points = List.unmodifiable(points);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final border = Paint()
+      ..color = const Color(0xFFBDBDBD)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final ink = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(8)),
+      border,
+    );
+    for (var index = 0; index < points.length - 1; index++) {
+      final first = points[index];
+      final second = points[index + 1];
+      if (first != null && second != null) {
+        canvas.drawLine(
+          Offset(first.dx * size.width, first.dy * size.height),
+          Offset(second.dx * size.width, second.dy * size.height),
+          ink,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_KanaWritingPainter oldDelegate) =>
+      !listEquals(oldDelegate.points, points);
 }

@@ -149,6 +149,12 @@ class StatisticsContent extends StatelessWidget {
             SessionType.sentenceSession,
           ),
         ),
+        (
+          label: 'Kana',
+          value: sessionStatistics.getNumberOfSessionsBySessionType(
+            SessionType.characterSession,
+          ),
+        ),
       ],
     );
   }

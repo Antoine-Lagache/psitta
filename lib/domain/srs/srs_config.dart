@@ -10,9 +10,10 @@ class SRSConfig {
   /// Offset from midnight used to decide whether an interval crosses a day.
   final Duration dayBoundary;
 
-  /// Maximum new words, new sentence groups, and due exercises per session.
+  /// Maximum new exercises per type and due exercises per session.
   final int newCount;
   final int newSentenceCount;
+  final int newCharacterCount;
   final int reviewCount;
 
   SRSConfig({
@@ -20,6 +21,7 @@ class SRSConfig {
     this.dayBoundary = Duration.zero,
     this.newCount = 4,
     this.newSentenceCount = 3,
+    this.newCharacterCount = 5,
     this.reviewCount = 9999,
   }) : fsrsScheduler = fsrsScheduler ?? FsrsSchedulerConfig();
 }

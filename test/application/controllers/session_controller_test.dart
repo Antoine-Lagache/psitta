@@ -66,6 +66,11 @@ void main() {
     return exerciseRepository.createWordExercise(contentId);
   }
 
+  Future<int> createCharacterExercise() async {
+    final contentId = await testDatabase.insertContent();
+    return exerciseRepository.createCharacterExercise(contentId);
+  }
+
   SessionOverview overviewOf(List<SessionOverview> overviews, SessionType sessionType) {
     return overviews.singleWhere((overview) => overview.sessionType == sessionType);
   }
@@ -79,6 +84,27 @@ void main() {
       expect(result, StartSessionResult.noExerciseAvailable);
       expect(controller.hasActiveSession, isFalse);
       expect(await testDatabase.countRows('session_result'), 0);
+    });
+
+    test('character sessions use their exercise type and five-new limit', () async {
+      for (var index = 0; index < 7; index++) {
+        await createCharacterExercise();
+      }
+      await createWordExercise();
+      final controller = createController();
+
+      final overview = overviewOf(
+        await controller.getSessionOverviews(),
+        SessionType.characterSession,
+      );
+
+      expect(overview.newExerciseCount, 5);
+      expect(
+        await controller.startNewSession(SessionType.characterSession),
+        StartSessionResult.started,
+      );
+      expect(controller.remainingExerciseCount, 5);
+      expect(controller.currentExerciseHasDrawingArea, isTrue);
     });
 
     test(

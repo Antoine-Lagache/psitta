@@ -63,6 +63,25 @@ void main() {
     expect(pressed, isTrue);
   });
 
+  testWidgets('displays the Kana session with its new-exercise count', (tester) async {
+    await tester.pumpWidget(
+      buildCard(
+        overview: SessionOverview(
+          sessionType: SessionType.characterSession,
+          newExerciseCount: 5,
+          reviewExerciseCount: 2,
+          hasActiveSession: false,
+        ),
+        onPressed: () {},
+      ),
+    );
+
+    expect(find.text('Kana'), findsOneWidget);
+    expect(find.text('Read and practice Japanese kana'), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+  });
+
   testWidgets('disables a new session when no exercise is available', (tester) async {
     await tester.pumpWidget(
       buildCard(

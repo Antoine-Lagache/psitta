@@ -138,6 +138,7 @@ class _LearningScreenState extends State<LearningScreen> {
             allowedGrades: _allowedGrades,
             previewIntervals: _previewIntervals,
             showPreviewIntervals: _showPreviewIntervals,
+            showDrawingArea: widget.sessionController.currentExerciseHasDrawingArea,
             onRevealAnswer: _revealAnswer,
             onGradeSelected: _selectGrade,
             onToggleSide: _toggleSide,
@@ -521,6 +522,7 @@ class _LearningScreenState extends State<LearningScreen> {
     return switch (widget.sessionType) {
       SessionType.wordSession => 'Words',
       SessionType.sentenceSession => 'Sentences',
+      SessionType.characterSession => 'Kana',
     };
   }
 

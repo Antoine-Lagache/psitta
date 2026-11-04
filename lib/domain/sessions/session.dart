@@ -1,5 +1,6 @@
 import 'package:psitta/domain/exercise/sentence_exercise.dart';
 import 'package:psitta/domain/exercise/word_exercise.dart';
+import 'package:psitta/domain/exercise/character_exercise.dart';
 import 'package:psitta/domain/sessions/session_result.dart';
 import 'package:psitta/domain/sessions/session_scheduler.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
@@ -25,6 +26,8 @@ class Session {
 
   bool get currentExerciseHasPreviewInterval =>
       currentExercise.hasMeaningfulPreviewInterval;
+
+  bool get currentExerciseHasDrawingArea => currentExercise is CharacterExercise;
 
   List<ExerciseResume> getResumeList() => _scheduler.getResumeList();
 
@@ -58,6 +61,12 @@ class Session {
         if (!_scheduler.exercises.every((a) => a is SentenceExercise)) {
           throw Exception(
             "All exercises must be SentenceExercise for a sentence session",
+          );
+        }
+      case SessionType.characterSession:
+        if (!_scheduler.exercises.every((a) => a is CharacterExercise)) {
+          throw Exception(
+            'All exercises must be CharacterExercise for a character session',
           );
         }
     }

@@ -10,6 +10,7 @@ void main() {
     required ValueChanged<Grade> onGradeSelected,
     Grade? selectedGrade,
     bool interactionEnabled = true,
+    bool showDrawingArea = false,
     List<Grade> allowedGrades = const [Grade.again, Grade.good],
     bool showPreviewIntervals = true,
     VoidCallback? onToggleSide,
@@ -32,6 +33,7 @@ void main() {
             Grade.easy: Duration(days: 1),
           },
           showPreviewIntervals: showPreviewIntervals,
+          showDrawingArea: showDrawingArea,
           onRevealAnswer: onRevealAnswer,
           onGradeSelected: onGradeSelected,
           onToggleSide: onToggleSide ?? () {},
@@ -60,6 +62,38 @@ void main() {
 
     await tester.tap(find.text('Show answer'));
     expect(answerRequested, isTrue);
+  });
+
+  testWidgets('shows an interactive writing area when requested', (tester) async {
+    await tester.pumpWidget(
+      buildContent(
+        showingAnswer: false,
+        showDrawingArea: true,
+        onRevealAnswer: () {},
+        onGradeSelected: (_) {},
+      ),
+    );
+
+    expect(find.text('Practice writing'), findsOneWidget);
+    expect(find.byType(CustomPaint), findsOneWidget);
+    final clearButton = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Clear'),
+    );
+    expect(clearButton.onPressed, isNull);
+
+    await tester.drag(find.byType(CustomPaint), const Offset(30, 30));
+    await tester.pump();
+
+    final clearButtonAfterStroke = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Clear'),
+    );
+    expect(clearButtonAfterStroke.onPressed, isNotNull);
+    await tester.tap(find.widgetWithText(TextButton, 'Clear'));
+    await tester.pump();
+    expect(
+      tester.widget<TextButton>(find.widgetWithText(TextButton, 'Clear')).onPressed,
+      isNull,
+    );
   });
 
   testWidgets('shows the back, intervals, and allowed grades after reveal', (

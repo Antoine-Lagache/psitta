@@ -1,7 +1,8 @@
 /// Represents all the possible types of sessions in the application.
 enum SessionType {
   wordSession(0),
-  sentenceSession(1);
+  sentenceSession(1),
+  characterSession(2);
 
   const SessionType(this.code);
 

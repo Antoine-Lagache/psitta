@@ -120,6 +120,11 @@ class SessionOverviewCard extends StatelessWidget {
         description: 'Practice words in context',
         icon: Icons.notes,
       ),
+      SessionType.characterSession => (
+        title: 'Kana',
+        description: 'Read and practice Japanese kana',
+        icon: Icons.draw_outlined,
+      ),
     };
   }
 }
