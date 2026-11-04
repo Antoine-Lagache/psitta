@@ -52,6 +52,24 @@ class LearningContent extends StatelessWidget {
                 ),
               ),
             ),
+            if (showDrawingArea)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Practice writing',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: const Color(0xFF616161),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _KanaWritingArea(key: ValueKey(front)),
+                  ],
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               child: _buildActions(),
@@ -74,18 +92,6 @@ class LearningContent extends StatelessWidget {
               _buildSideLabel(context),
               const SizedBox(height: 24),
               Center(child: _buildVisibleSide()),
-              if (showDrawingArea) ...[
-                const SizedBox(height: 24),
-                Text(
-                  'Practice writing',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: const Color(0xFF616161),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _KanaWritingArea(key: ValueKey(front)),
-              ],
             ],
           ),
         ),
