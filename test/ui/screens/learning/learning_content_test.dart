@@ -75,13 +75,14 @@ void main() {
     );
 
     expect(find.text('Practice writing'), findsOneWidget);
-    expect(find.byType(CustomPaint), findsOneWidget);
+    const writingCanvas = ValueKey('character-writing-canvas');
+    expect(find.byKey(writingCanvas), findsOneWidget);
     final clearButton = tester.widget<TextButton>(
       find.widgetWithText(TextButton, 'Clear'),
     );
     expect(clearButton.onPressed, isNull);
 
-    await tester.drag(find.byType(CustomPaint), const Offset(30, 30));
+    await tester.drag(find.byKey(writingCanvas), const Offset(30, 30));
     await tester.pump();
 
     final clearButtonAfterStroke = tester.widget<TextButton>(

@@ -101,6 +101,9 @@ class _TransitionSessionController implements SessionController {
   bool get currentExerciseHasPreviewInterval => false;
 
   @override
+  bool get currentExerciseHasDrawingArea => false;
+
+  @override
   Future<void> pauseSession() {
     _active = false;
     return finishPause.future;

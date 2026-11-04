@@ -143,10 +143,7 @@ void main() {
         final overviews = await controller.getSessionOverviews();
         final wordOverview = overviewOf(overviews, SessionType.wordSession);
         final sentenceOverview = overviewOf(overviews, SessionType.sentenceSession);
-        final characterOverview = overviewOf(
-          overviews,
-          SessionType.characterSession,
-        );
+        final characterOverview = overviewOf(overviews, SessionType.characterSession);
 
         expect(overviews, hasLength(SessionType.values.length));
         expect(wordOverview.hasActiveSession, isFalse);

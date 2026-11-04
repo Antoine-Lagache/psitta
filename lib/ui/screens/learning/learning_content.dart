@@ -242,7 +242,11 @@ class _KanaWritingAreaState extends State<_KanaWritingArea> {
               onPanUpdate: (details) =>
                   setState(() => _points.add(_normalized(details.localPosition, size))),
               onPanEnd: (_) => setState(() => _points.add(null)),
-              child: CustomPaint(size: size, painter: _KanaWritingPainter(_points)),
+              child: CustomPaint(
+                key: const ValueKey('character-writing-canvas'),
+                size: size,
+                painter: _KanaWritingPainter(_points),
+              ),
             );
           },
         ),
