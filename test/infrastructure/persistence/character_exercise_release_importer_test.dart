@@ -31,16 +31,13 @@ void main() {
 
     expect(await importRelease(), isTrue);
     expect(
-      (await database.get("SELECT COUNT(*) AS count FROM exercise WHERE type = 'character'"))[
-        'count'
-      ],
+      (await database.get(
+        "SELECT COUNT(*) AS count FROM exercise WHERE type = 'character'",
+      ))['count'],
       310,
     );
     expect(await importRelease(), isFalse);
-    expect(
-      (await database.get('SELECT COUNT(*) AS count FROM exercise'))['count'],
-      310,
-    );
+    expect((await database.get('SELECT COUNT(*) AS count FROM exercise'))['count'], 310);
     expect(
       await database.get(
         'SELECT content_id FROM character_exercise WHERE exercise_id = ?',

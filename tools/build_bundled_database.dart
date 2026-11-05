@@ -55,9 +55,7 @@ void main() {
         'database_sha256': sha256.convert(bytes).toString(),
         'gzip_sha256': sha256.convert(compressed).toString(),
         'content_manifest_sha256': sha256.convert(sourceManifest).toString(),
-        'character_content_manifest_sha256': sha256
-            .convert(characterManifest)
-            .toString(),
+        'character_content_manifest_sha256': sha256.convert(characterManifest).toString(),
         'counts': {
           ...(jsonDecode(utf8.decode(sourceManifest)) as Map),
           'character_exercises': 309,

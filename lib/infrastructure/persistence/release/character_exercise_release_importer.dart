@@ -137,9 +137,7 @@ final class CharacterExerciseReleaseImporter {
         ON back_definition.id = back.field_definition_id AND back_definition.side = 'back'
       WHERE e.type = 'character'
       ''');
-    return rows
-        .map((row) => jsonEncode([row['front_html'], row['back_html']]))
-        .toSet();
+    return rows.map((row) => jsonEncode([row['front_html'], row['back_html']])).toSet();
   }
 
   void _validateRows(List<Map<String, dynamic>> rows, Map<String, dynamic> counts) {
@@ -175,7 +173,9 @@ final class CharacterExerciseReleaseImporter {
     }
     if (characterCount != counts['character_exercise_count'] ||
         wordCount != counts['word_exercise_count']) {
-      throw const FormatException('Character release exercise types do not match the manifest');
+      throw const FormatException(
+        'Character release exercise types do not match the manifest',
+      );
     }
   }
 
@@ -190,8 +190,6 @@ final class CharacterExerciseReleaseImporter {
     throw FormatException('Missing $key in character release');
   }
 
-  static String _renderedCardKey(Map<String, dynamic> row) => jsonEncode([
-    _html(row, 'front_html'),
-    _html(row, 'back_html'),
-  ]);
+  static String _renderedCardKey(Map<String, dynamic> row) =>
+      jsonEncode([_html(row, 'front_html'), _html(row, 'back_html')]);
 }

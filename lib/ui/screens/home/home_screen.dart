@@ -31,18 +31,20 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _sessionOverviews = widget.sessionController.getSessionOverviews();
-    widget.backgroundContentImport?.then((_) {
-      if (mounted) _reload();
-    }).catchError((Object error, StackTrace stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'Psitta content release import',
-          context: ErrorDescription('while installing kana exercises'),
-        ),
-      );
-    });
+    widget.backgroundContentImport
+        ?.then((_) {
+          if (mounted) _reload();
+        })
+        .catchError((Object error, StackTrace stackTrace) {
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: error,
+              stack: stackTrace,
+              library: 'Psitta content release import',
+              context: ErrorDescription('while installing kana exercises'),
+            ),
+          );
+        });
   }
 
   Future<void> _reload() {
