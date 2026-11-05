@@ -36,14 +36,14 @@ void main() {
       );
       Finder button(SessionType type) =>
           find.descendant(of: card(type), matching: find.byType(FilledButton));
-      await tester.ensureVisible(card(SessionType.characterSession));
+      await tester.scrollUntilVisible(card(SessionType.characterSession), 300);
       await tester.pump();
       expect(find.text('Loading character exercises…'), findsOneWidget);
       expect(
         tester.widget<FilledButton>(button(SessionType.characterSession)).onPressed,
         isNull,
       );
-      await tester.ensureVisible(button(type));
+      await tester.scrollUntilVisible(button(type), -300);
       await tester.tap(button(type));
       await tester.pumpAndSettle();
       expect(controller.started, [type]);
@@ -61,7 +61,7 @@ void main() {
       await tester.tap(find.text('Pause session').last);
       controller.finishPause.complete();
       await tester.pumpAndSettle();
-      await tester.ensureVisible(card(SessionType.characterSession));
+      await tester.scrollUntilVisible(card(SessionType.characterSession), 300);
       await tester.pumpAndSettle();
       expect(find.text('Loading character exercises…'), findsNothing);
       expect(
@@ -96,7 +96,7 @@ void main() {
           widget is SessionOverviewCard &&
           widget.overview.sessionType == SessionType.characterSession,
     );
-    await tester.ensureVisible(card);
+    await tester.scrollUntilVisible(card, 300);
     await tester.pumpAndSettle();
     expect(
       find.text('Character exercises could not be loaded. Restart the app to try again.'),
