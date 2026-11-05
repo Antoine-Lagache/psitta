@@ -8,6 +8,7 @@ import 'package:psitta/infrastructure/persistence/database/migration_runner.dart
 import 'package:psitta/infrastructure/persistence/database/migrations/database_migration.dart';
 import 'package:psitta/infrastructure/persistence/database/sqlite_database.dart';
 import 'package:psitta/infrastructure/persistence/release/bundled_database_installer.dart';
+import 'package:psitta/infrastructure/persistence/release/character_exercise_release_importer.dart';
 import 'package:psitta/infrastructure/persistence/release/release_content_importer.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
@@ -47,6 +48,10 @@ void main() {
         reference.database,
         loadAsset: (p) => File(p).readAsBytes(),
       ).importIfEmpty();
+      await CharacterExerciseReleaseImporter(
+        reference.database,
+        loadAsset: (p) => File(p).readAsBytes(),
+      ).importIfNeeded();
       final importMs = timer.elapsedMilliseconds;
       timer.reset();
       final installed = await owner.open();
