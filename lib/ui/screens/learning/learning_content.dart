@@ -257,10 +257,8 @@ class _KanaWritingAreaState extends State<_KanaWritingArea> {
           builder: (context, constraints) {
             final size = Size(constraints.maxWidth, 160);
             return GestureDetector(
-              onPanStart: (details) =>
-                  _recordPoint(details.localPosition, size),
-              onPanUpdate: (details) =>
-                  _recordPoint(details.localPosition, size),
+              onPanStart: (details) => _recordPoint(details.localPosition, size),
+              onPanUpdate: (details) => _recordPoint(details.localPosition, size),
               onPanEnd: (_) => setState(() => _points.add(null)),
               onPanCancel: () => setState(() => _points.add(null)),
               child: CustomPaint(
