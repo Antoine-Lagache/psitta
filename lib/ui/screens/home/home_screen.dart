@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/models/session/session_overview.dart';
@@ -35,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _sessionOverviews = widget.sessionController.getSessionOverviews();
     _loadingCharacters = widget.backgroundContentImport != null;
-    if (_loadingCharacters) _loadCharacters();
+    if (_loadingCharacters) unawaited(_loadCharacters());
   }
 
   Future<void> _loadCharacters() async {
@@ -45,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Keep the character action disabled until the fresh counts are ready.
       await _reload();
       if (mounted) setState(() => _loadingCharacters = false);
-    } catch (_) {
+    } on Object catch (_) {
       if (!mounted) return;
       setState(() {
         _loadingCharacters = false;

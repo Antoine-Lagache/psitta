@@ -5,21 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/models/content/content.dart';
 import 'package:psitta/application/models/content/field_definition.dart';
+import 'package:psitta/application/models/session/session_overview.dart';
 import 'package:psitta/application/models/session/start_session_result.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/domain/srs/grade.dart';
 import 'package:psitta/ui/presentation/content/content_renderer.dart';
-import 'package:psitta/ui/screens/learning/learning_screen.dart';
-
-import 'package:psitta/application/models/session/session_overview.dart';
 import 'package:psitta/ui/screens/home/home_screen.dart';
 import 'package:psitta/ui/screens/home/session_overview_card.dart';
+import 'package:psitta/ui/screens/learning/learning_screen.dart';
 
 void main() {
   for (final type in [SessionType.wordSession, SessionType.sentenceSession]) {
-    testWidgets('import completes safely during a $type session', (
-      tester,
-    ) async {
+    testWidgets('import completes safely during a $type session', (tester) async {
       final controller = _TransitionSessionController();
       final importing = Completer<bool>();
       await tester.pumpWidget(
@@ -35,9 +32,7 @@ void main() {
       );
       await tester.pump();
       Finder card(SessionType type) => find.byWidgetPredicate(
-        (widget) =>
-            widget is SessionOverviewCard &&
-            widget.overview.sessionType == type,
+        (widget) => widget is SessionOverviewCard && widget.overview.sessionType == type,
       );
       Finder button(SessionType type) =>
           find.descendant(of: card(type), matching: find.byType(FilledButton));
@@ -45,9 +40,7 @@ void main() {
       await tester.pump();
       expect(find.text('Loading character exercises…'), findsOneWidget);
       expect(
-        tester
-            .widget<FilledButton>(button(SessionType.characterSession))
-            .onPressed,
+        tester.widget<FilledButton>(button(SessionType.characterSession)).onPressed,
         isNull,
       );
       await tester.ensureVisible(button(type));
@@ -72,9 +65,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Loading character exercises…'), findsNothing);
       expect(
-        tester
-            .widget<FilledButton>(button(SessionType.characterSession))
-            .onPressed,
+        tester.widget<FilledButton>(button(SessionType.characterSession)).onPressed,
         isNotNull,
       );
       await tester.tap(button(SessionType.characterSession));
@@ -84,9 +75,7 @@ void main() {
     });
   }
 
-  testWidgets('failed import displays an error and keeps kana disabled', (
-    tester,
-  ) async {
+  testWidgets('failed import displays an error and keeps kana disabled', (tester) async {
     final importing = Completer<bool>();
     await tester.pumpWidget(
       MaterialApp(
@@ -110,9 +99,7 @@ void main() {
     await tester.ensureVisible(card);
     await tester.pumpAndSettle();
     expect(
-      find.text(
-        'Character exercises could not be loaded. Restart the app to try again.',
-      ),
+      find.text('Character exercises could not be loaded. Restart the app to try again.'),
       findsOneWidget,
     );
     expect(
@@ -138,9 +125,7 @@ class _TransitionSessionController implements SessionController {
     for (final type in SessionType.values)
       SessionOverview(
         sessionType: type,
-        newExerciseCount: type == SessionType.characterSession && !imported
-            ? 0
-            : 5,
+        newExerciseCount: type == SessionType.characterSession && !imported ? 0 : 5,
         reviewExerciseCount: 0,
         hasActiveSession: false,
       ),
@@ -157,8 +142,7 @@ class _TransitionSessionController implements SessionController {
   }
 
   @override
-  Future<Content> getCurrentExerciseContent() async =>
-      Content(id: 1, fields: []);
+  Future<Content> getCurrentExerciseContent() async => Content(id: 1, fields: []);
 
   @override
   int get remainingExerciseCount {

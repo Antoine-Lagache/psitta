@@ -100,10 +100,7 @@ class SessionOverviewCard extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _SessionCount(
-            count: overview.reviewExerciseCount,
-            label: 'To review',
-          ),
+          child: _SessionCount(count: overview.reviewExerciseCount, label: 'To review'),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -123,12 +120,8 @@ class SessionOverviewCard extends StatelessWidget {
                 (overview.hasActiveSession || hasAvailableExercises)
             ? onPressed
             : null,
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-        child: Text(
-          overview.hasActiveSession ? 'Resume session' : 'Start new session',
-        ),
+        style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+        child: Text(overview.hasActiveSession ? 'Resume session' : 'Start new session'),
       ),
     );
   }
