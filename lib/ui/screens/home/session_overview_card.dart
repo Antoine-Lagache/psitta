@@ -6,8 +6,16 @@ import 'package:psitta/domain/sessions/session_type.dart';
 class SessionOverviewCard extends StatelessWidget {
   final SessionOverview overview;
   final VoidCallback onPressed;
+  final bool isLoading;
+  final bool loadFailed;
 
-  const SessionOverviewCard({required this.overview, required this.onPressed, super.key});
+  const SessionOverviewCard({
+    required this.overview,
+    required this.onPressed,
+    this.isLoading = false,
+    this.loadFailed = false,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +31,16 @@ class SessionOverviewCard extends StatelessWidget {
           children: [
             _buildHeader(context, presentation),
             const SizedBox(height: 24),
-            _buildCounts(),
+            if (isLoading) ...[
+              const LinearProgressIndicator(),
+              const SizedBox(height: 12),
+              const Text('Loading character exercises…'),
+            ] else if (loadFailed)
+              const Text(
+                'Character exercises could not be loaded. Restart the app to try again.',
+              )
+            else
+              _buildCounts(),
             const SizedBox(height: 20),
             _buildAction(hasAvailableExercises),
           ],
@@ -66,16 +83,14 @@ class SessionOverviewCard extends StatelessWidget {
       children: [
         Text(
           presentation.title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 2),
         Text(
           presentation.description,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF616161)),
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: const Color(0xFF616161)),
         ),
       ],
     );
@@ -85,7 +100,10 @@ class SessionOverviewCard extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _SessionCount(count: overview.reviewExerciseCount, label: 'To review'),
+          child: _SessionCount(
+            count: overview.reviewExerciseCount,
+            label: 'To review',
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -99,9 +117,18 @@ class SessionOverviewCard extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: FilledButton(
-        onPressed: overview.hasActiveSession || hasAvailableExercises ? onPressed : null,
-        style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-        child: Text(overview.hasActiveSession ? 'Resume session' : 'Start new session'),
+        onPressed:
+            !isLoading &&
+                !loadFailed &&
+                (overview.hasActiveSession || hasAvailableExercises)
+            ? onPressed
+            : null,
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+        child: Text(
+          overview.hasActiveSession ? 'Resume session' : 'Start new session',
+        ),
       ),
     );
   }
@@ -148,17 +175,14 @@ class _SessionCount extends StatelessWidget {
         children: [
           Text(
             '$count',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
-            ),
+            style: Theme.of(context).textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w700, color: Colors.black),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF616161)),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: const Color(0xFF616161)),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/models/session/session_overview.dart';
+import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/ui/presentation/content/content_renderer.dart';
 import 'package:psitta/ui/presentation/load_error_content.dart';
 import 'package:psitta/ui/screens/home/home_content.dart';
@@ -26,25 +27,31 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late Future<List<SessionOverview>> _sessionOverviews;
   bool _openingSession = false;
+  bool _loadingCharacters = false;
+  bool _characterLoadFailed = false;
 
   @override
   void initState() {
     super.initState();
     _sessionOverviews = widget.sessionController.getSessionOverviews();
-    widget.backgroundContentImport
-        ?.then((_) {
-          if (mounted) _reload();
-        })
-        .catchError((Object error, StackTrace stackTrace) {
-          FlutterError.reportError(
-            FlutterErrorDetails(
-              exception: error,
-              stack: stackTrace,
-              library: 'Psitta content release import',
-              context: ErrorDescription('while installing kana exercises'),
-            ),
-          );
-        });
+    _loadingCharacters = widget.backgroundContentImport != null;
+    if (_loadingCharacters) _loadCharacters();
+  }
+
+  Future<void> _loadCharacters() async {
+    try {
+      await widget.backgroundContentImport;
+      if (!mounted) return;
+      // Keep the character action disabled until the fresh counts are ready.
+      await _reload();
+      if (mounted) setState(() => _loadingCharacters = false);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadingCharacters = false;
+        _characterLoadFailed = true;
+      });
+    }
   }
 
   Future<void> _reload() {
@@ -56,7 +63,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _selectSession(SessionOverview overview) async {
-    if (_openingSession) {
+    if (_openingSession ||
+        (overview.sessionType == SessionType.characterSession &&
+            (_loadingCharacters || _characterLoadFailed))) {
       return;
     }
     _openingSession = true;
@@ -108,6 +117,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return HomeContent(
       overviews: snapshot.requireData,
+      loadingCharacters: _loadingCharacters,
+      characterLoadFailed: _characterLoadFailed,
       onRefresh: _reload,
       onSessionSelected: _selectSession,
     );

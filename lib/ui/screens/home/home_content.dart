@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:psitta/application/models/session/session_overview.dart';
 import 'package:psitta/ui/screens/home/session_overview_card.dart';
+import 'package:psitta/domain/sessions/session_type.dart';
 
 /// Displays the successfully loaded content of the home screen.
 class HomeContent extends StatelessWidget {
   final List<SessionOverview> overviews;
+  final bool loadingCharacters;
+  final bool characterLoadFailed;
   final RefreshCallback onRefresh;
   final ValueChanged<SessionOverview> onSessionSelected;
 
   const HomeContent({
     required this.overviews,
+    this.loadingCharacters = false,
+    this.characterLoadFailed = false,
     required this.onRefresh,
     required this.onSessionSelected,
     super.key,
@@ -45,17 +50,14 @@ class HomeContent extends StatelessWidget {
     return [
       Text(
         'Choose a session',
-        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: Colors.black,
-        ),
+        style: Theme.of(context).textTheme.headlineMedium
+            ?.copyWith(fontWeight: FontWeight.w700, color: Colors.black),
       ),
       const SizedBox(height: 8),
       Text(
         'Recommended: one Words session and one Sentences session per day.',
-        style: Theme.of(
-          context,
-        ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF616161)),
+        style: Theme.of(context).textTheme.bodyLarge
+            ?.copyWith(color: const Color(0xFF616161)),
       ),
     ];
   }
@@ -65,6 +67,12 @@ class HomeContent extends StatelessWidget {
       for (var index = 0; index < overviews.length; index++) ...[
         SessionOverviewCard(
           overview: overviews[index],
+          isLoading:
+              loadingCharacters &&
+              overviews[index].sessionType == SessionType.characterSession,
+          loadFailed:
+              characterLoadFailed &&
+              overviews[index].sessionType == SessionType.characterSession,
           onPressed: () => onSessionSelected(overviews[index]),
         ),
         if (index < overviews.length - 1) const SizedBox(height: 16),
