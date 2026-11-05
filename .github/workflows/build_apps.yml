@@ -3,7 +3,7 @@ name: Build applications
 on:
   workflow_dispatch:
   push:
-    branches: [main, chatGPT/develop]
+    branches: [main]
     paths:
       - 'pubspec.yaml'
       - '.github/workflows/build_apps.yml'

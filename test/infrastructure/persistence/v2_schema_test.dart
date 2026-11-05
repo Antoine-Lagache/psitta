@@ -88,7 +88,7 @@ void main() {
         'SELECT grade FROM exercise_history ORDER BY id',
       );
       expect(rows.map((row) => row['grade']), [1, 1, 2, 3, 4]);
-      expect((await database.get('PRAGMA user_version'))['user_version'], 3);
+      expect((await database.get('PRAGMA user_version'))['user_version'], 2);
     });
 
     test('rejects invalid grades even in history excluded from replay', () async {
@@ -213,7 +213,7 @@ void main() {
         'SELECT id, grade FROM exercise_history WHERE id IN (105, 106) ORDER BY id',
       );
       expect(trainingGrades.map((row) => row['grade']), [1, 3]);
-      expect((await database.get('PRAGMA user_version'))['user_version'], 3);
+      expect((await database.get('PRAGMA user_version'))['user_version'], 2);
     });
 
     test('inserts states in bounded batches and keeps the cascade foreign key', () async {

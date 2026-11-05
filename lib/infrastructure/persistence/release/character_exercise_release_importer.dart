@@ -20,8 +20,9 @@ const _fileName = 'character_exercises.jsonl.gz';
 
 /// Adds the frozen v0.2 kana curriculum to an existing or new database once.
 ///
-/// Release rows and the installed-release marker commit in one transaction, so
-/// an interrupted import can be retried without leaving partial content.
+/// Release rows commit in one transaction, so an interrupted import can be
+/// retried without leaving partial content. Existing rendered cards identify
+/// the release without requiring a database schema migration.
 final class CharacterExerciseReleaseImporter {
   final sqlite.SqliteDatabase _database;
   final CharacterReleaseAssetLoader _loadAsset;
@@ -38,23 +39,11 @@ final class CharacterExerciseReleaseImporter {
 
   Future<bool> importIfNeeded() async {
     final manifestBytes = await _loadAsset('$_assetDirectory/manifest.json');
-    final manifestHash = sha256.convert(manifestBytes).toString();
     final manifest = _asMap(jsonDecode(utf8.decode(manifestBytes)));
     if (manifest['schema_version'] != 1 ||
         manifest['kind'] != 'psitta_v0_2_character_exercises' ||
         manifest['release_id'] != _releaseId) {
       throw const FormatException('Unsupported character exercise manifest');
-    }
-
-    final installed = await _database.getAll(
-      'SELECT manifest_sha256 FROM installed_content_release WHERE release_id = ?',
-      [_releaseId],
-    );
-    if (installed.isNotEmpty) {
-      if (installed.single['manifest_sha256'] != manifestHash) {
-        throw StateError('Installed character release checksum does not match');
-      }
-      return false;
     }
 
     final counts = _asMap(manifest['counts']);
@@ -74,20 +63,28 @@ final class CharacterExerciseReleaseImporter {
         .toList();
     _validateRows(rows, counts);
 
+    final expectedCards = rows.map(_renderedCardKey).toSet();
+    final existingReleaseRows = await _existingReleaseRows(_database);
+    final matchingRows = expectedCards.intersection(existingReleaseRows).length;
+    if (matchingRows == rows.length) return false;
+    if (matchingRows > 0) {
+      throw StateError(
+        'The character release is only partially present; refusing to duplicate it',
+      );
+    }
+
     final contentDao = ContentDao(_database);
     final exerciseDao = ExerciseDao(_database);
     final definitionDao = FieldDefinitionDao(_database);
 
     return _database.writeTransaction((txn) async {
-      final existing = await txn.getAll(
-        'SELECT manifest_sha256 FROM installed_content_release WHERE release_id = ?',
-        [_releaseId],
-      );
-      if (existing.isNotEmpty) {
-        if (existing.single['manifest_sha256'] != manifestHash) {
-          throw StateError('Installed character release checksum does not match');
-        }
-        return false;
+      final existingRows = await _existingReleaseRows(txn);
+      final existingMatches = expectedCards.intersection(existingRows).length;
+      if (existingMatches == rows.length) return false;
+      if (existingMatches > 0) {
+        throw StateError(
+          'The character release is only partially present; refusing to duplicate it',
+        );
       }
 
       final frontId = await definitionDao.insertInTransaction(
@@ -123,12 +120,26 @@ final class CharacterExerciseReleaseImporter {
         );
       }
 
-      await txn.execute(
-        'INSERT INTO installed_content_release (release_id, manifest_sha256) VALUES (?, ?)',
-        [_releaseId, manifestHash],
-      );
       return true;
     });
+  }
+
+  Future<Set<String>> _existingReleaseRows(sqlite.SqliteReadContext database) async {
+    final rows = await database.getAll('''
+      SELECT front.text_value AS front_html, back.text_value AS back_html
+      FROM character_exercise ce
+      JOIN exercise e ON e.id = ce.exercise_id
+      JOIN field_value front ON front.content_id = ce.content_id
+      JOIN field_definition front_definition
+        ON front_definition.id = front.field_definition_id AND front_definition.side = 'front'
+      JOIN field_value back ON back.content_id = ce.content_id
+      JOIN field_definition back_definition
+        ON back_definition.id = back.field_definition_id AND back_definition.side = 'back'
+      WHERE e.type = 'character'
+      ''');
+    return rows
+        .map((row) => jsonEncode([row['front_html'], row['back_html']]))
+        .toSet();
   }
 
   void _validateRows(List<Map<String, dynamic>> rows, Map<String, dynamic> counts) {
@@ -139,6 +150,7 @@ final class CharacterExerciseReleaseImporter {
       throw const FormatException('Character release counts do not match the manifest');
     }
     final ids = <String>{};
+    final renderedCards = <String>{};
     var characterCount = 0;
     var wordCount = 0;
     for (var index = 0; index < rows.length; index++) {
@@ -156,8 +168,10 @@ final class CharacterExerciseReleaseImporter {
         wordCount++;
       }
       _asMap(row['target']);
-      _html(row, 'front_html');
-      _html(row, 'back_html');
+      final renderedCard = _renderedCardKey(row);
+      if (!renderedCards.add(renderedCard)) {
+        throw const FormatException('Character release contains duplicate cards');
+      }
     }
     if (characterCount != counts['character_exercise_count'] ||
         wordCount != counts['word_exercise_count']) {
@@ -175,4 +189,9 @@ final class CharacterExerciseReleaseImporter {
     if (value is String && value.isNotEmpty) return value;
     throw FormatException('Missing $key in character release');
   }
+
+  static String _renderedCardKey(Map<String, dynamic> row) => jsonEncode([
+    _html(row, 'front_html'),
+    _html(row, 'back_html'),
+  ]);
 }

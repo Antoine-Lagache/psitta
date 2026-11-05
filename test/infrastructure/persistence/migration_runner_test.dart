@@ -32,7 +32,7 @@ void main() {
           '''),
       );
 
-      expect(version['user_version'], 3);
+      expect(version['user_version'], 2);
       expect(
         tableRows.map((row) => row['name']),
         orderedEquals([
@@ -43,7 +43,6 @@ void main() {
           'exercise_history',
           'field_definition',
           'field_value',
-          'installed_content_release',
           'media',
           'sentence_exercise',
           'sentence_group',
@@ -64,11 +63,6 @@ void main() {
         'exercise': ['id', 'type', 'training_count_max'],
         'content': ['id'],
         'field_definition': ['id', 'value_type', 'side'],
-        'installed_content_release': [
-          'release_id',
-          'manifest_sha256',
-          'installed_at',
-        ],
         'media': ['id', 'path', 'mime_type', 'size', 'sha256'],
         'sentence_group': ['id'],
         'srs_state': [
@@ -143,7 +137,7 @@ void main() {
       final contentRows = await database.get('SELECT COUNT(*) AS count FROM content');
       final foreignKeys = await database.get('PRAGMA foreign_keys;');
 
-      expect(version['user_version'], 3);
+      expect(version['user_version'], 2);
       expect(contentRows['count'], 1);
       expect(foreignKeys['foreign_keys'], 1);
     });
