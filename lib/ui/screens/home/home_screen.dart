@@ -10,10 +10,12 @@ import 'package:psitta/ui/screens/learning/learning_screen.dart';
 class HomeScreen extends StatefulWidget {
   final SessionController sessionController;
   final ContentRenderer contentRenderer;
+  final Future<bool>? backgroundContentImport;
 
   const HomeScreen({
     required this.sessionController,
     required this.contentRenderer,
+    this.backgroundContentImport,
     super.key,
   });
 
@@ -29,6 +31,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _sessionOverviews = widget.sessionController.getSessionOverviews();
+    widget.backgroundContentImport?.then((_) {
+      if (mounted) _reload();
+    }).catchError((Object error, StackTrace stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'Psitta content release import',
+          context: ErrorDescription('while installing kana exercises'),
+        ),
+      );
+    });
   }
 
   Future<void> _reload() {

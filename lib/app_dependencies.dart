@@ -2,6 +2,7 @@ import 'package:psitta/application/controllers/content_controller.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
 import 'package:psitta/infrastructure/persistence/database/sqlite_database.dart';
+import 'package:psitta/infrastructure/persistence/release/character_exercise_release_importer.dart';
 import 'package:psitta/infrastructure/persistence/release/release_content_importer.dart';
 import 'package:psitta/infrastructure/persistence/repositories/content_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_history_repository.dart';
@@ -20,6 +21,7 @@ class AppDependencies {
   late final SessionController sessionController;
   late final StatisticController statisticController;
   late final ContentRenderer contentRenderer;
+  late final Future<bool> characterReleaseImport;
 
   AppDependencies._(this._database) {
     final connection = _database.database;
@@ -51,12 +53,23 @@ class AppDependencies {
     await database.open();
     try {
       await ReleaseContentImporter(database.database).importIfEmpty();
-      return AppDependencies._(database);
+      final dependencies = AppDependencies._(database);
+      dependencies.characterReleaseImport = CharacterExerciseReleaseImporter(
+        database.database,
+      ).importIfNeeded();
+      return dependencies;
     } on Object {
       await database.close();
       rethrow;
     }
   }
 
-  Future<void> dispose() => _database.close();
+  Future<void> dispose() async {
+    try {
+      await characterReleaseImport;
+    } on Object {
+      // The import error is reported by the home screen while the app is open.
+    }
+    await _database.close();
+  }
 }

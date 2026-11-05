@@ -11,11 +11,13 @@ class MainScreen extends StatefulWidget {
   final SessionController sessionController;
   final StatisticController statisticController;
   final ContentRenderer contentRenderer;
+  final Future<bool>? backgroundContentImport;
 
   const MainScreen({
     required this.sessionController,
     required this.statisticController,
     required this.contentRenderer,
+    this.backgroundContentImport,
     super.key,
   });
 
@@ -35,6 +37,7 @@ class _MainScreenState extends State<MainScreen> {
       HomeScreen(
         sessionController: widget.sessionController,
         contentRenderer: widget.contentRenderer,
+        backgroundContentImport: widget.backgroundContentImport,
       ),
       StatisticsScreen(
         refreshSignal: _statisticsRefreshSignal,

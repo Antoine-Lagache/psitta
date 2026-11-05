@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psitta/infrastructure/persistence/database/migration_registry.dart';
 import 'package:psitta/infrastructure/persistence/database/psitta_sqlite_open_factory.dart';
+import 'package:psitta/infrastructure/persistence/release/character_exercise_release_importer.dart';
 import 'package:psitta/infrastructure/persistence/release/release_content_importer.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
@@ -29,6 +30,10 @@ void main() {
         database,
         loadAsset: (path) => File(path).readAsBytes(),
       ).importIfEmpty();
+      await CharacterExerciseReleaseImporter(
+        database,
+        loadAsset: (path) => File(path).readAsBytes(),
+      ).importIfNeeded();
       expect((await database.get('PRAGMA integrity_check')).values.single, 'ok');
       expect(await database.getAll('PRAGMA foreign_key_check'), isEmpty);
       final version = (await database.get('PRAGMA user_version'))['user_version'];
@@ -40,6 +45,9 @@ void main() {
       final sourceManifest = await File(
         'assets/content/v0_1/manifest.json',
       ).readAsBytes();
+      final characterManifest = await File(
+        'assets/content/v0_2/manifest.json',
+      ).readAsBytes();
       final metadata = {
         'format_version': 1,
         'database_version': version,
@@ -47,7 +55,13 @@ void main() {
         'database_sha256': sha256.convert(bytes).toString(),
         'gzip_sha256': sha256.convert(compressed).toString(),
         'content_manifest_sha256': sha256.convert(sourceManifest).toString(),
-        'counts': (jsonDecode(utf8.decode(sourceManifest)) as Map)['counts'],
+        'character_content_manifest_sha256': sha256
+            .convert(characterManifest)
+            .toString(),
+        'counts': {
+          ...(jsonDecode(utf8.decode(sourceManifest)) as Map),
+          'character_exercises': 309,
+        },
       };
       await File('${output.path}/psitta.db.gz').writeAsBytes(compressed, flush: true);
       await File('${output.path}/manifest.json').writeAsString(

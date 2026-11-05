@@ -46,3 +46,5 @@ flutter:
     - assets/content/v0_1/manifest.json
     - assets/content/v0_1/word_exercises.jsonl.gz
     - assets/content/v0_1/sentence_exercises.jsonl.gz
+    - assets/content/v0_2/manifest.json
+    - assets/content/v0_2/character_exercises.jsonl.gz

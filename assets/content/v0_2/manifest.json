@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "kind": "psitta_v0_2_character_exercises",
+  "release_id": "v0_2_character_exercises",
+  "counts": {
+    "exercise_count": 309,
+    "character_exercise_count": 218,
+    "word_exercise_count": 91
+  },
+  "files": {
+    "character_exercises.jsonl.gz": {
+      "sha256": "cbab653aa6dc7b04b8b8d535ac3101b53cfd9de2371887ed86a8fce1be0a8342",
+      "jsonl_sha256": "c969a8d04267a208e62a26dd99ff123717cbc9581507c1b6758e1a5d1fbefe80"
+    }
+  }
+}

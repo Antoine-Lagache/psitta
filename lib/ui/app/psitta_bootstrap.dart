@@ -114,6 +114,7 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
         sessionController: dependencies.sessionController,
         statisticController: dependencies.statisticController,
         contentRenderer: dependencies.contentRenderer,
+        backgroundContentImport: dependencies.characterReleaseImport,
       ),
     };
   }
