@@ -2,18 +2,6 @@ name: Build applications
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'pubspec.yaml'
-      - '.github/workflows/build_apps.yml'
-      - 'tools/prepare_native_platform.py'
-      - 'tools/package_build.py'
-      - 'packaging/windows/**'
-      - 'packaging/linux/**'
-      - 'tools/package_linux.py'
-      - 'android/app/build.gradle.kts'
-      - 'tools/configure_android_signing.py'
 
 permissions:
   contents: read
