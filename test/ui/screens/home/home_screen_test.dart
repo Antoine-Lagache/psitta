@@ -44,6 +44,7 @@ void main() {
         isNull,
       );
       await tester.scrollUntilVisible(button(type), -300);
+      await tester.pump();
       await tester.tap(button(type));
       await tester.pumpAndSettle();
       expect(controller.started, [type]);
