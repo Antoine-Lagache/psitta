@@ -234,6 +234,20 @@ class _KanaWritingAreaState extends State<_KanaWritingArea> {
   Offset _normalized(Offset local, Size size) =>
       Offset(local.dx / size.width, local.dy / size.height);
 
+  void _recordPoint(Offset local, Size size) {
+    setState(() {
+      final bounds = RRect.fromRectAndRadius(
+        Offset.zero & size,
+        const Radius.circular(8),
+      );
+      if (bounds.contains(local)) {
+        _points.add(_normalized(local, size));
+      } else if (_points.isNotEmpty && _points.last != null) {
+        _points.add(null);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -244,10 +258,11 @@ class _KanaWritingAreaState extends State<_KanaWritingArea> {
             final size = Size(constraints.maxWidth, 160);
             return GestureDetector(
               onPanStart: (details) =>
-                  setState(() => _points.add(_normalized(details.localPosition, size))),
+                  _recordPoint(details.localPosition, size),
               onPanUpdate: (details) =>
-                  setState(() => _points.add(_normalized(details.localPosition, size))),
+                  _recordPoint(details.localPosition, size),
               onPanEnd: (_) => setState(() => _points.add(null)),
+              onPanCancel: () => setState(() => _points.add(null)),
               child: CustomPaint(
                 key: const ValueKey('character-writing-canvas'),
                 size: size,
@@ -286,6 +301,10 @@ class _KanaWritingPainter extends CustomPainter {
       RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(8)),
       border,
     );
+    canvas.save();
+    canvas.clipRRect(
+      RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(8)),
+    );
     for (var index = 0; index < points.length - 1; index++) {
       final first = points[index];
       final second = points[index + 1];
@@ -297,6 +316,7 @@ class _KanaWritingPainter extends CustomPainter {
         );
       }
     }
+    canvas.restore();
   }
 
   @override

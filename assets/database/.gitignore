@@ -1,3 +1,5 @@
 # Generated before testing, running, or building the app. Never commit snapshots.
 *
 !.gitignore
+!history/
+!history/**

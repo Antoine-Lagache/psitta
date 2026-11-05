@@ -44,6 +44,36 @@ void main() {
     );
   }
 
+  testWidgets('breaks the stroke when leaving the writing area', (tester) async {
+    await tester.pumpWidget(
+      buildContent(
+        showingAnswer: false,
+        showDrawingArea: true,
+        onRevealAnswer: () {},
+        onGradeSelected: (_) {},
+      ),
+    );
+    final finder = find.byKey(const ValueKey('character-writing-canvas'));
+    final rect = tester.getRect(finder);
+    final gesture = await tester.startGesture(rect.center);
+    await gesture.moveBy(const Offset(30, 0));
+    await gesture.moveTo(rect.bottomRight + const Offset(30, 30));
+    await gesture.moveTo(rect.center);
+    await tester.pump();
+    final dynamic painter = tester.widget<CustomPaint>(finder).painter;
+    final points = List<Offset?>.from(painter.points as List);
+    expect(points, contains(null));
+    expect(points.last, isNotNull);
+    for (final point in points.whereType<Offset>()) {
+      expect(point.dx, inInclusiveRange(0, 1));
+      expect(point.dy, inInclusiveRange(0, 1));
+    }
+    await gesture.cancel();
+    await tester.pump();
+    final dynamic cancelledPainter = tester.widget<CustomPaint>(finder).painter;
+    expect((cancelledPainter.points as List).last, isNull);
+  });
+
   testWidgets('shows the front before revealing the answer', (tester) async {
     var answerRequested = false;
 
