@@ -38,9 +38,7 @@ class DailyStreakController {
     final offset = local.timeZoneOffset.inMinutes;
     final previousDate = await _settings.get(_dateKey);
     final previousOffset = int.tryParse(await _settings.get(_offsetKey) ?? '');
-    final previousInstant = DateTime.tryParse(
-      await _settings.get(_instantKey) ?? '',
-    );
+    final previousInstant = DateTime.tryParse(await _settings.get(_instantKey) ?? '');
     var count = int.tryParse(await _settings.get(_countKey) ?? '') ?? 0;
 
     if (previousDate == null || count == 0) {
