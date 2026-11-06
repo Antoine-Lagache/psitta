@@ -26,6 +26,9 @@ class ExerciseRepository {
       _historyDao = ExerciseHistoryDao(database),
       _sentencesDao = SentenceGroupDao(database);
 
+  Future<({int notStarted, int started, int mastered})> countProgress() =>
+      _exerciseDao.countProgress();
+
   Future<int> createWordExercise(int contentId) async {
     return await _exerciseDao.insert(WordExerciseMapper.newWordExercise(contentId));
   }

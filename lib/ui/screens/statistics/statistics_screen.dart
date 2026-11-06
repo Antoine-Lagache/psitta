@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
 import 'package:psitta/application/models/statistics/exercise_statistics.dart';
 import 'package:psitta/application/models/statistics/session_statistics.dart';
+import 'package:psitta/application/models/statistics/exercise_progress_counts.dart';
 import 'package:psitta/ui/presentation/load_error_content.dart';
 import 'package:psitta/ui/screens/statistics/statistics_content.dart';
 
@@ -11,6 +12,8 @@ typedef _StatisticsData = ({
   SessionStatistics sessions,
   ExerciseStatistics todayExercises,
   SessionStatistics todaySessions,
+  ExerciseProgressCounts progress,
+  int dailyStreak,
 });
 
 /// Loads and displays today's and all-time statistics.
@@ -64,7 +67,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
     // These are independent read transactions. A strict shared snapshot would
     // require one repository operation backed by a single read transaction.
-    final (sessions, exercises, todaySessions, todayExercises) = await (
+    final (sessions, exercises, todaySessions, todayExercises, progress, streak) = await (
       widget.statisticController.getSessionStatistics(),
       widget.statisticController.getExerciseStatistics(),
       widget.statisticController.getSessionStatistics(
@@ -75,12 +78,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         startDate: todayStart.toUtc(),
         endDate: tomorrowStart.toUtc(),
       ),
+      widget.statisticController.getExerciseProgressCounts(),
+      widget.statisticController.getDailyStreak(),
     ).wait;
 
     return (
       sessions: sessions,
       exercises: exercises,
       todaySessions: todaySessions,
+      progress: progress,
+      dailyStreak: streak,
       todayExercises: todayExercises,
     );
   }
@@ -119,6 +126,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       exerciseStatistics: data.exercises,
       todaySessionStatistics: data.todaySessions,
       todayExerciseStatistics: data.todayExercises,
+      progressCounts: data.progress,
+      dailyStreak: data.dailyStreak,
       onRefresh: _reload,
     );
   }

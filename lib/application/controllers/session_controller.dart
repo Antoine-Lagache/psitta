@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:psitta/application/controllers/content_controller.dart';
+import 'package:psitta/application/controllers/daily_streak_controller.dart';
 import 'package:psitta/application/models/content/content.dart';
 import 'package:psitta/application/models/session/session_overview.dart';
 import 'package:psitta/application/models/session/start_session_result.dart';
@@ -44,6 +45,7 @@ class SessionController {
 
   final SessionRepository _sessionRepository;
   final ExerciseRepository _exerciseRepository;
+  final DailyStreakController? _dailyStreakController;
   final ContentController _contentController;
   final DateTime Function() _now;
   final Duration Function() _elapsedNow;
@@ -54,11 +56,13 @@ class SessionController {
     required SessionRepository sessionRepository,
     required ExerciseRepository exerciseRepository,
     required ContentController contentController,
+    DailyStreakController? dailyStreakController,
     SRSConfig? config,
     DateTime Function()? now,
     Duration Function()? elapsedNow,
   }) : _sessionRepository = sessionRepository,
        _exerciseRepository = exerciseRepository,
+       _dailyStreakController = dailyStreakController,
        _contentController = contentController,
        config = config ?? SRSConfig(),
        _now = now ?? DateTime.now,
@@ -278,6 +282,7 @@ class SessionController {
         }
 
         await _sessionRepository.saveAnswerProgress(session, answeredExercise);
+        await _dailyStreakController?.recordActivity(now);
 
         if (sessionFinished) {
           _activeSession = null;

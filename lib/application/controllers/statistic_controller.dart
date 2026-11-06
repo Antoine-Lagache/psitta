@@ -1,5 +1,7 @@
 import 'package:psitta/application/models/statistics/exercise_statistics.dart';
 import 'package:psitta/application/models/statistics/session_statistics.dart';
+import 'package:psitta/application/models/statistics/exercise_progress_counts.dart';
+import 'package:psitta/application/controllers/daily_streak_controller.dart';
 import 'package:psitta/domain/history/exercise_history_entry.dart';
 import 'package:psitta/domain/sessions/session_result.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
@@ -7,17 +9,37 @@ import 'package:psitta/domain/srs/grade.dart';
 
 import 'package:psitta/infrastructure/persistence/repositories/exercise_history_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/session_repository.dart';
+import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
 
 /// Builds application statistics from persisted sessions and answer history.
 class StatisticController {
   final SessionRepository _sessionRepository;
   final ExerciseHistoryRepository _exerciseHistoryRepository;
+  final ExerciseRepository? _exerciseRepository;
+  final DailyStreakController? _dailyStreakController;
 
   StatisticController({
     required SessionRepository sessionRepository,
     required ExerciseHistoryRepository exerciseHistoryRepository,
+    ExerciseRepository? exerciseRepository,
+    DailyStreakController? dailyStreakController,
   }) : _sessionRepository = sessionRepository,
-       _exerciseHistoryRepository = exerciseHistoryRepository;
+       _exerciseHistoryRepository = exerciseHistoryRepository,
+       _exerciseRepository = exerciseRepository,
+       _dailyStreakController = dailyStreakController;
+
+  Future<ExerciseProgressCounts> getExerciseProgressCounts() async {
+    final counts =
+        await _exerciseRepository?.countProgress() ??
+        (notStarted: 0, started: 0, mastered: 0);
+    return ExerciseProgressCounts(
+      notStarted: counts.notStarted,
+      started: counts.started,
+      mastered: counts.mastered,
+    );
+  }
+
+  Future<int> getDailyStreak() => _dailyStreakController?.getCurrent() ?? Future.value(0);
 
   /// Aggregates session statistics over the half-open requested date range.
   Future<SessionStatistics> getSessionStatistics({

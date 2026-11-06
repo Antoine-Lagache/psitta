@@ -156,6 +156,25 @@ class ExerciseDao {
     });
   }
 
+  /// Counts the complete exercise corpus by current FSRS stability.
+  Future<({int notStarted, int started, int mastered})> countProgress() async {
+    final rows = await database.getAll('''
+      SELECT
+        COALESCE(SUM(CASE WHEN s.last_review IS NULL THEN 1 ELSE 0 END), 0) AS not_started,
+        COALESCE(SUM(CASE WHEN s.last_review IS NOT NULL AND
+                      (s.stability IS NULL OR s.stability <= 30) THEN 1 ELSE 0 END), 0) AS started,
+        COALESCE(SUM(CASE WHEN s.stability > 30 THEN 1 ELSE 0 END), 0) AS mastered
+      FROM exercise e
+      JOIN srs_state s ON s.exercise_id = e.id
+      ''');
+    final row = rows.single;
+    return (
+      notStarted: row['not_started'] as int,
+      started: row['started'] as int,
+      mastered: row['mastered'] as int,
+    );
+  }
+
   /// Updates an exercise aggregate within the caller's transaction.
   Future<void> update(sqlite.SqliteWriteContext txn, ExercisePersistence exercise) async {
     if (exercise.id == null) {

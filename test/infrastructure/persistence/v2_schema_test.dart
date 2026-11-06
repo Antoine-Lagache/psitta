@@ -60,6 +60,10 @@ void main() {
       expect(sentence, {'exercise_id': 10, 'sentence_group_id': 30});
       expect(sentenceColumns, ['exercise_id', 'sentence_group_id']);
       expect(characterTable['name'], 'character_exercise');
+      final settingsTable = await database.get(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'app_setting'",
+      );
+      expect(settingsTable['name'], 'app_setting');
     });
 
     test('replays history then converts its grades to FSRS ratings in V2', () async {

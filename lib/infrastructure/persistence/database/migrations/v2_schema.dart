@@ -3,6 +3,7 @@ import 'package:psitta/utils/conversion/time_conversion.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'package:fsrs/fsrs.dart' as fsrs;
+
 import 'database_migration.dart';
 
 /// Updates all tables for Psitta version 0.2.0.
@@ -17,6 +18,12 @@ class V2Schema implements DatabaseMigration {
 
   @override
   Future<void> migrate(sqlite.SqliteWriteContext database) async {
+    await database.execute('''
+      CREATE TABLE app_setting (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+      ''');
     // Read history and exercise IDs before replacing the old SRS table.
     final historyRows = await database.getAll(
       '''

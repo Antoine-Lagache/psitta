@@ -1,8 +1,10 @@
 import 'package:psitta/application/controllers/content_controller.dart';
+import 'package:psitta/application/controllers/daily_streak_controller.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
 import 'package:psitta/application/startup/content_release_state.dart';
 import 'package:psitta/infrastructure/persistence/database/sqlite_database.dart';
+import 'package:psitta/infrastructure/persistence/dao/app_setting_dao.dart';
 import 'package:psitta/infrastructure/persistence/release/character_exercise_release_importer.dart';
 import 'package:psitta/infrastructure/persistence/release/release_content_importer.dart';
 import 'package:psitta/infrastructure/persistence/repositories/content_repository.dart';
@@ -32,6 +34,7 @@ class AppDependencies {
       connection,
       exerciseRepository: exerciseRepository,
     );
+    final dailyStreakController = DailyStreakController(AppSettingDao(connection));
 
     contentController = ContentController(
       contentRepository: contentRepository,
@@ -41,10 +44,13 @@ class AppDependencies {
       sessionRepository: sessionRepository,
       exerciseRepository: exerciseRepository,
       contentController: contentController,
+      dailyStreakController: dailyStreakController,
     );
     statisticController = StatisticController(
       sessionRepository: sessionRepository,
       exerciseHistoryRepository: ExerciseHistoryRepository(connection),
+      exerciseRepository: exerciseRepository,
+      dailyStreakController: dailyStreakController,
     );
     contentRenderer = ContentRenderer(FieldRenderer(MediaResolver(contentController)));
   }
