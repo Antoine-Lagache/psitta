@@ -19,9 +19,13 @@ class DailyStreakController {
     final localNow = (now ?? DateTime.now()).toLocal();
     final today = _dateKeyOf(localNow);
     if (today == lastDate) return count;
+    final elapsedSinceActivity = lastInstant == null
+        ? null
+        : localNow.difference(lastInstant);
     if (lastOffset != localNow.timeZoneOffset.inMinutes &&
-        lastInstant != null &&
-        localNow.difference(lastInstant).inHours <= 48) {
+        elapsedSinceActivity != null &&
+        !elapsedSinceActivity.isNegative &&
+        elapsedSinceActivity <= const Duration(hours: 48)) {
       return count;
     }
     return _dateOrdinal(today) - _dateOrdinal(lastDate) == 1 ? count : 0;
@@ -34,6 +38,9 @@ class DailyStreakController {
     final offset = local.timeZoneOffset.inMinutes;
     final previousDate = await _settings.get(_dateKey);
     final previousOffset = int.tryParse(await _settings.get(_offsetKey) ?? '');
+    final previousInstant = DateTime.tryParse(
+      await _settings.get(_instantKey) ?? '',
+    );
     var count = int.tryParse(await _settings.get(_countKey) ?? '') ?? 0;
 
     if (previousDate == null || count == 0) {
@@ -42,8 +49,18 @@ class DailyStreakController {
       final elapsedDays = _dateOrdinal(date) - _dateOrdinal(previousDate);
       if (previousOffset != offset) {
         // A timezone/DST transition can skip or repeat a civil date. Preserve
-        // the streak and establish the current timezone's new date anchor.
-        count++;
+        // the streak for a recent activity and establish the current timezone's
+        // new date anchor. A long absence still breaks the streak.
+        final elapsed = previousInstant == null
+            ? null
+            : instant.toUtc().difference(previousInstant.toUtc());
+        if (elapsed != null &&
+            !elapsed.isNegative &&
+            elapsed <= const Duration(hours: 48)) {
+          count++;
+        } else {
+          count = 1;
+        }
       } else if (elapsedDays == 1) {
         count++;
       } else if (elapsedDays != 1) {

@@ -37,6 +37,7 @@ void main() {
         tableRows.map((row) => row['name']),
         orderedEquals([
           'active_session_exercise',
+          'app_setting',
           'character_exercise',
           'content',
           'exercise',
