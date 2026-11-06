@@ -1,9 +1,5 @@
 /// Current corpus counts classified by their FSRS progress.
-typedef ExerciseTypeProgressCounts = ({
-  int notStarted,
-  int started,
-  int mastered,
-});
+typedef ExerciseTypeProgressCounts = ({int notStarted, int started, int mastered});
 
 class ExerciseProgressCounts {
   final int notStarted;

@@ -88,8 +88,9 @@ class V2Schema implements DatabaseMigration {
         .toList();
     if (answers.isEmpty) return;
 
-    final localDates = answers.map((answer) => _dateKey(answer.toLocal())).toSet().toList()
-      ..sort((left, right) => _dateOrdinal(right).compareTo(_dateOrdinal(left)));
+    final localDates =
+        answers.map((answer) => _dateKey(answer.toLocal())).toSet().toList()
+          ..sort((left, right) => _dateOrdinal(right).compareTo(_dateOrdinal(left)));
     var streak = 1;
     for (var index = 1; index < localDates.length; index++) {
       if (_dateOrdinal(localDates[index - 1]) - _dateOrdinal(localDates[index]) != 1) {

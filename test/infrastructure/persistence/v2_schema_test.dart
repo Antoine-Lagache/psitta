@@ -72,12 +72,7 @@ void main() {
       await database.writeTransaction((transaction) async {
         await _insertLegacyExercise(transaction, 10);
         for (var daysAgo = 0; daysAgo <= 2; daysAgo++) {
-          final localAnswer = DateTime(
-            today.year,
-            today.month,
-            today.day - daysAgo,
-            12,
-          );
+          final localAnswer = DateTime(today.year, today.month, today.day - daysAgo, 12);
           await _insertHistory(
             transaction,
             id: 200 + daysAgo,
@@ -107,10 +102,12 @@ void main() {
         {for (final row in settings) row['key']: row['value']},
         {
           'statistics.daily_streak.count': '3',
-          'statistics.daily_streak.last_activity_utc':
-              DateTime(today.year, today.month, today.day, 12)
-                  .toUtc()
-                  .toIso8601String(),
+          'statistics.daily_streak.last_activity_utc': DateTime(
+            today.year,
+            today.month,
+            today.day,
+            12,
+          ).toUtc().toIso8601String(),
           'statistics.daily_streak.local_date':
               '${today.year.toString().padLeft(4, '0')}-'
               '${today.month.toString().padLeft(2, '0')}-'

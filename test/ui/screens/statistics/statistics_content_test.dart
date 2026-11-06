@@ -75,9 +75,9 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pump();
 
-    expect(find.text('Words'), findsOneWidget);
-    expect(find.text('Sentences'), findsOneWidget);
-    expect(find.text('Kana'), findsOneWidget);
+    expect(find.text('Words'), findsNWidgets(2));
+    expect(find.text('Sentences'), findsNWidgets(2));
+    expect(find.text('Kana'), findsNWidgets(2));
     expect(find.text('Again'), findsOneWidget);
     expect(find.text('Hard'), findsOneWidget);
     expect(find.text('Medium'), findsNothing);

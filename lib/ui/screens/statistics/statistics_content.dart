@@ -144,11 +144,7 @@ class _StatisticsContentState extends State<StatisticsContent> {
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.menu),
-                  SizedBox(width: 6),
-                  Text('Sections'),
-                ],
+                children: [Icon(Icons.menu), SizedBox(width: 6), Text('Sections')],
               ),
             ),
           ),
@@ -157,19 +153,15 @@ class _StatisticsContentState extends State<StatisticsContent> {
       const SizedBox(height: 6),
       Text(
         'Your learning activity today and overall.',
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          color: const Color(0xFF616161),
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF616161)),
       ),
       const SizedBox(height: 24),
       Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.local_fire_department,
-            color: Color(0xFFE87524),
-            size: 48,
-          ),
+          const Icon(Icons.local_fire_department, color: Color(0xFFE87524), size: 48),
           const SizedBox(width: 12),
           Text(
             '${widget.dailyStreak}',
@@ -184,9 +176,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               widget.dailyStreak == 1 ? 'day streak' : 'days streak',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -194,11 +186,7 @@ class _StatisticsContentState extends State<StatisticsContent> {
     ];
   }
 
-  Widget _buildSection(
-    BuildContext context,
-    _StatisticsSection section,
-    Widget content,
-  ) {
+  Widget _buildSection(BuildContext context, _StatisticsSection section, Widget content) {
     return Padding(
       key: _sectionKeys[section],
       padding: const EdgeInsets.only(bottom: 32),
@@ -207,9 +195,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
         children: [
           Text(
             section.label,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 16),
           content,
@@ -239,15 +227,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
   ) {
     return [
       (label: 'Sessions completed', value: '${sessions.numberOfSessions}'),
-      (
-        label: 'Completed session time',
-        value: _formatDuration(sessions.totalTimeSpent),
-      ),
+      (label: 'Completed session time', value: _formatDuration(sessions.totalTimeSpent)),
       (label: 'Answers recorded', value: '${exercises.totalNumberAnswers}'),
-      (
-        label: 'Exercises completed',
-        value: '${sessions.numberOfExercisesCompleted}',
-      ),
+      (label: 'Exercises completed', value: '${sessions.numberOfExercisesCompleted}'),
     ];
   }
 
@@ -295,9 +277,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
           alignment: Alignment.centerLeft,
           child: Text(
             'Mastered means FSRS stability above 30 days.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF616161),
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
           ),
         ),
       ],
@@ -322,84 +304,63 @@ class _StatisticsContentState extends State<StatisticsContent> {
       children: [
         Expanded(flex: 3, child: Text(label, style: style)),
         Expanded(
-          child: Text(
-            notStarted,
-            textAlign: TextAlign.end,
-            style: style,
-          ),
+          child: Text(notStarted, textAlign: TextAlign.end, style: style),
         ),
         Expanded(
-          child: Text(
-            started,
-            textAlign: TextAlign.end,
-            style: style,
-          ),
+          child: Text(started, textAlign: TextAlign.end, style: style),
         ),
         Expanded(
-          child: Text(
-            mastered,
-            textAlign: TextAlign.end,
-            style: style,
-          ),
+          child: Text(mastered, textAlign: TextAlign.end, style: style),
         ),
       ],
     );
   }
 
   Widget _buildSessionBreakdown(BuildContext context) {
-    return _buildBreakdown(
-      context,
-      [
-        (
-          label: 'Words',
-          value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
-            SessionType.wordSession,
-          ),
+    return _buildBreakdown(context, [
+      (
+        label: 'Words',
+        value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
+          SessionType.wordSession,
         ),
-        (
-          label: 'Sentences',
-          value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
-            SessionType.sentenceSession,
-          ),
+      ),
+      (
+        label: 'Sentences',
+        value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
+          SessionType.sentenceSession,
         ),
-        (
-          label: 'Kana',
-          value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
-            SessionType.characterSession,
-          ),
+      ),
+      (
+        label: 'Kana',
+        value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
+          SessionType.characterSession,
         ),
-      ],
-    );
+      ),
+    ]);
   }
 
   Widget _buildGradeBreakdown(BuildContext context) {
-    return _buildBreakdown(
-      context,
-      [
-        (
-          label: 'Again',
-          value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.again),
-        ),
-        (
-          label: 'Hard',
-          value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.hard),
-        ),
-        (
-          label: 'Good',
-          value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.good),
-        ),
-        (
-          label: 'Easy',
-          value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.easy),
-        ),
-      ],
-    );
+    return _buildBreakdown(context, [
+      (
+        label: 'Again',
+        value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.again),
+      ),
+      (
+        label: 'Hard',
+        value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.hard),
+      ),
+      (
+        label: 'Good',
+        value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.good),
+      ),
+      (
+        label: 'Easy',
+        value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.easy),
+      ),
+    ]);
   }
 
-  Widget _buildBreakdown(
-    BuildContext context,
-    List<_BreakdownEntry> entries,
-  ) {
+  Widget _buildBreakdown(BuildContext context, List<_BreakdownEntry> entries) {
     return Column(
       children: [
         for (final entry in entries)
@@ -410,9 +371,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
                 Expanded(child: Text(entry.label)),
                 Text(
                   '${entry.value}',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -450,9 +411,9 @@ class _StatisticMetric extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           metric.label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: const Color(0xFF616161),
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
         ),
       ],
     );
