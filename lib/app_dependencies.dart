@@ -1,6 +1,7 @@
 import 'package:psitta/application/controllers/content_controller.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
+import 'package:psitta/application/startup/content_release_state.dart';
 import 'package:psitta/infrastructure/persistence/database/sqlite_database.dart';
 import 'package:psitta/infrastructure/persistence/release/character_exercise_release_importer.dart';
 import 'package:psitta/infrastructure/persistence/release/release_content_importer.dart';
@@ -21,7 +22,7 @@ class AppDependencies {
   late final SessionController sessionController;
   late final StatisticController statisticController;
   late final ContentRenderer contentRenderer;
-  late final Future<bool> characterReleaseImport;
+  late final ContentReleaseState contentReleaseState;
 
   AppDependencies._(this._database) {
     final connection = _database.database;
@@ -54,9 +55,9 @@ class AppDependencies {
     try {
       await ReleaseContentImporter(database.database).importIfEmpty();
       final dependencies = AppDependencies._(database);
-      dependencies.characterReleaseImport = CharacterExerciseReleaseImporter(
-        database.database,
-      ).importIfNeeded();
+      dependencies.contentReleaseState = ContentReleaseState(
+        CharacterExerciseReleaseImporter(database.database).importIfNeeded(),
+      );
       return dependencies;
     } on Object {
       await database.close();
@@ -66,10 +67,11 @@ class AppDependencies {
 
   Future<void> dispose() async {
     try {
-      await characterReleaseImport;
+      await contentReleaseState.completed;
     } on Object {
-      // The import error is reported by the home screen while the app is open.
+      // ContentReleaseState records installation failures for the UI.
     }
+    contentReleaseState.dispose();
     await _database.close();
   }
 }

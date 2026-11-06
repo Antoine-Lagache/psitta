@@ -6,6 +6,7 @@ import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/models/content/content.dart';
 import 'package:psitta/application/models/content/field_definition.dart';
 import 'package:psitta/application/models/session/session_overview.dart';
+import 'package:psitta/application/startup/content_release_state.dart';
 import 'package:psitta/application/models/session/start_session_result.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/domain/srs/grade.dart';
@@ -25,7 +26,7 @@ void main() {
             body: HomeScreen(
               sessionController: controller,
               contentRenderer: _TestContentRenderer(),
-              backgroundContentImport: importing.future,
+              contentReleaseState: ContentReleaseState(importing.future),
             ),
           ),
         ),
@@ -84,7 +85,7 @@ void main() {
           body: HomeScreen(
             sessionController: _TransitionSessionController(),
             contentRenderer: _TestContentRenderer(),
-            backgroundContentImport: importing.future,
+            contentReleaseState: ContentReleaseState(importing.future),
           ),
         ),
       ),

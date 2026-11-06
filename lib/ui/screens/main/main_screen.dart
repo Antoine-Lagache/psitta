@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:psitta/application/startup/content_release_state.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
 import 'package:psitta/ui/presentation/content/content_renderer.dart';
@@ -11,13 +12,13 @@ class MainScreen extends StatefulWidget {
   final SessionController sessionController;
   final StatisticController statisticController;
   final ContentRenderer contentRenderer;
-  final Future<bool>? backgroundContentImport;
+  final ContentReleaseState contentReleaseState;
 
   const MainScreen({
     required this.sessionController,
     required this.statisticController,
     required this.contentRenderer,
-    this.backgroundContentImport,
+    required this.contentReleaseState,
     super.key,
   });
 
@@ -37,7 +38,7 @@ class _MainScreenState extends State<MainScreen> {
       HomeScreen(
         sessionController: widget.sessionController,
         contentRenderer: widget.contentRenderer,
-        backgroundContentImport: widget.backgroundContentImport,
+        contentReleaseState: widget.contentReleaseState,
       ),
       StatisticsScreen(
         refreshSignal: _statisticsRefreshSignal,

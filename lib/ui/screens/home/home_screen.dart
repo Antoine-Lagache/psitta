@@ -1,6 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:psitta/application/startup/content_release_state.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/models/session/session_overview.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
@@ -13,12 +12,12 @@ import 'package:psitta/ui/screens/learning/learning_screen.dart';
 class HomeScreen extends StatefulWidget {
   final SessionController sessionController;
   final ContentRenderer contentRenderer;
-  final Future<bool>? backgroundContentImport;
+  final ContentReleaseState contentReleaseState;
 
   const HomeScreen({
     required this.sessionController,
     required this.contentRenderer,
-    this.backgroundContentImport,
+    required this.contentReleaseState,
     super.key,
   });
 
@@ -29,31 +28,31 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late Future<List<SessionOverview>> _sessionOverviews;
   bool _openingSession = false;
-  bool _loadingCharacters = false;
-  bool _characterLoadFailed = false;
+  ContentReleaseStatus? _lastContentStatus;
 
   @override
   void initState() {
     super.initState();
     _sessionOverviews = widget.sessionController.getSessionOverviews();
-    _loadingCharacters = widget.backgroundContentImport != null;
-    if (_loadingCharacters) unawaited(_loadCharacters());
+    _lastContentStatus = widget.contentReleaseState.status;
+    widget.contentReleaseState.addListener(_onContentReleaseChanged);
   }
 
-  Future<void> _loadCharacters() async {
-    try {
-      await widget.backgroundContentImport;
-      if (!mounted) return;
-      // Keep the character action disabled until the fresh counts are ready.
-      await _reload();
-      if (mounted) setState(() => _loadingCharacters = false);
-    } on Object catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _loadingCharacters = false;
-        _characterLoadFailed = true;
-      });
+  void _onContentReleaseChanged() {
+    final status = widget.contentReleaseState.status;
+    if (status == _lastContentStatus) return;
+    _lastContentStatus = status;
+    if (status == ContentReleaseStatus.ready) {
+      _reload();
+    } else if (mounted) {
+      setState(() {});
     }
+  }
+
+  @override
+  void dispose() {
+    widget.contentReleaseState.removeListener(_onContentReleaseChanged);
+    super.dispose();
   }
 
   Future<void> _reload() {
@@ -67,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _selectSession(SessionOverview overview) async {
     if (_openingSession ||
         (overview.sessionType == SessionType.characterSession &&
-            (_loadingCharacters || _characterLoadFailed))) {
+            widget.contentReleaseState.status != ContentReleaseStatus.ready)) {
       return;
     }
     _openingSession = true;
@@ -119,8 +118,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return HomeContent(
       overviews: snapshot.requireData,
-      loadingCharacters: _loadingCharacters,
-      characterLoadFailed: _characterLoadFailed,
+      loadingCharacters: widget.contentReleaseState.isLoading,
+      characterLoadFailed: widget.contentReleaseState.hasFailed,
       onRefresh: _reload,
       onSessionSelected: _selectSession,
     );
