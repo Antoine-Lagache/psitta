@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:psitta/application/models/statistics/exercise_progress_counts.dart';
 import 'package:psitta/application/models/statistics/exercise_statistics.dart';
 import 'package:psitta/application/models/statistics/session_statistics.dart';
 import 'package:psitta/domain/exercise/exercise_status.dart';
@@ -35,6 +36,17 @@ void main() {
             exerciseStatistics: exercises,
             todaySessionStatistics: sessions,
             todayExerciseStatistics: exercises,
+            progressCounts: const ExerciseProgressCounts(
+              notStarted: 60,
+              started: 10,
+              mastered: 11,
+              byType: {
+                'word': (notStarted: 10, started: 2, mastered: 1),
+                'sentence': (notStarted: 20, started: 3, mastered: 4),
+                'character': (notStarted: 30, started: 5, mastered: 6),
+              },
+            ),
+            dailyStreak: 17,
             onRefresh: () async {},
           ),
         ),
@@ -46,6 +58,20 @@ void main() {
     expect(find.text('All time'), findsOneWidget);
     expect(find.text('1h 5m'), findsNWidgets(2));
     expect(find.text('Answers recorded'), findsNWidgets(2));
+    expect(find.text('17'), findsOneWidget);
+    expect(find.byType(Card), findsNothing);
+
+    await tester.tap(find.text('Sections'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Exercise progress').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Words'), findsNWidgets(2));
+    expect(find.text('Sentences'), findsNWidgets(2));
+    expect(find.text('Kana'), findsNWidgets(2));
+    expect(find.text('30'), findsOneWidget);
+    expect(find.text('20'), findsOneWidget);
+    expect(find.text('10'), findsOneWidget);
+
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pump();
 

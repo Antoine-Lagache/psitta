@@ -66,6 +66,61 @@ void main() {
       expect(settingsTable['name'], 'app_setting');
     });
 
+    test('initializes the current daily streak from local answer dates', () async {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day, 12);
+      await database.writeTransaction((transaction) async {
+        await _insertLegacyExercise(transaction, 10);
+        for (var daysAgo = 0; daysAgo <= 2; daysAgo++) {
+          final localAnswer = DateTime(
+            today.year,
+            today.month,
+            today.day - daysAgo,
+            12,
+          );
+          await _insertHistory(
+            transaction,
+            id: 200 + daysAgo,
+            exerciseId: 10,
+            grade: 3,
+            answeredAt: localAnswer.toUtc().toIso8601String(),
+          );
+        }
+        final olderDate = DateTime(today.year, today.month, today.day - 4, 12);
+        await _insertHistory(
+          transaction,
+          id: 204,
+          exerciseId: 10,
+          grade: 3,
+          answeredAt: olderDate.toUtc().toIso8601String(),
+        );
+      });
+
+      await createMigrationRunner().migrate(database);
+
+      final settings = await database.getAll('''
+        SELECT key, value FROM app_setting
+        WHERE key LIKE 'statistics.daily_streak.%'
+        ORDER BY key
+        ''');
+      expect(
+        {for (final row in settings) row['key']: row['value']},
+        {
+          'statistics.daily_streak.count': '3',
+          'statistics.daily_streak.last_activity_utc':
+              DateTime(today.year, today.month, today.day, 12)
+                  .toUtc()
+                  .toIso8601String(),
+          'statistics.daily_streak.local_date':
+              '${today.year.toString().padLeft(4, '0')}-'
+              '${today.month.toString().padLeft(2, '0')}-'
+              '${today.day.toString().padLeft(2, '0')}',
+          'statistics.daily_streak.utc_offset_minutes':
+              '${today.timeZoneOffset.inMinutes}',
+        },
+      );
+    });
+
     test('replays history then converts its grades to FSRS ratings in V2', () async {
       await database.writeTransaction((transaction) async {
         await _insertLegacyExercise(transaction, 10);

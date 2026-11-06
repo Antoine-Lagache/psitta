@@ -29,13 +29,20 @@ class StatisticController {
        _dailyStreakController = dailyStreakController;
 
   Future<ExerciseProgressCounts> getExerciseProgressCounts() async {
-    final counts =
-        await _exerciseRepository?.countProgress() ??
-        (notStarted: 0, started: 0, mastered: 0);
+    final byType = await _exerciseRepository?.countProgressByType() ?? const {};
+    var notStarted = 0;
+    var started = 0;
+    var mastered = 0;
+    for (final counts in byType.values) {
+      notStarted += counts.notStarted;
+      started += counts.started;
+      mastered += counts.mastered;
+    }
     return ExerciseProgressCounts(
-      notStarted: counts.notStarted,
-      started: counts.started,
-      mastered: counts.mastered,
+      notStarted: notStarted,
+      started: started,
+      mastered: mastered,
+      byType: byType,
     );
   }
 

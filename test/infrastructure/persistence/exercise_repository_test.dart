@@ -222,6 +222,44 @@ void main() {
       expect(await repository.countNewExercises(null), 1);
     });
 
+    test('countProgressByType classifies each exercise type independently', () async {
+      final wordNewContent = await testDatabase.insertContent();
+      final wordStartedContent = await testDatabase.insertContent();
+      final sentenceContent = await testDatabase.insertContent();
+      final characterNewContent = await testDatabase.insertContent();
+      final characterStartedContent = await testDatabase.insertContent();
+
+      await repository.createWordExercise(wordNewContent);
+      final wordStartedId = await repository.createWordExercise(wordStartedContent);
+      final sentenceGroupRepository = SentenceGroupRepository(database);
+      final sentenceGroupId = await sentenceGroupRepository.createGroup();
+      await sentenceGroupRepository.createInstance(sentenceGroupId, sentenceContent);
+      final sentenceId = await repository.createSentenceExercise(sentenceGroupId, 1);
+      await repository.createCharacterExercise(characterNewContent);
+      final characterStartedId = await repository.createCharacterExercise(
+        characterStartedContent,
+      );
+
+      await database.execute(
+        'UPDATE srs_state SET last_review = 100, stability = 30 WHERE exercise_id = ?',
+        [wordStartedId],
+      );
+      await database.execute(
+        'UPDATE srs_state SET last_review = 100, stability = 31 WHERE exercise_id = ?',
+        [sentenceId],
+      );
+      await database.execute(
+        'UPDATE srs_state SET last_review = 100, stability = NULL WHERE exercise_id = ?',
+        [characterStartedId],
+      );
+
+      expect(await repository.countProgressByType(), {
+        'word': (notStarted: 1, started: 1, mastered: 0),
+        'sentence': (notStarted: 0, started: 0, mastered: 1),
+        'character': (notStarted: 1, started: 1, mastered: 0),
+      });
+    });
+
     test('countDueExercises filters by type and includes the exact boundary', () async {
       final now = DateTime.utc(2026, 9, 18, 12);
       final firstContentId = await testDatabase.insertContent();

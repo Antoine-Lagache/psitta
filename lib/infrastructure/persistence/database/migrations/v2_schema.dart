@@ -12,6 +12,7 @@ import 'database_migration.dart';
 /// - Migration of the old SRS to the FSRS-6 algorithm
 /// - Conversion of historical grades to FSRS rating values
 /// - Shared exercise training state and character exercise persistence
+/// - Initialization of application settings and the existing daily streak
 class V2Schema implements DatabaseMigration {
   @override
   int get version => 2;
@@ -72,6 +73,63 @@ class V2Schema implements DatabaseMigration {
     _replayHistory(cards, historyRows);
     await _insertCardsInBatches(database, cards.values.toList());
     await _migrateHistoryGrades(database);
+    await _initializeDailyStreak(database);
+  }
+
+  Future<void> _initializeDailyStreak(sqlite.SqliteWriteContext database) async {
+    final rows = await database.getAll('''
+      SELECT answered_at
+      FROM exercise_history
+      WHERE answered_at IS NOT NULL
+      ''');
+    final answers = rows
+        .map((row) => DateTime.tryParse(row['answered_at'] as String))
+        .whereType<DateTime>()
+        .toList();
+    if (answers.isEmpty) return;
+
+    final localDates = answers.map((answer) => _dateKey(answer.toLocal())).toSet().toList()
+      ..sort((left, right) => _dateOrdinal(right).compareTo(_dateOrdinal(left)));
+    var streak = 1;
+    for (var index = 1; index < localDates.length; index++) {
+      if (_dateOrdinal(localDates[index - 1]) - _dateOrdinal(localDates[index]) != 1) {
+        break;
+      }
+      streak++;
+    }
+
+    final latestAnswer = answers.reduce(
+      (latest, answer) => answer.isAfter(latest) ? answer : latest,
+    );
+    final latestLocal = latestAnswer.toLocal();
+    const upsert = '''
+      INSERT INTO app_setting (key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+      ''';
+    await database.execute(upsert, ['statistics.daily_streak.count', '$streak']);
+    await database.execute(upsert, [
+      'statistics.daily_streak.local_date',
+      _dateKey(latestLocal),
+    ]);
+    await database.execute(upsert, [
+      'statistics.daily_streak.utc_offset_minutes',
+      '${latestLocal.timeZoneOffset.inMinutes}',
+    ]);
+    await database.execute(upsert, [
+      'statistics.daily_streak.last_activity_utc',
+      latestAnswer.toUtc().toIso8601String(),
+    ]);
+  }
+
+  String _dateKey(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
+  int _dateOrdinal(String value) {
+    final parts = value.split('-').map(int.parse).toList();
+    return DateTime.utc(parts[0], parts[1], parts[2]).millisecondsSinceEpoch ~/
+        Duration.millisecondsPerDay;
   }
 
   Future<void> _migrateSharedExerciseSchema(sqlite.SqliteWriteContext database) async {
