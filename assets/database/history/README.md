@@ -1,7 +1,8 @@
 # Historical database schemas
 
 - `v1.db`: empty schema version 1, including the original SRS state.
-- `v2.db`: empty schema version 2, including FSRS and character exercises.
+- `v2.db`: empty schema version 2, including FSRS, character exercises, and
+  the `app_setting` key-value table.
 
 These SQLite files contain no vocabulary or user data. Use a copy for debugging;
 never run migrations directly against the committed fixtures. Check the version
