@@ -34,10 +34,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('More information: Session counts'));
+    await tester.tap(find.text('Daily recommendation'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('For a new session, New and To review'), findsOneWidget);
-    await tester.tap(find.text('Got it'));
+    expect(
+      find.textContaining('one Words session and one Sentences session each day'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
 
     final wordCard = find.byWidgetPredicate(

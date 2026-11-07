@@ -14,6 +14,7 @@ typedef _StatisticsData = ({
   SessionStatistics todaySessions,
   ExerciseProgressCounts progress,
   int dailyStreak,
+  bool didExerciseToday,
 });
 
 /// Loads and displays today's and all-time statistics.
@@ -79,7 +80,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         endDate: tomorrowStart.toUtc(),
       ),
       widget.statisticController.getExerciseProgressCounts(),
-      widget.statisticController.getDailyStreak(),
+      widget.statisticController.getDailyStreakStatus(),
     ).wait;
 
     return (
@@ -87,7 +88,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       exercises: exercises,
       todaySessions: todaySessions,
       progress: progress,
-      dailyStreak: streak,
+      dailyStreak: streak.count,
+      didExerciseToday: streak.activityToday,
       todayExercises: todayExercises,
     );
   }
@@ -128,6 +130,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       todayExerciseStatistics: data.todayExercises,
       progressCounts: data.progress,
       dailyStreak: data.dailyStreak,
+      didExerciseToday: data.didExerciseToday,
       onRefresh: _reload,
     );
   }

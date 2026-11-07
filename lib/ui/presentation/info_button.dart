@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// Opens a short contextual explanation without taking space in the layout.
+/// Shows an explanatory dialog from a labeled action.
 class InfoButton extends StatelessWidget {
+  final String label;
   final String title;
   final String message;
 
-  const InfoButton({required this.title, required this.message, super.key});
+  const InfoButton({
+    required this.label,
+    required this.title,
+    required this.message,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: 'More information: $title',
-      visualDensity: VisualDensity.compact,
-      iconSize: 20,
+    return TextButton.icon(
       onPressed: () => showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
@@ -21,12 +24,13 @@ class InfoButton extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Got it'),
+              child: const Text('Close'),
             ),
           ],
         ),
       ),
       icon: const Icon(Icons.info_outline),
+      label: Text(label),
     );
   }
 }

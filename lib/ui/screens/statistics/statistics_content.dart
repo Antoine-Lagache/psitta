@@ -4,7 +4,6 @@ import 'package:psitta/application/models/statistics/exercise_statistics.dart';
 import 'package:psitta/application/models/statistics/session_statistics.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/domain/srs/grade.dart';
-import 'package:psitta/ui/presentation/info_button.dart';
 
 typedef _Metric = ({String label, String value});
 typedef _BreakdownEntry = ({String label, int value});
@@ -18,6 +17,7 @@ class StatisticsContent extends StatefulWidget {
   final RefreshCallback onRefresh;
   final ExerciseProgressCounts progressCounts;
   final int dailyStreak;
+  final bool didExerciseToday;
 
   const StatisticsContent({
     required this.sessionStatistics,
@@ -31,6 +31,7 @@ class StatisticsContent extends StatefulWidget {
       mastered: 0,
     ),
     this.dailyStreak = 0,
+    this.didExerciseToday = false,
     super.key,
   });
 
@@ -82,6 +83,10 @@ class _StatisticsContentState extends State<StatisticsContent> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final streakIconColor = widget.didExerciseToday
+        ? const Color(0xFFE87524)
+        : const Color(0xFF9E9E9E);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       child: Container(
@@ -97,12 +102,14 @@ class _StatisticsContentState extends State<StatisticsContent> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: const Color(0xFFE87524).withValues(alpha: 0.12),
+                color: widget.didExerciseToday
+                    ? const Color(0xFFE87524).withValues(alpha: 0.12)
+                    : const Color(0xFFE0E0E0),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.local_fire_department,
-                color: Color(0xFFE87524),
+                color: streakIconColor,
                 size: 36,
               ),
             ),
@@ -127,7 +134,7 @@ class _StatisticsContentState extends State<StatisticsContent> {
                     ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   Text(
-                    'Keep your daily learning going',
+                    _streakCaption,
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
@@ -135,15 +142,16 @@ class _StatisticsContentState extends State<StatisticsContent> {
                 ],
               ),
             ),
-            const InfoButton(
-              title: 'Daily streak',
-              message:
-                  'A day counts when you record at least one answer. The streak follows local calendar days and tolerates recent timezone or daylight-saving offset changes.',
-            ),
           ],
         ),
       ),
     );
+  }
+
+  String get _streakCaption {
+    if (widget.didExerciseToday) return 'Great work today';
+    if (widget.dailyStreak > 0) return 'Complete an exercise to keep it going';
+    return 'Complete an exercise to start your streak';
   }
 
   Widget _buildPage(BuildContext context, List<Widget> sections) {
@@ -184,21 +192,11 @@ class _StatisticsContentState extends State<StatisticsContent> {
       context,
       title: 'Exercise progress',
       key: const ValueKey('statistics-progress-section'),
-      action: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const InfoButton(
-            title: 'Exercise progress',
-            message:
-                'New exercises have no answer history. Started exercises have been answered but have not reached the mastered threshold. Mastered exercises have an FSRS stability above 30 days; a failed answer can move one back to Started.',
-          ),
-          IconButton(
-            tooltip: _showPercentages ? 'Show counts' : 'Show percentages',
-            visualDensity: VisualDensity.compact,
-            onPressed: () => setState(() => _showPercentages = !_showPercentages),
-            icon: Icon(_showPercentages ? Icons.numbers : Icons.percent),
-          ),
-        ],
+      action: IconButton(
+        tooltip: _showPercentages ? 'Show counts' : 'Show percentages',
+        visualDensity: VisualDensity.compact,
+        onPressed: () => setState(() => _showPercentages = !_showPercentages),
+        icon: Icon(_showPercentages ? Icons.numbers : Icons.percent),
       ),
       child: _buildExerciseProgress(context),
     ),

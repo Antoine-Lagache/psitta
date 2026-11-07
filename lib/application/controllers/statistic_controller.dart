@@ -48,6 +48,10 @@ class StatisticController {
 
   Future<int> getDailyStreak() => _dailyStreakController?.getCurrent() ?? Future.value(0);
 
+  Future<({int count, bool activityToday})> getDailyStreakStatus() =>
+      _dailyStreakController?.getStatus() ??
+      Future.value((count: 0, activityToday: false));
+
   /// Aggregates session statistics over the half-open requested date range.
   Future<SessionStatistics> getSessionStatistics({
     DateTime? startDate,

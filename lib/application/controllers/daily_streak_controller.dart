@@ -10,15 +10,24 @@ class DailyStreakController {
 
   DailyStreakController(this._settings);
 
-  Future<int> getCurrent([DateTime? now]) async {
+  Future<int> getCurrent([DateTime? now]) async => (await getStatus(now)).count;
+
+  Future<({int count, bool activityToday})> getStatus([DateTime? now]) async {
     final count = int.tryParse(await _settings.get(_countKey) ?? '') ?? 0;
     final lastDate = await _settings.get(_dateKey);
     final lastOffset = int.tryParse(await _settings.get(_offsetKey) ?? '');
     final lastInstant = DateTime.tryParse(await _settings.get(_instantKey) ?? '');
-    if (count == 0 || lastDate == null) return 0;
     final localNow = (now ?? DateTime.now()).toLocal();
     final today = _dateKeyOf(localNow);
-    if (today == lastDate) return count;
+    final activityToday = count > 0 &&
+        lastInstant != null &&
+        _dateKeyOf(lastInstant.toLocal()) == today;
+
+    if (count == 0 || lastDate == null) {
+      return (count: 0, activityToday: false);
+    }
+    if (today == lastDate) return (count: count, activityToday: activityToday);
+
     final elapsedSinceActivity = lastInstant == null
         ? null
         : localNow.difference(lastInstant);
@@ -26,9 +35,10 @@ class DailyStreakController {
         elapsedSinceActivity != null &&
         !elapsedSinceActivity.isNegative &&
         elapsedSinceActivity <= const Duration(hours: 48)) {
-      return count;
+      return (count: count, activityToday: activityToday);
     }
-    return _dateOrdinal(today) - _dateOrdinal(lastDate) == 1 ? count : 0;
+    final currentCount = _dateOrdinal(today) - _dateOrdinal(lastDate) == 1 ? count : 0;
+    return (count: currentCount, activityToday: activityToday);
   }
 
   /// Counts local calendar days; an offset change re-anchors without a reset.

@@ -30,4 +30,21 @@ void main() {
     await streak.recordActivity(DateTime(2026, 11, 1, 21));
     expect(await streak.getCurrent(DateTime(2026, 11, 1, 22)), 1);
   });
+
+  test('reports activity today separately from a still-valid streak', () async {
+    await streak.recordActivity(DateTime(2026, 11, 1, 9));
+
+    expect(
+      await streak.getStatus(DateTime(2026, 11, 1, 10)),
+      (count: 1, activityToday: true),
+    );
+    expect(
+      await streak.getStatus(DateTime(2026, 11, 2, 8)),
+      (count: 1, activityToday: false),
+    );
+    expect(
+      await streak.getStatus(DateTime(2026, 11, 3, 8)),
+      (count: 0, activityToday: false),
+    );
+  });
 }

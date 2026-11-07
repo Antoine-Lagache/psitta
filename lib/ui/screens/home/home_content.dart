@@ -58,23 +58,12 @@ class HomeContent extends StatelessWidget {
           color: Colors.black,
         ),
       ),
-      const SizedBox(height: 8),
-      Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Recommended: one Words session and one Sentences session per day.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF616161)),
-            ),
-          ),
-          const InfoButton(
-            title: 'Session counts',
-            message:
-                'For a new session, New and To review show the exercises that can be added. For a paused session, they show the exercises still remaining. Answers already submitted are saved as you go.',
-          ),
-        ],
+      const SizedBox(height: 4),
+      const InfoButton(
+        label: 'Daily recommendation',
+        title: 'A balanced daily routine',
+        message:
+            'Try to complete one Words session and one Sentences session each day. Words build vocabulary through individual items; Sentences help you recognize vocabulary in context. Sessions can include due reviews and new exercises, depending on what is available. You can pause a session and resume it later. This is a flexible guideline, not a daily requirement.',
       ),
     ];
   }
