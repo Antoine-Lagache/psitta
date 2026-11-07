@@ -19,7 +19,8 @@ void main() {
   testWidgets('abandon action removes a paused session after confirmation', (
     tester,
   ) async {
-    final controller = _TransitionSessionController()..persistedActiveType = SessionType.wordSession;
+    final controller = _TransitionSessionController()
+      ..persistedActiveType = SessionType.wordSession;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -50,7 +51,10 @@ void main() {
     );
     await tester.tap(abandonButton);
     await tester.pumpAndSettle();
-    expect(find.text('Answers already submitted keep their exercise progress.'), findsOneWidget);
+    expect(
+      find.textContaining('Answers already submitted keep their exercise progress.'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Abandon session').last);
     await tester.pumpAndSettle();

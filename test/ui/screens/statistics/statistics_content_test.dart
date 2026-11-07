@@ -88,7 +88,15 @@ void main() {
     );
     await tester.tap(find.byTooltip('More information: Exercise progress'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('FSRS stability above 30 days'), findsOneWidget);
+    expect(
+      find.text(
+        'New exercises have no answer history. Started exercises have been '
+        'answered but have not reached the mastered threshold. Mastered '
+        'exercises have an FSRS stability above 30 days; a failed answer can '
+        'move one back to Started.',
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Got it'));
     await tester.pumpAndSettle();
     expect(
