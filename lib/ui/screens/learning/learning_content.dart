@@ -123,11 +123,20 @@ class LearningContent extends StatelessWidget {
     if (!showingAnswer) {
       return _buildRevealButton();
     }
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 10,
-      runSpacing: 10,
-      children: [for (final grade in allowedGrades) _buildGradeButton(grade)],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth >= 620 ? 4 : 2;
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          mainAxisExtent: 68,
+          children: [for (final grade in allowedGrades) _buildGradeButton(grade)],
+        );
+      },
     );
   }
 

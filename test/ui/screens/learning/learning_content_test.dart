@@ -172,6 +172,33 @@ void main() {
     expect(selectedGrade, Grade.hard);
   });
 
+  testWidgets('lays out all four grade buttons in two columns on a phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      buildContent(
+        showingAnswer: true,
+        allowedGrades: Grade.values,
+        onRevealAnswer: () {},
+        onGradeSelected: (_) {},
+      ),
+    );
+
+    final again = tester.getRect(find.widgetWithText(OutlinedButton, 'Again'));
+    final hard = tester.getRect(find.widgetWithText(OutlinedButton, 'Hard'));
+    final good = tester.getRect(find.widgetWithText(OutlinedButton, 'Good'));
+    final easy = tester.getRect(find.widgetWithText(OutlinedButton, 'Easy'));
+
+    expect(again.top, hard.top);
+    expect(good.top, easy.top);
+    expect(good.top, greaterThan(again.top));
+  });
+
   testWidgets('keeps the selected answer pending until the next exercise', (
     tester,
   ) async {

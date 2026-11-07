@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 /// Builds the monochrome Material theme used by the MVP.
 ThemeData buildAppTheme() {
+  final colorScheme = _buildColorScheme();
   return ThemeData(
-    colorScheme: _buildColorScheme(),
+    colorScheme: colorScheme,
     scaffoldBackgroundColor: const Color(0xFFF7F7F7),
     appBarTheme: const AppBarTheme(
       backgroundColor: Color(0xFFF7F7F7),
@@ -18,6 +19,9 @@ ThemeData buildAppTheme() {
         side: BorderSide(color: Color(0xFFD6D6D6)),
         borderRadius: BorderRadius.all(Radius.circular(20)),
       ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: colorScheme.surfaceContainer,
     ),
     useMaterial3: true,
   );

@@ -37,13 +37,13 @@ void main() {
             todaySessionStatistics: sessions,
             todayExerciseStatistics: exercises,
             progressCounts: const ExerciseProgressCounts(
-              notStarted: 60,
-              started: 10,
-              mastered: 11,
+              notStarted: 240,
+              started: 325,
+              mastered: 585,
               byType: {
-                'word': (notStarted: 10, started: 2, mastered: 1),
-                'sentence': (notStarted: 20, started: 3, mastered: 4),
-                'character': (notStarted: 30, started: 5, mastered: 6),
+                'word': (notStarted: 10, started: 20, mastered: 70),
+                'sentence': (notStarted: 200, started: 300, mastered: 500),
+                'character': (notStarted: 30, started: 5, mastered: 15),
               },
             ),
             dailyStreak: 17,
@@ -61,23 +61,29 @@ void main() {
     expect(find.text('17'), findsOneWidget);
     expect(find.byType(Card), findsNothing);
 
-    await tester.tap(find.text('Sections'));
+    await tester.tap(find.text('Progress'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Exercise progress').last);
+    final progressSection = find.byKey(const ValueKey('statistics-progress-section'));
+    expect(find.descendant(of: progressSection, matching: find.text('Words')), findsOneWidget);
+    expect(
+      find.descendant(of: progressSection, matching: find.text('Sentences')),
+      findsOneWidget,
+    );
+    expect(find.descendant(of: progressSection, matching: find.text('Kana')), findsOneWidget);
+    expect(find.descendant(of: progressSection, matching: find.text('10')), findsOneWidget);
+    expect(find.descendant(of: progressSection, matching: find.text('100')), findsOneWidget);
+    await tester.tap(find.byTooltip('Show percentages'));
     await tester.pumpAndSettle();
-    expect(find.text('Words'), findsNWidgets(2));
-    expect(find.text('Sentences'), findsNWidgets(2));
-    expect(find.text('Kana'), findsNWidgets(2));
-    expect(find.text('30'), findsOneWidget);
-    expect(find.text('20'), findsOneWidget);
-    expect(find.text('10'), findsOneWidget);
+    expect(find.descendant(of: progressSection, matching: find.text('10.0%')), findsOneWidget);
+    expect(find.descendant(of: progressSection, matching: find.text('20.0%')), findsOneWidget);
+    expect(find.descendant(of: progressSection, matching: find.text('70.0%')), findsOneWidget);
+    expect(find.descendant(of: progressSection, matching: find.text('100.0%')), findsNWidgets(3));
 
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
-    await tester.pump();
-
-    expect(find.text('Words'), findsNWidgets(2));
-    expect(find.text('Sentences'), findsNWidgets(2));
-    expect(find.text('Kana'), findsNWidgets(2));
+    await tester.tap(find.text('Sessions'));
+    await tester.pumpAndSettle();
+    expect(find.text('Completed sessions'), findsOneWidget);
+    await tester.tap(find.text('Grades'));
+    await tester.pumpAndSettle();
     expect(find.text('Again'), findsOneWidget);
     expect(find.text('Hard'), findsOneWidget);
     expect(find.text('Medium'), findsNothing);

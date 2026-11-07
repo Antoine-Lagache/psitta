@@ -8,19 +8,7 @@ import 'package:psitta/domain/srs/grade.dart';
 typedef _Metric = ({String label, String value});
 typedef _BreakdownEntry = ({String label, int value});
 
-enum _StatisticsSection {
-  today('Today'),
-  allTime('All time'),
-  learningProgress('Exercise progress'),
-  sessions('Completed sessions'),
-  grades('Answers by grade');
-
-  const _StatisticsSection(this.label);
-
-  final String label;
-}
-
-/// Presents statistics in unframed sections with a section jump menu.
+/// Presents statistics in navigable tabs and distinct, unbordered sections.
 class StatisticsContent extends StatefulWidget {
   final SessionStatistics sessionStatistics;
   final ExerciseStatistics exerciseStatistics;
@@ -50,161 +38,208 @@ class StatisticsContent extends StatefulWidget {
 }
 
 class _StatisticsContentState extends State<StatisticsContent> {
-  final _sectionKeys = {
-    for (final section in _StatisticsSection.values) section: GlobalKey(),
-  };
-
-  void _jumpToSection(_StatisticsSection section) {
-    final target = _sectionKeys[section]?.currentContext;
-    if (target == null) return;
-    Scrollable.ensureVisible(
-      target,
-      duration: const Duration(milliseconds: 300),
-      alignment: 0.04,
-      curve: Curves.easeInOut,
-    );
-  }
+  bool _showPercentages = false;
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: widget.onRefresh,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(24, 28, 24, 36),
-            children: [
-              ..._buildHeader(context),
-              const SizedBox(height: 28),
-              _buildSection(
-                context,
-                _StatisticsSection.today,
-                _buildOverview(
-                  context,
-                  sessions: widget.todaySessionStatistics,
-                  exercises: widget.todayExerciseStatistics,
-                ),
-              ),
-              _buildSection(
-                context,
-                _StatisticsSection.allTime,
-                _buildOverview(
-                  context,
-                  sessions: widget.sessionStatistics,
-                  exercises: widget.exerciseStatistics,
-                ),
-              ),
-              _buildSection(
-                context,
-                _StatisticsSection.learningProgress,
-                _buildExerciseProgress(context),
-              ),
-              _buildSection(
-                context,
-                _StatisticsSection.sessions,
-                _buildSessionBreakdown(context),
-              ),
-              _buildSection(
-                context,
-                _StatisticsSection.grades,
-                _buildGradeBreakdown(context),
-              ),
-            ],
+    return DefaultTabController(
+      length: 4,
+      child: Column(
+        children: [
+          _buildHeader(context),
+          Container(
+            color: _navigationColor(context),
+            child: const TabBar(
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              tabs: [
+                Tab(text: 'Overview'),
+                Tab(text: 'Progress'),
+                Tab(text: 'Sessions'),
+                Tab(text: 'Grades'),
+              ],
+            ),
           ),
-        ),
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: TabBarView(
+                  children: [
+                    _buildPage(context, _buildOverviewPage(context)),
+                    _buildPage(context, _buildProgressPage(context)),
+                    _buildPage(context, _buildSessionsPage(context)),
+                    _buildPage(context, _buildGradesPage(context)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  List<Widget> _buildHeader(BuildContext context) {
-    return [
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Text(
-              'Statistics',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          PopupMenuButton<_StatisticsSection>(
-            tooltip: 'Move to a section',
-            onSelected: _jumpToSection,
-            itemBuilder: (context) => [
-              for (final section in _StatisticsSection.values)
-                PopupMenuItem(value: section, child: Text(section.label)),
-            ],
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [Icon(Icons.menu), SizedBox(width: 6), Text('Sections')],
-              ),
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 6),
-      Text(
-        'Your learning activity today and overall.',
-        style: Theme.of(
-          context,
-        ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF616161)),
-      ),
-      const SizedBox(height: 24),
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Icon(Icons.local_fire_department, color: Color(0xFFE87524), size: 48),
-          const SizedBox(width: 12),
-          Text(
-            '${widget.dailyStreak}',
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              color: Colors.black,
-              fontWeight: FontWeight.w800,
-              height: 1,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              widget.dailyStreak == 1 ? 'day streak' : 'days streak',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    ];
-  }
-
-  Widget _buildSection(BuildContext context, _StatisticsSection section, Widget content) {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
-      key: _sectionKeys[section],
-      padding: const EdgeInsets.only(bottom: 32),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            section.label,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            'Statistics',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Your learning activity today and overall.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF616161),
+            ),
           ),
           const SizedBox(height: 16),
-          content,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.local_fire_department,
+                color: Color(0xFFE87524),
+                size: 42,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '${widget.dailyStreak}',
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  widget.dailyStreak == 1 ? 'day streak' : 'days streak',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
+
+  Widget _buildPage(BuildContext context, List<Widget> sections) {
+    return RefreshIndicator(
+      onRefresh: widget.onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+        children: sections,
+      ),
+    );
+  }
+
+  List<Widget> _buildOverviewPage(BuildContext context) => [
+    _buildSection(
+      context,
+      title: 'Today',
+      child: _buildOverview(
+        context,
+        sessions: widget.todaySessionStatistics,
+        exercises: widget.todayExerciseStatistics,
+      ),
+    ),
+    const SizedBox(height: 16),
+    _buildSection(
+      context,
+      title: 'All time',
+      child: _buildOverview(
+        context,
+        sessions: widget.sessionStatistics,
+        exercises: widget.exerciseStatistics,
+      ),
+    ),
+  ];
+
+  List<Widget> _buildProgressPage(BuildContext context) => [
+    _buildSection(
+      context,
+      title: 'Exercise progress',
+      key: const ValueKey('statistics-progress-section'),
+      action: IconButton(
+        tooltip: _showPercentages ? 'Show counts' : 'Show percentages',
+        visualDensity: VisualDensity.compact,
+        onPressed: () => setState(() => _showPercentages = !_showPercentages),
+        icon: Icon(_showPercentages ? Icons.numbers : Icons.percent),
+      ),
+      child: _buildExerciseProgress(context),
+    ),
+  ];
+
+  List<Widget> _buildSessionsPage(BuildContext context) => [
+    _buildSection(
+      context,
+      title: 'Completed sessions',
+      child: _buildBreakdown(context, _sessionEntries()),
+    ),
+  ];
+
+  List<Widget> _buildGradesPage(BuildContext context) => [
+    _buildSection(
+      context,
+      title: 'Recorded answers by grade',
+      child: _buildBreakdown(context, _gradeEntries()),
+    ),
+  ];
+
+  Widget _buildSection(
+    BuildContext context, {
+    required String title,
+    required Widget child,
+    Widget? action,
+    Key? key,
+  }) {
+    return Container(
+      key: key,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _navigationColor(context),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (action != null) action,
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Color _navigationColor(BuildContext context) =>
+      Theme.of(context).navigationBarTheme.backgroundColor ??
+      Theme.of(context).colorScheme.surfaceContainer;
 
   Widget _buildOverview(
     BuildContext context, {
@@ -224,14 +259,12 @@ class _StatisticsContentState extends State<StatisticsContent> {
   List<_Metric> _overviewMetrics(
     SessionStatistics sessions,
     ExerciseStatistics exercises,
-  ) {
-    return [
-      (label: 'Sessions completed', value: '${sessions.numberOfSessions}'),
-      (label: 'Completed session time', value: _formatDuration(sessions.totalTimeSpent)),
-      (label: 'Answers recorded', value: '${exercises.totalNumberAnswers}'),
-      (label: 'Exercises completed', value: '${sessions.numberOfExercisesCompleted}'),
-    ];
-  }
+  ) => [
+    (label: 'Sessions completed', value: '${sessions.numberOfSessions}'),
+    (label: 'Completed session time', value: _formatDuration(sessions.totalTimeSpent)),
+    (label: 'Answers recorded', value: '${exercises.totalNumberAnswers}'),
+    (label: 'Exercises completed', value: '${sessions.numberOfExercisesCompleted}'),
+  ];
 
   Widget _buildMetricRow(BuildContext context, _Metric left, _Metric right) {
     return Row(
@@ -254,35 +287,48 @@ class _StatisticsContentState extends State<StatisticsContent> {
 
     return Column(
       children: [
-        _buildProgressRow(
-          context,
-          'Exercise type',
-          'New',
-          'Started',
-          'Mastered',
-          isHeader: true,
-        ),
-        const SizedBox(height: 14),
+        _buildProgressRow(context, 'Exercise type', 'New', 'Started', 'Mastered', 'Total', isHeader: true),
+        const SizedBox(height: 16),
         for (final type in types) ...[
-          _buildProgressRow(
+          _buildProgressValues(
             context,
             type.label,
-            (widget.progressCounts.byType[type.key] ?? zero).notStarted.toString(),
-            (widget.progressCounts.byType[type.key] ?? zero).started.toString(),
-            (widget.progressCounts.byType[type.key] ?? zero).mastered.toString(),
+            widget.progressCounts.byType[type.key] ?? zero,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
         ],
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
             'Mastered means FSRS stability above 30 days.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF616161),
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProgressValues(
+    BuildContext context,
+    String label,
+    ExerciseTypeProgressCounts counts,
+  ) {
+    final total = counts.notStarted + counts.started + counts.mastered;
+    String format(int count) {
+      if (!_showPercentages) return '$count';
+      if (total == 0) return '—';
+      return '${(count * 100 / total).toStringAsFixed(1)}%';
+    }
+
+    return _buildProgressRow(
+      context,
+      label,
+      format(counts.notStarted),
+      format(counts.started),
+      format(counts.mastered),
+      _showPercentages ? (total == 0 ? '—' : '100.0%') : '$total',
     );
   }
 
@@ -291,7 +337,8 @@ class _StatisticsContentState extends State<StatisticsContent> {
     String label,
     String notStarted,
     String started,
-    String mastered, {
+    String mastered,
+    String total, {
     bool isHeader = false,
   }) {
     final style = isHeader
@@ -302,63 +349,68 @@ class _StatisticsContentState extends State<StatisticsContent> {
         : Theme.of(context).textTheme.bodyLarge;
     return Row(
       children: [
-        Expanded(flex: 3, child: Text(label, style: style)),
-        Expanded(
-          child: Text(notStarted, textAlign: TextAlign.end, style: style),
-        ),
-        Expanded(
-          child: Text(started, textAlign: TextAlign.end, style: style),
-        ),
-        Expanded(
-          child: Text(mastered, textAlign: TextAlign.end, style: style),
-        ),
+        Expanded(flex: 2, child: Text(label, style: style)),
+        _buildProgressCell(notStarted, style),
+        _buildProgressCell(started, style),
+        _buildProgressCell(mastered, style),
+        _buildProgressCell(total, style, emphasize: true),
       ],
     );
   }
 
-  Widget _buildSessionBreakdown(BuildContext context) {
-    return _buildBreakdown(context, [
-      (
-        label: 'Words',
-        value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
-          SessionType.wordSession,
+  Widget _buildProgressCell(String value, TextStyle? style, {bool emphasize = false}) {
+    return Expanded(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: Text(
+          value,
+          textAlign: TextAlign.end,
+          style: emphasize ? style?.copyWith(fontWeight: FontWeight.w700) : style,
         ),
       ),
-      (
-        label: 'Sentences',
-        value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
-          SessionType.sentenceSession,
-        ),
-      ),
-      (
-        label: 'Kana',
-        value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
-          SessionType.characterSession,
-        ),
-      ),
-    ]);
+    );
   }
 
-  Widget _buildGradeBreakdown(BuildContext context) {
-    return _buildBreakdown(context, [
-      (
-        label: 'Again',
-        value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.again),
+  List<_BreakdownEntry> _sessionEntries() => [
+    (
+      label: 'Words',
+      value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
+        SessionType.wordSession,
       ),
-      (
-        label: 'Hard',
-        value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.hard),
+    ),
+    (
+      label: 'Sentences',
+      value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
+        SessionType.sentenceSession,
       ),
-      (
-        label: 'Good',
-        value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.good),
+    ),
+    (
+      label: 'Kana',
+      value: widget.sessionStatistics.getNumberOfSessionsBySessionType(
+        SessionType.characterSession,
       ),
-      (
-        label: 'Easy',
-        value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.easy),
-      ),
-    ]);
-  }
+    ),
+  ];
+
+  List<_BreakdownEntry> _gradeEntries() => [
+    (
+      label: 'Again',
+      value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.again),
+    ),
+    (
+      label: 'Hard',
+      value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.hard),
+    ),
+    (
+      label: 'Good',
+      value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.good),
+    ),
+    (
+      label: 'Easy',
+      value: widget.exerciseStatistics.getNumberOfAnswersByGrade(Grade.easy),
+    ),
+  ];
 
   Widget _buildBreakdown(BuildContext context, List<_BreakdownEntry> entries) {
     return Column(
@@ -371,9 +423,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
                 Expanded(child: Text(entry.label)),
                 Text(
                   '${entry.value}',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -411,9 +463,9 @@ class _StatisticMetric extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           metric.label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: const Color(0xFF616161),
+          ),
         ),
       ],
     );
