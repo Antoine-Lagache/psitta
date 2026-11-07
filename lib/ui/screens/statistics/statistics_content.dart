@@ -107,11 +107,7 @@ class _StatisticsContentState extends State<StatisticsContent> {
                     : const Color(0xFFE0E0E0),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.local_fire_department,
-                color: streakIconColor,
-                size: 36,
-              ),
+              child: Icon(Icons.local_fire_department, color: streakIconColor, size: 36),
             ),
             const SizedBox(width: 16),
             Text(

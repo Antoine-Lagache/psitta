@@ -19,9 +19,8 @@ class DailyStreakController {
     final lastInstant = DateTime.tryParse(await _settings.get(_instantKey) ?? '');
     final localNow = (now ?? DateTime.now()).toLocal();
     final today = _dateKeyOf(localNow);
-    final activityToday = count > 0 &&
-        lastInstant != null &&
-        _dateKeyOf(lastInstant.toLocal()) == today;
+    final activityToday =
+        count > 0 && lastInstant != null && _dateKeyOf(lastInstant.toLocal()) == today;
 
     if (count == 0 || lastDate == null) {
       return (count: 0, activityToday: false);
