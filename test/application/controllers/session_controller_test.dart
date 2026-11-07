@@ -252,7 +252,10 @@ void main() {
       await createWordExercise();
       final firstController = createController();
       await firstController.startNewSession(SessionType.wordSession);
-      expect(await firstController.submitAnswer(Grade.good), SubmitAnswerResult.nextExercise);
+      expect(
+        await firstController.submitAnswer(Grade.good),
+        SubmitAnswerResult.nextExercise,
+      );
       await firstController.pauseSession();
 
       final secondController = createController();

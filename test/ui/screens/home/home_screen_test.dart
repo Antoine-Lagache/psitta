@@ -60,7 +60,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(controller.abandoned, [SessionType.wordSession]);
-    expect(find.text('Start new session'), findsOneWidget);
+    expect(
+      find.descendant(of: wordCard, matching: find.text('Start new session')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 

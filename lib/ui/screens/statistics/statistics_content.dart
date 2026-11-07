@@ -128,9 +128,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
                   ),
                   Text(
                     'Keep your daily learning going',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF616161),
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
                   ),
                 ],
               ),
