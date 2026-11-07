@@ -42,7 +42,7 @@ void main() {
               mastered: 585,
               byType: {
                 'word': (notStarted: 10, started: 20, mastered: 70),
-                'sentence': (notStarted: 200, started: 300, mastered: 500),
+                'sentence': (notStarted: 210, started: 330, mastered: 460),
                 'character': (notStarted: 31, started: 7, mastered: 12),
               },
             ),

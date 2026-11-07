@@ -168,6 +168,13 @@ void main() {
     expect(find.text('Hard'), findsOneWidget);
     expect(find.text('Medium'), findsNothing);
     expect(find.text('10 min'), findsOneWidget);
+    final again = tester.getRect(find.widgetWithText(OutlinedButton, 'Again'));
+    final hard = tester.getRect(find.widgetWithText(OutlinedButton, 'Hard'));
+    final good = tester.getRect(find.widgetWithText(OutlinedButton, 'Good'));
+    final easy = tester.getRect(find.widgetWithText(OutlinedButton, 'Easy'));
+    expect(again.top, hard.top);
+    expect(again.top, good.top);
+    expect(again.top, easy.top);
     await tester.tap(find.text('Hard'));
     expect(selectedGrade, Grade.hard);
   });

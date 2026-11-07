@@ -223,7 +223,7 @@ class _StatisticsContentState extends State<StatisticsContent> {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
-              if (action != null) action,
+              ?action,
             ],
           ),
           const SizedBox(height: 16),
