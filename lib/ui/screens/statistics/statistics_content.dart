@@ -96,19 +96,15 @@ class _StatisticsContentState extends State<StatisticsContent> {
           const SizedBox(height: 4),
           Text(
             'Your learning activity today and overall.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF616161),
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF616161)),
           ),
           const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.local_fire_department,
-                color: Color(0xFFE87524),
-                size: 42,
-              ),
+              const Icon(Icons.local_fire_department, color: Color(0xFFE87524), size: 42),
               const SizedBox(width: 10),
               Text(
                 '${widget.dailyStreak}',
@@ -123,9 +119,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   widget.dailyStreak == 1 ? 'day streak' : 'days streak',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -222,9 +218,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
               Expanded(
                 child: Text(
                   title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
               if (action != null) action,
@@ -287,7 +283,15 @@ class _StatisticsContentState extends State<StatisticsContent> {
 
     return Column(
       children: [
-        _buildProgressRow(context, 'Exercise type', 'New', 'Started', 'Mastered', 'Total', isHeader: true),
+        _buildProgressRow(
+          context,
+          'Exercise type',
+          'New',
+          'Started',
+          'Mastered',
+          'Total',
+          isHeader: true,
+        ),
         const SizedBox(height: 16),
         for (final type in types) ...[
           _buildProgressValues(
@@ -301,9 +305,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
           alignment: Alignment.centerLeft,
           child: Text(
             'Mastered means FSRS stability above 30 days.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF616161),
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
           ),
         ),
       ],
@@ -423,9 +427,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
                 Expanded(child: Text(entry.label)),
                 Text(
                   '${entry.value}',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -463,9 +467,9 @@ class _StatisticMetric extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           metric.label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: const Color(0xFF616161),
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
         ),
       ],
     );
