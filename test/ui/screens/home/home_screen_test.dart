@@ -16,6 +16,50 @@ import 'package:psitta/ui/screens/home/session_overview_card.dart';
 import 'package:psitta/ui/screens/learning/learning_screen.dart';
 
 void main() {
+  testWidgets('abandon action removes a paused session after confirmation', (
+    tester,
+  ) async {
+    final controller = _TransitionSessionController()..persistedActiveType = SessionType.wordSession;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HomeScreen(
+            sessionController: controller,
+            contentRenderer: _TestContentRenderer(),
+            contentReleaseState: ContentReleaseState(Future.value(true)),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More information: Session counts'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('For a new session, New and To review'), findsOneWidget);
+    await tester.tap(find.text('Got it'));
+    await tester.pumpAndSettle();
+
+    final wordCard = find.byWidgetPredicate(
+      (widget) =>
+          widget is SessionOverviewCard &&
+          widget.overview.sessionType == SessionType.wordSession,
+    );
+    final abandonButton = find.descendant(
+      of: wordCard,
+      matching: find.text('Abandon session'),
+    );
+    await tester.tap(abandonButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Answers already submitted keep their exercise progress.'), findsOneWidget);
+
+    await tester.tap(find.text('Abandon session').last);
+    await tester.pumpAndSettle();
+
+    expect(controller.abandoned, [SessionType.wordSession]);
+    expect(find.text('Start new session'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final type in [SessionType.wordSession, SessionType.sentenceSession]) {
     testWidgets('import completes safely during a $type session', (tester) async {
       final controller = _TransitionSessionController();
@@ -121,6 +165,8 @@ class _TransitionSessionController implements SessionController {
   final Completer<void> finishPause = Completer<void>();
   bool imported = false;
   final started = <SessionType>[];
+  SessionType? persistedActiveType;
+  final abandoned = <SessionType>[];
 
   @override
   Future<List<SessionOverview>> getSessionOverviews() async => [
@@ -129,9 +175,16 @@ class _TransitionSessionController implements SessionController {
         sessionType: type,
         newExerciseCount: type == SessionType.characterSession && !imported ? 0 : 5,
         reviewExerciseCount: 0,
-        hasActiveSession: false,
+        hasActiveSession: persistedActiveType == type,
       ),
   ];
+
+  @override
+  Future<bool> abandonSession(SessionType type) async {
+    abandoned.add(type);
+    if (persistedActiveType == type) persistedActiveType = null;
+    return true;
+  }
 
   @override
   bool get hasActiveSession => _active;

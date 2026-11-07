@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:psitta/application/models/session/session_overview.dart';
 import 'package:psitta/ui/screens/home/session_overview_card.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
+import 'package:psitta/ui/presentation/info_button.dart';
 
 /// Displays the successfully loaded content of the home screen.
 class HomeContent extends StatelessWidget {
@@ -10,6 +11,7 @@ class HomeContent extends StatelessWidget {
   final bool characterLoadFailed;
   final RefreshCallback onRefresh;
   final ValueChanged<SessionOverview> onSessionSelected;
+  final ValueChanged<SessionOverview> onSessionAbandon;
 
   const HomeContent({
     required this.overviews,
@@ -17,6 +19,7 @@ class HomeContent extends StatelessWidget {
     this.characterLoadFailed = false,
     required this.onRefresh,
     required this.onSessionSelected,
+    required this.onSessionAbandon,
     super.key,
   });
 
@@ -56,11 +59,22 @@ class HomeContent extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 8),
-      Text(
-        'Recommended: one Words session and one Sentences session per day.',
-        style: Theme.of(
-          context,
-        ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF616161)),
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              'Recommended: one Words session and one Sentences session per day.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF616161)),
+            ),
+          ),
+          const InfoButton(
+            title: 'Session counts',
+            message:
+                'For a new session, New and To review show the exercises that can be added. For a paused session, they show the exercises still remaining. Answers already submitted are saved as you go.',
+          ),
+        ],
       ),
     ];
   }
@@ -77,6 +91,9 @@ class HomeContent extends StatelessWidget {
               characterLoadFailed &&
               overviews[index].sessionType == SessionType.characterSession,
           onPressed: () => onSessionSelected(overviews[index]),
+          onAbandon: overviews[index].hasActiveSession
+              ? () => onSessionAbandon(overviews[index])
+              : null,
         ),
         if (index < overviews.length - 1) const SizedBox(height: 16),
       ],

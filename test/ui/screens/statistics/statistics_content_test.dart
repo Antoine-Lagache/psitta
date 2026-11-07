@@ -59,7 +59,17 @@ void main() {
     expect(find.text('1h 5m'), findsNWidgets(2));
     expect(find.text('Answers recorded'), findsNWidgets(2));
     expect(find.text('17'), findsOneWidget);
+    expect(find.text('Statistics'), findsNothing);
     expect(find.byType(Card), findsNothing);
+
+    await tester.tap(find.byTooltip('More information: Daily streak'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('A day counts when you record at least one answer.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Got it'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Progress'));
     await tester.pumpAndSettle();
@@ -76,6 +86,11 @@ void main() {
       find.descendant(of: progressSection, matching: find.text('Kana')),
       findsOneWidget,
     );
+    await tester.tap(find.byTooltip('More information: Exercise progress'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('FSRS stability above 30 days'), findsOneWidget);
+    await tester.tap(find.text('Got it'));
+    await tester.pumpAndSettle();
     expect(
       find.descendant(of: progressSection, matching: find.text('10')),
       findsOneWidget,

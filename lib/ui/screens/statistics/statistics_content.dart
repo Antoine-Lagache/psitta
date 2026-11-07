@@ -4,6 +4,7 @@ import 'package:psitta/application/models/statistics/exercise_statistics.dart';
 import 'package:psitta/application/models/statistics/session_statistics.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/domain/srs/grade.dart';
+import 'package:psitta/ui/presentation/info_button.dart';
 
 typedef _Metric = ({String label, String value});
 typedef _BreakdownEntry = ({String label, int value});
@@ -82,51 +83,65 @@ class _StatisticsContentState extends State<StatisticsContent> {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Statistics',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: _navigationColor(context),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE87524).withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.local_fire_department,
+                color: Color(0xFFE87524),
+                size: 36,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Your learning activity today and overall.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF616161)),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(Icons.local_fire_department, color: Color(0xFFE87524), size: 42),
-              const SizedBox(width: 10),
-              Text(
-                '${widget.dailyStreak}',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w800,
-                  height: 1,
-                ),
+            const SizedBox(width: 16),
+            Text(
+              '${widget.dailyStreak}',
+              style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.w800,
+                height: 1,
               ),
-              const SizedBox(width: 10),
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  widget.dailyStreak == 1 ? 'day streak' : 'days streak',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.dailyStreak == 1 ? 'day streak' : 'days streak',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  Text(
+                    'Keep your daily learning going',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF616161),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+            const InfoButton(
+              title: 'Daily streak',
+              message:
+                  'A day counts when you record at least one answer. The streak follows local calendar days and tolerates recent timezone or daylight-saving offset changes.',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -169,11 +184,21 @@ class _StatisticsContentState extends State<StatisticsContent> {
       context,
       title: 'Exercise progress',
       key: const ValueKey('statistics-progress-section'),
-      action: IconButton(
-        tooltip: _showPercentages ? 'Show counts' : 'Show percentages',
-        visualDensity: VisualDensity.compact,
-        onPressed: () => setState(() => _showPercentages = !_showPercentages),
-        icon: Icon(_showPercentages ? Icons.numbers : Icons.percent),
+      action: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const InfoButton(
+            title: 'Exercise progress',
+            message:
+                'New exercises have no answer history. Started exercises have been answered but have not reached the mastered threshold. Mastered exercises have an FSRS stability above 30 days; a failed answer can move one back to Started.',
+          ),
+          IconButton(
+            tooltip: _showPercentages ? 'Show counts' : 'Show percentages',
+            visualDensity: VisualDensity.compact,
+            onPressed: () => setState(() => _showPercentages = !_showPercentages),
+            icon: Icon(_showPercentages ? Icons.numbers : Icons.percent),
+          ),
+        ],
       ),
       child: _buildExerciseProgress(context),
     ),

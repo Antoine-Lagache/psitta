@@ -247,6 +247,29 @@ void main() {
       expect(secondController.hasActiveSession, isFalse);
     });
 
+    test('abandons a paused session but keeps progress from submitted answers', () async {
+      await createWordExercise();
+      await createWordExercise();
+      final firstController = createController();
+      await firstController.startNewSession(SessionType.wordSession);
+      expect(await firstController.submitAnswer(Grade.good), SubmitAnswerResult.nextExercise);
+      await firstController.pauseSession();
+
+      final secondController = createController();
+      expect(await secondController.abandonSession(SessionType.wordSession), isTrue);
+
+      expect(await sessionRepository.getAllActiveSessionResult(), isEmpty);
+      expect(await sessionRepository.getList(), isEmpty);
+      expect(await ExerciseHistoryRepository(database).getList(), hasLength(1));
+      expect(
+        overviewOf(
+          await secondController.getSessionOverviews(),
+          SessionType.wordSession,
+        ).hasActiveSession,
+        isFalse,
+      );
+    });
+
     test('does not block a new session because another type is persisted', () async {
       await createWordExercise();
       final firstController = createController();

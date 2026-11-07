@@ -90,6 +90,52 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _abandonSession(SessionOverview overview) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Abandon this session?'),
+        content: const Text(
+          'The saved session and its session statistics will be removed. '
+          'Answers already submitted keep their exercise progress.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep session'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Abandon session'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await widget.sessionController.abandonSession(overview.sessionType);
+      if (mounted) await _reload();
+    } on Object catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'home screen',
+          context: ErrorDescription('while abandoning a paused session'),
+        ),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('The session could not be abandoned.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -122,6 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
       characterLoadFailed: widget.contentReleaseState.hasFailed,
       onRefresh: _reload,
       onSessionSelected: _selectSession,
+      onSessionAbandon: (overview) => _abandonSession(overview),
     );
   }
 }

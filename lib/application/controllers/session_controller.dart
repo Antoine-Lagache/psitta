@@ -316,6 +316,29 @@ class SessionController {
     });
   }
 
+  /// Deletes a paused session and its resumable snapshot without undoing
+  /// exercise progress from answers that were already submitted.
+  Future<bool> abandonSession(SessionType sessionType) {
+    return _runExclusive(() async {
+      if (_activeSession != null) {
+        throw StateError('Pause the running session before abandoning it');
+      }
+
+      final persistedSessions = await _sessionRepository.getAllActiveSessionResult();
+      final session = _mostRecentSessionOfType(persistedSessions, sessionType);
+      if (session == null) {
+        return false;
+      }
+
+      final sessionId = session.id;
+      if (sessionId == null) {
+        throw StateError('An active persisted session must have an id');
+      }
+      await _sessionRepository.deleteSessionResult(sessionId);
+      return true;
+    });
+  }
+
   Future<void> pauseSession() {
     return _runExclusive(() async {
       final session = _requireActiveSession();

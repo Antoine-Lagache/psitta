@@ -6,12 +6,14 @@ import 'package:psitta/domain/sessions/session_type.dart';
 class SessionOverviewCard extends StatelessWidget {
   final SessionOverview overview;
   final VoidCallback onPressed;
+  final VoidCallback? onAbandon;
   final bool isLoading;
   final bool loadFailed;
 
   const SessionOverviewCard({
     required this.overview,
     required this.onPressed,
+    this.onAbandon,
     this.isLoading = false,
     this.loadFailed = false,
     super.key,
@@ -43,6 +45,19 @@ class SessionOverviewCard extends StatelessWidget {
               _buildCounts(),
             const SizedBox(height: 20),
             _buildAction(hasAvailableExercises),
+            if (overview.hasActiveSession && onAbandon != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: onAbandon,
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Abandon session'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
