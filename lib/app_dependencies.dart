@@ -80,6 +80,13 @@ class AppDependencies {
     }
   }
 
+  /// Reinstalls bundled releases missing from a restored older backup.
+  Future<void> installMissingReleasedContent() async {
+    final connection = _database.database;
+    await ReleaseContentImporter(connection).importIfEmpty();
+    await CharacterExerciseReleaseImporter(connection).importIfNeeded();
+  }
+
   Future<void> dispose() async {
     try {
       await contentReleaseState.completed;

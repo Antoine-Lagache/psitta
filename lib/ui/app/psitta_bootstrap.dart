@@ -127,6 +127,7 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
         settingsController: dependencies.settingsController,
         contentRenderer: dependencies.contentRenderer,
         contentReleaseState: dependencies.contentReleaseState,
+        installMissingReleasedContent: dependencies.installMissingReleasedContent,
         themeVariant: widget.themeVariant,
       ),
     };

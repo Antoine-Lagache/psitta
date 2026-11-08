@@ -100,9 +100,18 @@ class ProgressRepository {
       // ATTACH/DETACH are connection-scoped SQLite operations and must run
       // outside a transaction. Detach a stale alias first in case a previous
       // restore failed while cleaning up.
-      await database.writeLock((tx) async {
+      final foreignKeysWereEnabled = await database.writeLock((tx) async {
         await _detachRestoreSourceIfAttached(tx);
-        await tx.execute('ATTACH DATABASE ? AS restore_source', [path]);
+        final result = await tx.get('PRAGMA foreign_keys');
+        final wasEnabled = result['foreign_keys'] == 1;
+        await tx.execute('PRAGMA foreign_keys = OFF');
+        try {
+          await tx.execute('ATTACH DATABASE ? AS restore_source', [path]);
+        } on Object {
+          if (wasEnabled) await tx.execute('PRAGMA foreign_keys = ON');
+          rethrow;
+        }
+        return wasEnabled;
       });
       try {
         await database.writeTransaction((tx) async {
@@ -127,8 +136,10 @@ class ProgressRepository {
               .toList();
           final sourceNames = sourceTables.map((row) => row['name'] as String).toList();
 
-          // Deferring constraints allows tables to be restored in any order.
-          await tx.execute('PRAGMA defer_foreign_keys = ON');
+          // Replacing every table can temporarily violate foreign keys (and
+          // some relations use immediate constraints). The source was fully
+          // integrity-checked before this transaction; validate the restored
+          // main database after re-enabling enforcement.
           for (final table in destinationNames) {
             await tx.execute('DELETE FROM main.${_quoteIdentifier(table)}');
           }
@@ -139,7 +150,16 @@ class ProgressRepository {
           await tx.execute('PRAGMA main.user_version = $schemaVersion');
         });
       } finally {
-        await database.writeLock(_detachRestoreSourceIfAttached);
+        await database.writeLock((tx) async {
+          await tx.execute(
+            'PRAGMA foreign_keys = ${foreignKeysWereEnabled ? 'ON' : 'OFF'}',
+          );
+          await _detachRestoreSourceIfAttached(tx);
+        });
+      }
+      final foreignKeyErrors = await database.getAll('PRAGMA foreign_key_check');
+      if (foreignKeyErrors.isNotEmpty) {
+        throw StateError('The restored database contains invalid references.');
       }
       await database.refreshSchema();
     });

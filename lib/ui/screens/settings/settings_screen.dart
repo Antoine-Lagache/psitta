@@ -17,6 +17,7 @@ class SettingsScreen extends StatefulWidget {
   final ValueChanged<bool>? onCharacterSessionsChanged;
   final VoidCallback? onSessionLimitsChanged;
   final VoidCallback? onProgressChanged;
+  final Future<void> Function()? onDatabaseRestored;
 
   const SettingsScreen({
     this.settingsController,
@@ -26,6 +27,7 @@ class SettingsScreen extends StatefulWidget {
     this.onCharacterSessionsChanged,
     this.onSessionLimitsChanged,
     this.onProgressChanged,
+    this.onDatabaseRestored,
     super.key,
   });
 
@@ -379,6 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backupBytes,
         allowMigration: migrationRequired,
       );
+      await widget.onDatabaseRestored?.call();
       widget.onProgressChanged?.call();
       await _loadSettings();
     }, successMessage: 'Database restored.');
