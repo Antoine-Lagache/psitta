@@ -70,14 +70,14 @@ class SessionOverviewCard extends StatelessWidget {
   ) {
     return Row(
       children: [
-        _buildIcon(presentation.icon),
+        _buildIcon(context, presentation.icon),
         const SizedBox(width: 14),
         Expanded(child: _buildDescription(context, presentation)),
       ],
     );
   }
 
-  Widget _buildIcon(IconData icon) {
+  Widget _buildIcon(BuildContext context, IconData icon) {
     final colors = Theme.of(context).colorScheme;
     return Container(
       width: 44,
@@ -106,9 +106,7 @@ class SessionOverviewCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           presentation.description,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
@@ -197,9 +195,7 @@ class _SessionCount extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: Theme.of(
-            context,
-            ).textTheme.bodyMedium?.copyWith(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),

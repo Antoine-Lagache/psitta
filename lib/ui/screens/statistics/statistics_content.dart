@@ -131,9 +131,7 @@ class _StatisticsContentState extends State<StatisticsContent> {
                   ),
                   Text(
                     _streakCaption,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -326,9 +324,7 @@ class _StatisticsContentState extends State<StatisticsContent> {
           alignment: Alignment.centerLeft,
           child: Text(
             'Mastered means FSRS stability above 30 days.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
@@ -490,9 +486,7 @@ class _StatisticMetric extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           metric.label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),

@@ -4,9 +4,7 @@ enum AppThemeVariant { light, dark, psitta }
 
 /// Builds one of the application colour themes.
 ThemeData buildAppTheme({AppThemeVariant variant = AppThemeVariant.light}) {
-  final brightness = variant == AppThemeVariant.dark
-      ? Brightness.dark
-      : Brightness.light;
+  final brightness = variant == AppThemeVariant.dark ? Brightness.dark : Brightness.light;
   final seedColor = variant == AppThemeVariant.psitta
       ? const Color(0xFFAD422D)
       : Colors.black;

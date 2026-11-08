@@ -39,9 +39,7 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
     try {
       final dependencies = await widget.initializeDependencies();
 
-      final savedTheme = await dependencies.settingsController.get(
-        'appearance.theme',
-      );
+      final savedTheme = await dependencies.settingsController.get('appearance.theme');
       widget.themeVariant?.value = switch (savedTheme) {
         'dark' => AppThemeVariant.dark,
         'psitta' => AppThemeVariant.psitta,

@@ -10,7 +10,7 @@ void main() {
     expect(find.text('Settings'), findsOne);
     expect(find.text('Color theme'), findsOne);
 
-    await tester.ensureVisible(find.text('About Psitta'));
+    await tester.scrollUntilVisible(find.text('About Psitta'), 200);
     await tester.tap(find.text('About Psitta'));
     await tester.pumpAndSettle();
 

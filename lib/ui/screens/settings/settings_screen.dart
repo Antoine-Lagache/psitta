@@ -114,18 +114,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         initialValue: _theme,
         decoration: const InputDecoration(labelText: 'Color theme'),
         items: const [
-          DropdownMenuItem(
-            value: AppThemeVariant.light,
-            child: Text('Light'),
-          ),
-          DropdownMenuItem(
-            value: AppThemeVariant.dark,
-            child: Text('Dark'),
-          ),
-          DropdownMenuItem(
-            value: AppThemeVariant.psitta,
-            child: Text('Psitta'),
-          ),
+          DropdownMenuItem(value: AppThemeVariant.light, child: Text('Light')),
+          DropdownMenuItem(value: AppThemeVariant.dark, child: Text('Dark')),
+          DropdownMenuItem(value: AppThemeVariant.psitta, child: Text('Psitta')),
         ],
         onChanged: _loading
             ? null
@@ -191,19 +182,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     List<int> values = const [0, 1, 2, 3, 4, 5, 6, 8, 10, 15, 20],
     Map<int, String> labels = const {},
   }) {
-    final options = values.contains(value)
-        ? values
-        : ([...values, value]..sort());
+    final options = values.contains(value) ? values : ([...values, value]..sort());
     return DropdownButtonFormField<int>(
       key: ValueKey('$label:$value'),
       initialValue: value,
       decoration: InputDecoration(labelText: label),
       items: [
         for (final option in options)
-          DropdownMenuItem(
-            value: option,
-            child: Text(labels[option] ?? '$option'),
-          ),
+          DropdownMenuItem(value: option, child: Text(labels[option] ?? '$option')),
       ],
       onChanged: _loading
           ? null
@@ -220,9 +206,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Reset progress and database backup tools will be available here.',
-          ),
+          const Text('Reset progress and database backup tools will be available here.'),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: null,
@@ -290,9 +274,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await widget.settingsController?.set(key, value);
     } on Object catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Setting could not be saved: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Setting could not be saved: $error')));
     }
   }
 
@@ -320,11 +304,7 @@ class _SettingsSection extends StatelessWidget {
   final IconData icon;
   final Widget child;
 
-  const _SettingsSection({
-    required this.title,
-    required this.icon,
-    required this.child,
-  });
+  const _SettingsSection({required this.title, required this.icon, required this.child});
 
   @override
   Widget build(BuildContext context) {
