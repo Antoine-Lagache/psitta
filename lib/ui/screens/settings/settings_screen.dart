@@ -325,6 +325,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _showDataOperationError(error);
       return;
     }
+    if (!mounted) return;
     if (file == null) return;
     final selectedFile = file;
     final confirmed = await showDialog<bool>(
