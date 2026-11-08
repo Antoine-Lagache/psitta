@@ -399,9 +399,7 @@ class _NumericSliderSettingState extends State<_NumericSliderSetting> {
 
   void _commit() {
     final parsed = int.tryParse(_textController.text);
-    if (parsed == null ||
-        parsed < widget.minValue ||
-        parsed > widget.maxValue) {
+    if (parsed == null || parsed < widget.minValue || parsed > widget.maxValue) {
       setState(() {
         _errorText =
             'Enter a whole number from ${widget.minValue} to ${widget.maxValue}.';

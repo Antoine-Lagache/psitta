@@ -14,6 +14,7 @@ class SRSConfig {
   final int newCount;
   final int newSentenceCount;
   final int newCharacterCount;
+
   /// A negative value means that reviews are not capped per session.
   final int reviewCount;
 
