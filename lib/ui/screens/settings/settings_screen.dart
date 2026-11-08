@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -328,14 +329,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
     if (file == null) return;
     final selectedFile = file;
+    Uint8List backupBytes;
+    int backupVersion;
+    setState(() => _dataOperationInProgress = true);
+    try {
+      backupBytes = await selectedFile.readAsBytes();
+      backupVersion = await widget.progressController!.inspectDatabaseBackup(backupBytes);
+    } on Object catch (error) {
+      _showDataOperationError(error);
+      return;
+    } finally {
+      if (mounted) setState(() => _dataOperationInProgress = false);
+    }
+    if (!mounted) return;
+    final migrationRequired =
+        backupVersion < widget.progressController!.currentSchemaVersion;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Restore this database?'),
-        content: const Text(
-          'Restoring replaces all current content, settings, progress, and statistics '
-          'with the selected backup. The database version will be checked before '
-          'anything is changed.',
+        title: Text(
+          migrationRequired
+              ? 'Migrate and restore this backup?'
+              : 'Restore this database?',
+        ),
+        content: Text(
+          migrationRequired
+              ? 'This backup uses database version $backupVersion. Psitta will '
+                    'automatically migrate a temporary copy to version '
+                    '${widget.progressController!.currentSchemaVersion} before '
+                    'restoring it. This replaces all current content, settings, '
+                    'progress, and statistics.'
+              : 'Restoring replaces all current content, settings, progress, and '
+                    'statistics with the selected backup.',
         ),
         actions: [
           TextButton(
@@ -344,15 +369,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Restore'),
+            child: Text(migrationRequired ? 'Migrate and restore' : 'Restore'),
           ),
         ],
       ),
     );
     if (confirmed != true) return;
     await _runDataOperation(() async {
-      await widget.progressController?.restoreDatabaseBackup(
-        await selectedFile.readAsBytes(),
+      await widget.progressController!.restoreDatabaseBackup(
+        backupBytes,
+        allowMigration: migrationRequired,
       );
       widget.onProgressChanged?.call();
       await _loadSettings();

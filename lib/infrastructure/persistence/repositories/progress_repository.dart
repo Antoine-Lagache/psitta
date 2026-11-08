@@ -2,14 +2,18 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fsrs/fsrs.dart' as fsrs;
+import 'package:psitta/infrastructure/persistence/database/migration_runner.dart';
+import 'package:psitta/infrastructure/persistence/database/psitta_sqlite_open_factory.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 /// Resets learner progress while preserving content and app preferences.
 class ProgressRepository {
   final sqlite.SqliteDatabase database;
-  final int schemaVersion;
+  final MigrationRunner migrationRunner;
 
-  ProgressRepository(this.database, {required this.schemaVersion});
+  ProgressRepository(this.database, {required this.migrationRunner});
+
+  int get schemaVersion => migrationRunner.latestVersion;
 
   Future<void> resetAllProgress() async {
     await database.writeTransaction((txn) async {
@@ -48,23 +52,58 @@ class ProgressRepository {
     }
   }
 
-  /// Replaces all rows atomically after verifying the backup schema version.
-  Future<void> restoreDatabaseBackup(Uint8List bytes) async {
-    final backup = File(
-      '${Directory.systemTemp.path}/psitta-restore-${DateTime.now().microsecondsSinceEpoch}.db',
-    );
-    await backup.writeAsBytes(bytes, flush: true);
-    try {
+  /// Validates a backup and tests any required migrations on a temporary copy.
+  /// Returns its original schema version for the confirmation shown in Settings.
+  Future<int> inspectDatabaseBackup(Uint8List bytes) {
+    return _withTemporaryBackup(bytes, (path) async {
+      sqlite.SqliteDatabase? backup;
+      try {
+        backup = await _openBackupDatabase(path);
+        final originalVersion = await _readAndValidateVersion(backup);
+        await _prepareBackupDatabase(backup, originalVersion);
+        await _validateCompatibleSchema(backup);
+        return originalVersion;
+      } on UnsupportedError {
+        rethrow;
+      } on FormatException {
+        rethrow;
+      } on Object catch (error) {
+        throw FormatException('This is not a valid Psitta database backup: $error');
+      } finally {
+        if (backup != null) await backup.close();
+      }
+    });
+  }
+
+  /// Replaces all rows atomically, migrating an older backup only when allowed.
+  Future<void> restoreDatabaseBackup(Uint8List bytes, {required bool allowMigration}) {
+    return _withTemporaryBackup(bytes, (path) async {
+      sqlite.SqliteDatabase? backup;
+      try {
+        backup = await _openBackupDatabase(path);
+        final originalVersion = await _readAndValidateVersion(backup);
+        if (originalVersion < schemaVersion && !allowMigration) {
+          throw StateError('Migration of this older backup was not confirmed.');
+        }
+        await _prepareBackupDatabase(backup, originalVersion);
+        await _validateCompatibleSchema(backup);
+      } on UnsupportedError {
+        rethrow;
+      } on FormatException {
+        rethrow;
+      } on Object catch (error) {
+        throw FormatException('This is not a valid Psitta database backup: $error');
+      } finally {
+        if (backup != null) await backup.close();
+      }
+
       await database.writeTransaction((tx) async {
-        await tx.execute('ATTACH DATABASE ? AS restore_source', [backup.path]);
+        await tx.execute('ATTACH DATABASE ? AS restore_source', [path]);
         try {
           final version = await tx.get('PRAGMA restore_source.user_version');
           final backupVersion = version['user_version'] as int;
           if (backupVersion != schemaVersion) {
-            throw FormatException(
-              'Backup database version $backupVersion is not supported. '
-              'Expected version $schemaVersion.',
-            );
+            throw StateError('The backup could not be migrated to the current version.');
           }
 
           final sourceTables = await tx.getAll('''
@@ -97,8 +136,122 @@ class ProgressRepository {
         }
       });
       await database.refreshSchema();
+    });
+  }
+
+  Future<int> _readAndValidateVersion(sqlite.SqliteDatabase backup) async {
+    final integrity = await backup.get('PRAGMA integrity_check');
+    if (integrity['integrity_check'] != 'ok') {
+      throw const FormatException('The selected SQLite database is corrupted.');
+    }
+
+    final result = await backup.get('PRAGMA user_version');
+    final version = result['user_version'] as int;
+    if (version > schemaVersion) {
+      throw UnsupportedError(
+        'This backup comes from a newer Psitta database version ($version). '
+        'This app supports version $schemaVersion.',
+      );
+    }
+    if (version < 1) {
+      throw FormatException('Database version $version is not a valid Psitta backup.');
+    }
+    return version;
+  }
+
+  Future<void> _prepareBackupDatabase(
+    sqlite.SqliteDatabase backup,
+    int originalVersion,
+  ) async {
+    if (originalVersion < schemaVersion) {
+      await migrationRunner.migrate(backup);
+    }
+    final migratedVersion = await backup.get('PRAGMA user_version');
+    if (migratedVersion['user_version'] != schemaVersion) {
+      throw FormatException(
+        'The backup could not be migrated to database version $schemaVersion.',
+      );
+    }
+    final foreignKeyErrors = await backup.getAll('PRAGMA foreign_key_check');
+    if (foreignKeyErrors.isNotEmpty) {
+      throw const FormatException('The backup contains invalid database references.');
+    }
+  }
+
+  Future<void> _validateCompatibleSchema(sqlite.SqliteDatabase backup) async {
+    final currentSchema = await _readTableSchema(database);
+    final backupSchema = await _readTableSchema(backup);
+    if (currentSchema.length != backupSchema.length ||
+        currentSchema.keys.toSet().difference(backupSchema.keys.toSet()).isNotEmpty ||
+        backupSchema.keys.toSet().difference(currentSchema.keys.toSet()).isNotEmpty) {
+      throw const FormatException(
+        'The database structure does not match a Psitta backup.',
+      );
+    }
+    for (final table in currentSchema.keys) {
+      if (!_sameList(currentSchema[table]!, backupSchema[table]!)) {
+        throw FormatException('The backup has an incompatible "$table" table.');
+      }
+    }
+  }
+
+  Future<Map<String, List<String>>> _readTableSchema(sqlite.SqliteDatabase source) async {
+    final tables = await source.getAll('''
+      SELECT name FROM sqlite_master
+      WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+      ORDER BY name
+      ''');
+    final result = <String, List<String>>{};
+    for (final row in tables) {
+      final table = row['name'] as String;
+      final columns = await source.getAll(
+        'PRAGMA table_info(${_quoteIdentifier(table)})',
+      );
+      result[table] = columns
+          .map(
+            (column) => [
+              column['name'],
+              column['type'],
+              column['notnull'],
+              column['dflt_value'],
+              column['pk'],
+            ].join('\u001f'),
+          )
+          .toList();
+    }
+    return result;
+  }
+
+  bool _sameList(List<String> left, List<String> right) {
+    if (left.length != right.length) return false;
+    for (var index = 0; index < left.length; index++) {
+      if (left[index] != right[index]) return false;
+    }
+    return true;
+  }
+
+  Future<sqlite.SqliteDatabase> _openBackupDatabase(String path) async {
+    final backup = sqlite.SqliteDatabase.withFactory(PsittaSqliteOpenFactory(path: path));
+    try {
+      await backup.initialize();
+      return backup;
+    } on Object {
+      await backup.close();
+      rethrow;
+    }
+  }
+
+  Future<T> _withTemporaryBackup<T>(
+    Uint8List bytes,
+    Future<T> Function(String path) action,
+  ) async {
+    final directory = await Directory.systemTemp.createTemp('psitta_backup_');
+    try {
+      final file = File('${directory.path}/backup.db');
+      await file.writeAsBytes(bytes, flush: true);
+      return await action(file.path);
     } finally {
-      if (await backup.exists()) await backup.delete();
+      await directory.delete(recursive: true);
     }
   }
 

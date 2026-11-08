@@ -8,10 +8,15 @@ class ProgressController {
 
   ProgressController(this._repository);
 
+  int get currentSchemaVersion => _repository.schemaVersion;
+
   Future<void> resetAllProgress() => _repository.resetAllProgress();
 
   Future<Uint8List> createDatabaseBackup() => _repository.createDatabaseBackup();
 
-  Future<void> restoreDatabaseBackup(Uint8List bytes) =>
-      _repository.restoreDatabaseBackup(bytes);
+  Future<int> inspectDatabaseBackup(Uint8List bytes) =>
+      _repository.inspectDatabaseBackup(bytes);
+
+  Future<void> restoreDatabaseBackup(Uint8List bytes, {required bool allowMigration}) =>
+      _repository.restoreDatabaseBackup(bytes, allowMigration: allowMigration);
 }

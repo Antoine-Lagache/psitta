@@ -42,10 +42,7 @@ class AppDependencies {
     final dailyStreakController = DailyStreakController(AppSettingDao(connection));
     settingsController = SettingsController(AppSettingDao(connection));
     progressController = ProgressController(
-      ProgressRepository(
-        connection,
-        schemaVersion: _database.migrationRunner.latestVersion,
-      ),
+      ProgressRepository(connection, migrationRunner: _database.migrationRunner),
     );
 
     contentController = ContentController(
