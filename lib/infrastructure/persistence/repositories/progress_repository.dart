@@ -97,9 +97,15 @@ class ProgressRepository {
         if (backup != null) await backup.close();
       }
 
-      await database.writeTransaction((tx) async {
+      // ATTACH/DETACH are connection-scoped SQLite operations and must run
+      // outside a transaction. Detach a stale alias first in case a previous
+      // restore failed while cleaning up.
+      await database.writeLock((tx) async {
+        await _detachRestoreSourceIfAttached(tx);
         await tx.execute('ATTACH DATABASE ? AS restore_source', [path]);
-        try {
+      });
+      try {
+        await database.writeTransaction((tx) async {
           final version = await tx.get('PRAGMA restore_source.user_version');
           final backupVersion = version['user_version'] as int;
           if (backupVersion != schemaVersion) {
@@ -131,12 +137,19 @@ class ProgressRepository {
             await tx.execute('INSERT INTO main.$name SELECT * FROM restore_source.$name');
           }
           await tx.execute('PRAGMA main.user_version = $schemaVersion');
-        } finally {
-          await tx.execute('DETACH DATABASE restore_source');
-        }
-      });
+        });
+      } finally {
+        await database.writeLock(_detachRestoreSourceIfAttached);
+      }
       await database.refreshSchema();
     });
+  }
+
+  Future<void> _detachRestoreSourceIfAttached(sqlite.SqliteWriteContext tx) async {
+    final databases = await tx.getAll('PRAGMA database_list');
+    if (databases.any((database) => database['name'] == 'restore_source')) {
+      await tx.execute('DETACH DATABASE restore_source');
+    }
   }
 
   Future<int> _readAndValidateVersion(sqlite.SqliteDatabase backup) async {
