@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:psitta/application/startup/content_release_state.dart';
+import 'package:psitta/application/controllers/progress_controller.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/settings_controller.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
@@ -14,6 +15,7 @@ import 'package:psitta/ui/theme/app_theme.dart';
 /// Hosts the main application sections and preserves their state between tabs.
 class MainScreen extends StatefulWidget {
   final SessionController sessionController;
+  final ProgressController progressController;
   final StatisticController statisticController;
   final SettingsController settingsController;
   final ContentRenderer contentRenderer;
@@ -22,6 +24,7 @@ class MainScreen extends StatefulWidget {
 
   const MainScreen({
     required this.sessionController,
+    required this.progressController,
     required this.statisticController,
     required this.settingsController,
     required this.contentRenderer,
@@ -115,11 +118,16 @@ class _MainScreenState extends State<MainScreen> {
           key: const ValueKey('settings'),
           settingsController: widget.settingsController,
           sessionController: widget.sessionController,
+          progressController: widget.progressController,
           themeVariant: widget.themeVariant,
           onCharacterSessionsChanged: (enabled) => setState(() {
             _characterSessionsEnabled = enabled;
           }),
           onSessionLimitsChanged: () => _homeRefreshSignal.value++,
+          onProgressChanged: () {
+            _homeRefreshSignal.value++;
+            _statisticsRefreshSignal.value++;
+          },
         ),
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:psitta/application/controllers/content_controller.dart';
 import 'package:psitta/application/controllers/daily_streak_controller.dart';
+import 'package:psitta/application/controllers/progress_controller.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/settings_controller.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
@@ -12,6 +13,7 @@ import 'package:psitta/infrastructure/persistence/repositories/content_repositor
 import 'package:psitta/infrastructure/persistence/repositories/exercise_history_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/media_repository.dart';
+import 'package:psitta/infrastructure/persistence/repositories/progress_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/session_repository.dart';
 import 'package:psitta/ui/presentation/content/content_renderer.dart';
 import 'package:psitta/ui/presentation/content/field_renderer.dart';
@@ -25,6 +27,7 @@ class AppDependencies {
   late final SessionController sessionController;
   late final StatisticController statisticController;
   late final SettingsController settingsController;
+  late final ProgressController progressController;
   late final ContentRenderer contentRenderer;
   late final ContentReleaseState contentReleaseState;
 
@@ -38,6 +41,12 @@ class AppDependencies {
     );
     final dailyStreakController = DailyStreakController(AppSettingDao(connection));
     settingsController = SettingsController(AppSettingDao(connection));
+    progressController = ProgressController(
+      ProgressRepository(
+        connection,
+        schemaVersion: _database.migrationRunner.latestVersion,
+      ),
+    );
 
     contentController = ContentController(
       contentRepository: contentRepository,

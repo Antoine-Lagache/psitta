@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:psitta/application/controllers/progress_controller.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/settings_controller.dart';
 import 'package:psitta/ui/screens/settings/about_screen.dart';
@@ -10,16 +12,20 @@ import 'package:psitta/ui/theme/app_theme.dart';
 class SettingsScreen extends StatefulWidget {
   final SettingsController? settingsController;
   final SessionController? sessionController;
+  final ProgressController? progressController;
   final ValueNotifier<AppThemeVariant>? themeVariant;
   final ValueChanged<bool>? onCharacterSessionsChanged;
   final VoidCallback? onSessionLimitsChanged;
+  final VoidCallback? onProgressChanged;
 
   const SettingsScreen({
     this.settingsController,
     this.sessionController,
+    this.progressController,
     this.themeVariant,
     this.onCharacterSessionsChanged,
     this.onSessionLimitsChanged,
+    this.onProgressChanged,
     super.key,
   });
 
@@ -43,6 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _characterNewCount = 5;
   int _reviewCount = -1;
   bool _loading = true;
+  bool _dataOperationInProgress = false;
 
   @override
   void initState() {
@@ -209,21 +216,174 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Reset progress and database backup tools will be available here.'),
+          if (_dataOperationInProgress) ...[
+            const LinearProgressIndicator(),
+            const SizedBox(height: 12),
+          ],
+          const Text(
+            'Reset learning progress or save and restore a complete database backup.',
+          ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: null,
+            onPressed: _dataOperationInProgress || widget.progressController == null
+                ? null
+                : _confirmProgressReset,
             icon: const Icon(Icons.restart_alt),
             label: const Text('Reset progress'),
           ),
           OutlinedButton.icon(
-            onPressed: null,
+            onPressed: _dataOperationInProgress || widget.progressController == null
+                ? null
+                : _showBackupOptions,
             icon: const Icon(Icons.backup_outlined),
-            label: const Text('Backup or restore database'),
+            label: const Text('Save or restore database'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmProgressReset() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reset all progress?'),
+        content: const Text(
+          'This deletes all exercise progress, answer history, session statistics, '
+          'and your daily streak. Your exercise content and settings will remain. '
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Reset progress'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _runDataOperation(() async {
+      await widget.progressController?.resetAllProgress();
+      widget.onProgressChanged?.call();
+    }, successMessage: 'Learning progress reset.');
+  }
+
+  Future<void> _showBackupOptions() async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.save_alt),
+              title: const Text('Save a backup file'),
+              onTap: () => Navigator.pop(context, 'save'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.restore),
+              title: const Text('Restore from a backup file'),
+              onTap: () => Navigator.pop(context, 'restore'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (action == 'save') await _saveDatabaseBackup();
+    if (action == 'restore') await _restoreDatabaseBackup();
+  }
+
+  Future<void> _saveDatabaseBackup() async {
+    var saved = false;
+    await _runDataOperation(
+      () async {
+        final bytes = await widget.progressController?.createDatabaseBackup();
+        if (bytes == null) return;
+        final result = await FilePicker.saveFile(
+          dialogTitle: 'Save Psitta database backup',
+          fileName: 'psitta-backup.db',
+          bytes: bytes,
+        );
+        saved = result != null;
+      },
+      successMessage: 'Database backup saved.',
+      showSuccess: () => saved,
+    );
+  }
+
+  Future<void> _restoreDatabaseBackup() async {
+    PlatformFile? file;
+    try {
+      file = await FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: const ['db'],
+      );
+    } on Object catch (error) {
+      _showDataOperationError(error);
+      return;
+    }
+    if (file == null) return;
+    final selectedFile = file;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Restore this database?'),
+        content: const Text(
+          'Restoring replaces all current content, settings, progress, and statistics '
+          'with the selected backup. The database version will be checked before '
+          'anything is changed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _runDataOperation(() async {
+      await widget.progressController?.restoreDatabaseBackup(
+        await selectedFile.readAsBytes(),
+      );
+      widget.onProgressChanged?.call();
+      await _loadSettings();
+    }, successMessage: 'Database restored.');
+  }
+
+  Future<void> _runDataOperation(
+    Future<void> Function() operation, {
+    required String successMessage,
+    bool Function()? showSuccess,
+  }) async {
+    setState(() => _dataOperationInProgress = true);
+    try {
+      await operation();
+      if (!mounted) return;
+      if (showSuccess?.call() != false) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(successMessage)));
+      }
+    } on Object catch (error) {
+      _showDataOperationError(error);
+    } finally {
+      if (mounted) setState(() => _dataOperationInProgress = false);
+    }
+  }
+
+  void _showDataOperationError(Object error) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Operation failed: $error')));
   }
 
   Future<void> _saveTheme(AppThemeVariant value) async {

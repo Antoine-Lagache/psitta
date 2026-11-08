@@ -122,6 +122,7 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
       ),
       StartupReady(:final dependencies) => MainScreen(
         sessionController: dependencies.sessionController,
+        progressController: dependencies.progressController,
         statisticController: dependencies.statisticController,
         settingsController: dependencies.settingsController,
         contentRenderer: dependencies.contentRenderer,
