@@ -24,6 +24,14 @@ ThemeData buildAppTheme({AppThemeVariant variant = AppThemeVariant.light}) {
     AppThemeVariant.dark => const Color(0xFF424242),
     AppThemeVariant.psitta => const Color(0xFFDEDFD5),
   };
+  final filledButtonTheme = variant == AppThemeVariant.psitta
+      ? FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF262820),
+            foregroundColor: const Color(0xFFF6F5F0),
+          ),
+        )
+      : const FilledButtonThemeData();
   return ThemeData(
     colorScheme: colorScheme,
     scaffoldBackgroundColor: background,
@@ -44,6 +52,7 @@ ThemeData buildAppTheme({AppThemeVariant variant = AppThemeVariant.light}) {
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: colorScheme.surfaceContainer,
     ),
+    filledButtonTheme: filledButtonTheme,
     useMaterial3: true,
   );
 }

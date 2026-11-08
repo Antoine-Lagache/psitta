@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/settings_controller.dart';
 import 'package:psitta/ui/screens/settings/about_screen.dart';
@@ -82,22 +83,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
             children: [
-              Text('Settings', style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 20),
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  tooltip: 'About Psitta',
+                  onPressed: () => _openAbout(context),
+                  icon: const Icon(Icons.info_outline),
+                ),
+              ),
               _buildAppearanceSection(context),
               const SizedBox(height: 16),
               _buildSessionSection(context),
               const SizedBox(height: 16),
               _buildDataSection(context),
               const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => _openAbout(context),
-                  icon: const Icon(Icons.info_outline),
-                  label: const Text('About Psitta'),
-                ),
-              ),
             ],
           ),
         ),
@@ -141,61 +140,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: _loading ? null : _saveCharacterSessionsEnabled,
           ),
           const Divider(),
-          _countDropdown(
+          _countControl(
             label: 'New word exercises per session',
             value: _wordNewCount,
+            maxValue: 100,
             onChanged: (value) => _saveSessionCount(_wordNewKey, value, 0),
           ),
-          _countDropdown(
+          _countControl(
             label: 'New sentence exercises per session',
             value: _sentenceNewCount,
+            maxValue: 100,
             onChanged: (value) => _saveSessionCount(_sentenceNewKey, value, 1),
           ),
-          _countDropdown(
+          _countControl(
             label: 'New Kana exercises per session',
             value: _characterNewCount,
+            maxValue: 100,
             onChanged: (value) => _saveSessionCount(_characterNewKey, value, 2),
           ),
-          _countDropdown(
+          _countControl(
             label: 'Maximum reviews per session',
             value: _reviewCount,
+            maxValue: 9999,
             onChanged: (value) => _saveSessionCount(_reviewKey, value, 3),
-            values: const [10, 20, 30, 50, 100, 9999],
-            labels: const {
-              10: '10',
-              20: '20',
-              30: '30',
-              50: '50',
-              100: '100',
-              9999: 'No limit',
-            },
           ),
         ],
       ),
     );
   }
 
-  Widget _countDropdown({
+  Widget _countControl({
     required String label,
     required int value,
+    required int maxValue,
     required ValueChanged<int> onChanged,
-    List<int> values = const [0, 1, 2, 3, 4, 5, 6, 8, 10, 15, 20],
-    Map<int, String> labels = const {},
   }) {
-    final options = values.contains(value) ? values : ([...values, value]..sort());
-    return DropdownButtonFormField<int>(
-      key: ValueKey('$label:$value'),
-      initialValue: value,
-      decoration: InputDecoration(labelText: label),
-      items: [
-        for (final option in options)
-          DropdownMenuItem(value: option, child: Text(labels[option] ?? '$option')),
-      ],
-      onChanged: _loading
-          ? null
-          : (next) {
-              if (next != null) onChanged(next);
-            },
+    return _NumericSliderSetting(
+      label: label,
+      value: value,
+      maxValue: maxValue,
+      sliderMax: 100,
+      enabled: !_loading,
+      helperText: maxValue > 100
+          ? 'Slider: 0–100. Type $maxValue for no limit.'
+          : 'Choose with the slider or enter a value from 0 to $maxValue.',
+      onChanged: onChanged,
     );
   }
 
@@ -325,6 +314,148 @@ class _SettingsSection extends StatelessWidget {
             child,
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _NumericSliderSetting extends StatefulWidget {
+  final String label;
+  final int value;
+  final int maxValue;
+  final int sliderMax;
+  final bool enabled;
+  final String helperText;
+  final ValueChanged<int> onChanged;
+
+  const _NumericSliderSetting({
+    required this.label,
+    required this.value,
+    required this.maxValue,
+    required this.sliderMax,
+    required this.enabled,
+    required this.helperText,
+    required this.onChanged,
+  });
+
+  @override
+  State<_NumericSliderSetting> createState() => _NumericSliderSettingState();
+}
+
+class _NumericSliderSettingState extends State<_NumericSliderSetting> {
+  late final TextEditingController _textController;
+  late final FocusNode _focusNode;
+  late int _displayValue;
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayValue = widget.value;
+    _textController = TextEditingController(text: '${widget.value}');
+    _focusNode = FocusNode()..addListener(_onFocusChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _NumericSliderSetting oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value && !_focusNode.hasFocus) {
+      _displayValue = widget.value;
+      _textController.text = '${widget.value}';
+      _errorText = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode
+      ..removeListener(_onFocusChanged)
+      ..dispose();
+    _textController.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChanged() {
+    if (!_focusNode.hasFocus) _commit();
+  }
+
+  void _commit() {
+    final parsed = int.tryParse(_textController.text);
+    if (parsed == null || parsed < 0 || parsed > widget.maxValue) {
+      setState(() {
+        _errorText = 'Enter a whole number from 0 to ${widget.maxValue}.';
+        _textController.text = '${widget.value}';
+      });
+      return;
+    }
+    setState(() {
+      _errorText = null;
+      _displayValue = parsed;
+      _textController.text = '$parsed';
+    });
+    if (parsed != widget.value) widget.onChanged(parsed);
+  }
+
+  void _setFromSlider(double value) {
+    final next = value.round();
+    setState(() {
+      _displayValue = next;
+      _textController.text = '$next';
+      _errorText = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(widget.label)),
+              const SizedBox(width: 16),
+              SizedBox(
+                width: 88,
+                child: TextField(
+                  controller: _textController,
+                  focusNode: _focusNode,
+                  enabled: widget.enabled,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    isDense: true,
+                    border: const OutlineInputBorder(),
+                    counterText: '',
+                  ),
+                  onSubmitted: (_) => _commit(),
+                ),
+              ),
+            ],
+          ),
+          Slider(
+            value: _displayValue.clamp(0, widget.sliderMax).toDouble(),
+            min: 0,
+            max: widget.sliderMax.toDouble(),
+            divisions: widget.sliderMax,
+            label: '$_displayValue',
+            onChanged: widget.enabled ? _setFromSlider : null,
+            onChangeEnd: widget.enabled
+                ? (value) => widget.onChanged(value.round())
+                : null,
+          ),
+          Text(
+            _errorText ?? widget.helperText,
+            style: _errorText == null
+                ? Theme.of(context).textTheme.bodySmall
+                : Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+          ),
+        ],
       ),
     );
   }

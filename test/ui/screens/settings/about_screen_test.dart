@@ -7,11 +7,11 @@ void main() {
   testWidgets('opens the About screen from Settings', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
 
-    expect(find.text('Settings'), findsOne);
+    expect(find.text('Settings'), findsNothing);
+    expect(find.byTooltip('About Psitta'), findsOne);
     expect(find.text('Color theme'), findsOne);
 
-    await tester.scrollUntilVisible(find.text('About Psitta'), 200);
-    await tester.tap(find.text('About Psitta'));
+    await tester.tap(find.byTooltip('About Psitta'));
     await tester.pumpAndSettle();
 
     expect(find.text('About Psitta'), findsOne);
