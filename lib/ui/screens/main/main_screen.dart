@@ -1,24 +1,32 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:psitta/application/startup/content_release_state.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
+import 'package:psitta/application/controllers/settings_controller.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
 import 'package:psitta/ui/presentation/content/content_renderer.dart';
 import 'package:psitta/ui/screens/home/home_screen.dart';
 import 'package:psitta/ui/screens/settings/settings_screen.dart';
 import 'package:psitta/ui/screens/statistics/statistics_screen.dart';
+import 'package:psitta/ui/theme/app_theme.dart';
 
 /// Hosts the main application sections and preserves their state between tabs.
 class MainScreen extends StatefulWidget {
   final SessionController sessionController;
   final StatisticController statisticController;
+  final SettingsController settingsController;
   final ContentRenderer contentRenderer;
   final ContentReleaseState contentReleaseState;
+  final ValueNotifier<AppThemeVariant>? themeVariant;
 
   const MainScreen({
     required this.sessionController,
     required this.statisticController,
+    required this.settingsController,
     required this.contentRenderer,
     required this.contentReleaseState,
+    this.themeVariant,
     super.key,
   });
 
@@ -27,30 +35,44 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  late final List<Widget> _screens;
   final _statisticsRefreshSignal = ValueNotifier(0);
+  final _homeRefreshSignal = ValueNotifier(0);
   int _selectedIndex = 0;
+  bool _characterSessionsEnabled = true;
 
   @override
   void initState() {
     super.initState();
-    _screens = [
-      HomeScreen(
-        sessionController: widget.sessionController,
-        contentRenderer: widget.contentRenderer,
-        contentReleaseState: widget.contentReleaseState,
-      ),
-      StatisticsScreen(
-        refreshSignal: _statisticsRefreshSignal,
-        statisticController: widget.statisticController,
-      ),
-      const SettingsScreen(),
-    ];
+    unawaited(_loadSettings());
+  }
+
+  Future<void> _loadSettings() async {
+    final savedEnabled = await widget.settingsController.get(
+      'sessions.characters.enabled',
+    );
+    final values = await Future.wait([
+      widget.settingsController.get('sessions.words.new_count'),
+      widget.settingsController.get('sessions.sentences.new_count'),
+      widget.settingsController.get('sessions.characters.new_count'),
+      widget.settingsController.get('sessions.reviews.max_count'),
+    ]);
+    widget.sessionController.updateSessionLimits(
+      newWordCount: int.tryParse(values[0] ?? '') ?? 4,
+      newSentenceCount: int.tryParse(values[1] ?? '') ?? 3,
+      newCharacterCount: int.tryParse(values[2] ?? '') ?? 5,
+      reviewCount: int.tryParse(values[3] ?? '') ?? 9999,
+    );
+    if (!mounted) return;
+    setState(() {
+      _characterSessionsEnabled = savedEnabled != 'false';
+      _homeRefreshSignal.value++;
+    });
   }
 
   @override
   void dispose() {
     _statisticsRefreshSignal.dispose();
+    _homeRefreshSignal.dispose();
     super.dispose();
   }
 
@@ -63,7 +85,34 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildSelectedScreen() {
-    return IndexedStack(index: _selectedIndex, children: _screens);
+    return IndexedStack(
+      index: _selectedIndex,
+      children: [
+        HomeScreen(
+          key: const ValueKey('home'),
+          sessionController: widget.sessionController,
+          contentRenderer: widget.contentRenderer,
+          contentReleaseState: widget.contentReleaseState,
+          characterSessionsEnabled: _characterSessionsEnabled,
+          refreshSignal: _homeRefreshSignal,
+        ),
+        StatisticsScreen(
+          key: const ValueKey('statistics'),
+          refreshSignal: _statisticsRefreshSignal,
+          statisticController: widget.statisticController,
+        ),
+        SettingsScreen(
+          key: const ValueKey('settings'),
+          settingsController: widget.settingsController,
+          sessionController: widget.sessionController,
+          themeVariant: widget.themeVariant,
+          onCharacterSessionsChanged: (enabled) => setState(() {
+            _characterSessionsEnabled = enabled;
+          }),
+          onSessionLimitsChanged: () => _homeRefreshSignal.value++,
+        ),
+      ],
+    );
   }
 
   Widget _buildNavigationBar() {

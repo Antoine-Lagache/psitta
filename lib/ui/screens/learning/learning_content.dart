@@ -61,7 +61,7 @@ class LearningContent extends StatelessWidget {
                     Text(
                       'Practice writing',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: const Color(0xFF616161),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -103,7 +103,7 @@ class LearningContent extends StatelessWidget {
     return Text(
       showingAnswer ? 'Answer' : 'Question',
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        color: const Color(0xFF616161),
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.w700,
       ),
     );

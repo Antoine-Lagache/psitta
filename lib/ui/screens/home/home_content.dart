@@ -55,7 +55,7 @@ class HomeContent extends StatelessWidget {
         'Choose a session',
         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           fontWeight: FontWeight.w700,
-          color: Colors.black,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
       const SizedBox(height: 4),

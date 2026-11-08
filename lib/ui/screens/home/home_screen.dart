@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:psitta/application/startup/content_release_state.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
@@ -13,11 +15,15 @@ class HomeScreen extends StatefulWidget {
   final SessionController sessionController;
   final ContentRenderer contentRenderer;
   final ContentReleaseState contentReleaseState;
+  final bool characterSessionsEnabled;
+  final ValueListenable<int>? refreshSignal;
 
   const HomeScreen({
     required this.sessionController,
     required this.contentRenderer,
     required this.contentReleaseState,
+    this.characterSessionsEnabled = true,
+    this.refreshSignal,
     super.key,
   });
 
@@ -36,6 +42,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _sessionOverviews = widget.sessionController.getSessionOverviews();
     _lastContentStatus = widget.contentReleaseState.status;
     widget.contentReleaseState.addListener(_onContentReleaseChanged);
+    widget.refreshSignal?.addListener(_onExternalRefresh);
+  }
+
+  void _onExternalRefresh() {
+    if (mounted) unawaited(_reload());
   }
 
   void _onContentReleaseChanged() {
@@ -43,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (status == _lastContentStatus) return;
     _lastContentStatus = status;
     if (status == ContentReleaseStatus.ready) {
-      _reload();
+      unawaited(_reload());
     } else if (mounted) {
       setState(() {});
     }
@@ -52,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     widget.contentReleaseState.removeListener(_onContentReleaseChanged);
+    widget.refreshSignal?.removeListener(_onExternalRefresh);
     super.dispose();
   }
 
@@ -163,7 +175,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return HomeContent(
-      overviews: snapshot.requireData,
+      overviews: snapshot.requireData
+          .where(
+            (overview) =>
+                widget.characterSessionsEnabled ||
+                overview.hasActiveSession ||
+                overview.sessionType != SessionType.characterSession,
+          )
+          .toList(),
       loadingCharacters: widget.contentReleaseState.isLoading,
       characterLoadFailed: widget.contentReleaseState.hasFailed,
       onRefresh: _reload,

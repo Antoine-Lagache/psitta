@@ -24,4 +24,18 @@ class SRSConfig {
     this.newCharacterCount = 5,
     this.reviewCount = 9999,
   }) : fsrsScheduler = fsrsScheduler ?? FsrsSchedulerConfig();
+
+  SRSConfig copyWith({
+    int? newCount,
+    int? newSentenceCount,
+    int? newCharacterCount,
+    int? reviewCount,
+  }) => SRSConfig(
+    fsrsScheduler: fsrsScheduler,
+    dayBoundary: dayBoundary,
+    newCount: newCount ?? this.newCount,
+    newSentenceCount: newSentenceCount ?? this.newSentenceCount,
+    newCharacterCount: newCharacterCount ?? this.newCharacterCount,
+    reviewCount: reviewCount ?? this.reviewCount,
+  );
 }

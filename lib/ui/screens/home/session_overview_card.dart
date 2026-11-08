@@ -78,14 +78,15 @@ class SessionOverviewCard extends StatelessWidget {
   }
 
   Widget _buildIcon(IconData icon) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: 44,
       height: 44,
-      decoration: const BoxDecoration(
-        color: Color(0xFFF0F0F0),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
         borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
-      child: Icon(icon, color: Colors.black),
+      child: Icon(icon, color: colors.onSurface),
     );
   }
 
@@ -107,7 +108,9 @@ class SessionOverviewCard extends StatelessWidget {
           presentation.description,
           style: Theme.of(
             context,
-          ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF616161)),
+          ).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -174,10 +177,11 @@ class _SessionCount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF5F5F5),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
         borderRadius: BorderRadius.all(Radius.circular(14)),
       ),
       child: Column(
@@ -187,15 +191,17 @@ class _SessionCount extends StatelessWidget {
             '$count',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w700,
-              color: Colors.black,
+              color: colors.onSurface,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF616161)),
+            context,
+            ).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

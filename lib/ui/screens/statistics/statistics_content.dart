@@ -113,7 +113,7 @@ class _StatisticsContentState extends State<StatisticsContent> {
             Text(
               '${widget.dailyStreak}',
               style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w800,
                 height: 1,
               ),
@@ -133,7 +133,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
                     _streakCaption,
                     style: Theme.of(
                       context,
-                    ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
+                    ).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -326,7 +328,9 @@ class _StatisticsContentState extends State<StatisticsContent> {
             'Mastered means FSRS stability above 30 days.',
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
+            ).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],
@@ -366,7 +370,7 @@ class _StatisticsContentState extends State<StatisticsContent> {
   }) {
     final style = isHeader
         ? Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: const Color(0xFF616161),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w600,
           )
         : Theme.of(context).textTheme.bodyLarge;
@@ -480,7 +484,7 @@ class _StatisticMetric extends StatelessWidget {
           metric.value,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 2),
@@ -488,7 +492,9 @@ class _StatisticMetric extends StatelessWidget {
           metric.label,
           style: Theme.of(
             context,
-          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF616161)),
+          ).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );

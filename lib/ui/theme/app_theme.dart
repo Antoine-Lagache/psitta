@@ -1,22 +1,45 @@
 import 'package:flutter/material.dart';
 
-/// Builds the monochrome Material theme used by the MVP.
-ThemeData buildAppTheme() {
-  final colorScheme = _buildColorScheme();
+enum AppThemeVariant { light, dark, psitta }
+
+/// Builds one of the application colour themes.
+ThemeData buildAppTheme({AppThemeVariant variant = AppThemeVariant.light}) {
+  final brightness = variant == AppThemeVariant.dark
+      ? Brightness.dark
+      : Brightness.light;
+  final seedColor = variant == AppThemeVariant.psitta
+      ? const Color(0xFFAD422D)
+      : Colors.black;
+  final colorScheme = _buildColorScheme(seedColor, brightness);
+  final background = switch (variant) {
+    AppThemeVariant.light => const Color(0xFFF7F7F7),
+    AppThemeVariant.dark => const Color(0xFF121212),
+    AppThemeVariant.psitta => const Color(0xFFF6F5F0),
+  };
+  final cardColor = switch (variant) {
+    AppThemeVariant.light => Colors.white,
+    AppThemeVariant.dark => const Color(0xFF1E1E1E),
+    AppThemeVariant.psitta => Colors.white,
+  };
+  final borderColor = switch (variant) {
+    AppThemeVariant.light => const Color(0xFFD6D6D6),
+    AppThemeVariant.dark => const Color(0xFF424242),
+    AppThemeVariant.psitta => const Color(0xFFDEDFD5),
+  };
   return ThemeData(
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: const Color(0xFFF7F7F7),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFFF7F7F7),
-      foregroundColor: Colors.black,
+    scaffoldBackgroundColor: background,
+    appBarTheme: AppBarTheme(
+      backgroundColor: background,
+      foregroundColor: colorScheme.onSurface,
       elevation: 0,
     ),
-    cardTheme: const CardThemeData(
-      color: Colors.white,
+    cardTheme: CardThemeData(
+      color: cardColor,
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Color(0xFFD6D6D6)),
+        side: BorderSide(color: borderColor),
         borderRadius: BorderRadius.all(Radius.circular(20)),
       ),
     ),
@@ -27,11 +50,13 @@ ThemeData buildAppTheme() {
   );
 }
 
-ColorScheme _buildColorScheme() {
+ColorScheme _buildColorScheme(Color seedColor, Brightness brightness) {
   return ColorScheme.fromSeed(
-    seedColor: Colors.black,
-    brightness: Brightness.light,
-    dynamicSchemeVariant: DynamicSchemeVariant.monochrome,
+    seedColor: seedColor,
+    brightness: brightness,
+    dynamicSchemeVariant: seedColor == Colors.black
+        ? DynamicSchemeVariant.monochrome
+        : DynamicSchemeVariant.tonalSpot,
   ).copyWith(
     error: const Color(0xFF424242),
     onError: Colors.white,

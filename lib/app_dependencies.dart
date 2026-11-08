@@ -1,6 +1,7 @@
 import 'package:psitta/application/controllers/content_controller.dart';
 import 'package:psitta/application/controllers/daily_streak_controller.dart';
 import 'package:psitta/application/controllers/session_controller.dart';
+import 'package:psitta/application/controllers/settings_controller.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
 import 'package:psitta/application/startup/content_release_state.dart';
 import 'package:psitta/infrastructure/persistence/database/sqlite_database.dart';
@@ -23,6 +24,7 @@ class AppDependencies {
   late final ContentController contentController;
   late final SessionController sessionController;
   late final StatisticController statisticController;
+  late final SettingsController settingsController;
   late final ContentRenderer contentRenderer;
   late final ContentReleaseState contentReleaseState;
 
@@ -35,6 +37,7 @@ class AppDependencies {
       exerciseRepository: exerciseRepository,
     );
     final dailyStreakController = DailyStreakController(AppSettingDao(connection));
+    settingsController = SettingsController(AppSettingDao(connection));
 
     contentController = ContentController(
       contentRepository: contentRepository,

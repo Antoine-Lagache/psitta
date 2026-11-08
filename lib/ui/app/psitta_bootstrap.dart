@@ -5,6 +5,7 @@ import 'package:psitta/app_dependencies.dart';
 import 'package:psitta/ui/app/bootstrap/startup_screen.dart';
 import 'package:psitta/ui/app/bootstrap/startup_state.dart';
 import 'package:psitta/ui/screens/main/main_screen.dart';
+import 'package:psitta/ui/theme/app_theme.dart';
 
 /// Creates the dependencies owned by the application bootstrap.
 /// Each call must create a fresh instance and clean up resources on failure.
@@ -13,9 +14,11 @@ typedef AppDependenciesFactory = Future<AppDependencies> Function();
 /// Initializes and owns the dependencies that live for the whole application.
 class PsittaBootstrap extends StatefulWidget {
   final AppDependenciesFactory initializeDependencies;
+  final ValueNotifier<AppThemeVariant>? themeVariant;
 
   const PsittaBootstrap({
     this.initializeDependencies = AppDependencies.initialize,
+    this.themeVariant,
     super.key,
   });
 
@@ -35,6 +38,15 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
   Future<void> _initializeDependencies() async {
     try {
       final dependencies = await widget.initializeDependencies();
+
+      final savedTheme = await dependencies.settingsController.get(
+        'appearance.theme',
+      );
+      widget.themeVariant?.value = switch (savedTheme) {
+        'dark' => AppThemeVariant.dark,
+        'psitta' => AppThemeVariant.psitta,
+        _ => AppThemeVariant.light,
+      };
 
       if (!mounted) {
         await _disposeDependencies(dependencies);
@@ -113,8 +125,10 @@ class _PsittaBootstrapState extends State<PsittaBootstrap> {
       StartupReady(:final dependencies) => MainScreen(
         sessionController: dependencies.sessionController,
         statisticController: dependencies.statisticController,
+        settingsController: dependencies.settingsController,
         contentRenderer: dependencies.contentRenderer,
         contentReleaseState: dependencies.contentReleaseState,
+        themeVariant: widget.themeVariant,
       ),
     };
   }

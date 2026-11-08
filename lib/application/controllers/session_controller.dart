@@ -50,7 +50,8 @@ class SessionController {
   final DateTime Function() _now;
   final Duration Function() _elapsedNow;
 
-  final SRSConfig config;
+  SRSConfig _config;
+  SRSConfig get config => _config;
 
   SessionController({
     required SessionRepository sessionRepository,
@@ -64,9 +65,27 @@ class SessionController {
        _exerciseRepository = exerciseRepository,
        _dailyStreakController = dailyStreakController,
        _contentController = contentController,
-       config = config ?? SRSConfig(),
+       _config = config ?? SRSConfig(),
        _now = now ?? DateTime.now,
        _elapsedNow = elapsedNow ?? _readDefaultMonotonicClock;
+
+  /// Applies session limits selected by the user for future sessions.
+  void updateSessionLimits({
+    required int newWordCount,
+    required int newSentenceCount,
+    required int newCharacterCount,
+    required int reviewCount,
+  }) {
+    if (hasActiveSession) {
+      throw StateError('Session limits cannot change during an active session');
+    }
+    _config = _config.copyWith(
+      newCount: newWordCount,
+      newSentenceCount: newSentenceCount,
+      newCharacterCount: newCharacterCount,
+      reviewCount: reviewCount,
+    );
+  }
 
   /// Creates, starts, and persists a session from due and new exercises.
   Future<StartSessionResult> startNewSession(SessionType sessionType) {
