@@ -14,6 +14,7 @@ class SRSConfig {
   final int newCount;
   final int newSentenceCount;
   final int newCharacterCount;
+  /// A negative value means that reviews are not capped per session.
   final int reviewCount;
 
   SRSConfig({
@@ -22,7 +23,7 @@ class SRSConfig {
     this.newCount = 4,
     this.newSentenceCount = 3,
     this.newCharacterCount = 5,
-    this.reviewCount = 9999,
+    this.reviewCount = -1,
   }) : fsrsScheduler = fsrsScheduler ?? FsrsSchedulerConfig();
 
   SRSConfig copyWith({

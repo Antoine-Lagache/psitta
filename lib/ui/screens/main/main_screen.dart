@@ -35,6 +35,9 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  static const _reviewLimitKey = 'sessions.reviews.max_count.v2';
+  static const _legacyReviewLimitKey = 'sessions.reviews.max_count';
+
   final _statisticsRefreshSignal = ValueNotifier(0);
   final _homeRefreshSignal = ValueNotifier(0);
   int _selectedIndex = 0;
@@ -54,13 +57,20 @@ class _MainScreenState extends State<MainScreen> {
       widget.settingsController.get('sessions.words.new_count'),
       widget.settingsController.get('sessions.sentences.new_count'),
       widget.settingsController.get('sessions.characters.new_count'),
-      widget.settingsController.get('sessions.reviews.max_count'),
+      widget.settingsController.get(_reviewLimitKey),
+      widget.settingsController.get(_legacyReviewLimitKey),
     ]);
+    var reviewCount = int.tryParse(values[3] ?? '') ?? -1;
+    if (values[3] == null && values[4] != null) {
+      reviewCount = int.tryParse(values[4]!) ?? -1;
+      if (reviewCount == 9999) reviewCount = -1;
+      await widget.settingsController.set(_reviewLimitKey, '$reviewCount');
+    }
     widget.sessionController.updateSessionLimits(
       newWordCount: int.tryParse(values[0] ?? '') ?? 4,
       newSentenceCount: int.tryParse(values[1] ?? '') ?? 3,
       newCharacterCount: int.tryParse(values[2] ?? '') ?? 5,
-      reviewCount: int.tryParse(values[3] ?? '') ?? 9999,
+      reviewCount: reviewCount,
     );
     if (!mounted) return;
     setState(() {

@@ -8,10 +8,10 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
 
     expect(find.text('Settings'), findsNothing);
-    expect(find.byTooltip('About Psitta'), findsOne);
+    expect(find.text('About Psitta'), findsOne);
     expect(find.text('Color theme'), findsOne);
 
-    await tester.tap(find.byTooltip('About Psitta'));
+    await tester.tap(find.text('About Psitta'));
     await tester.pumpAndSettle();
 
     expect(find.text('About Psitta'), findsOne);

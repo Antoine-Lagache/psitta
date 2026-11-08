@@ -220,7 +220,9 @@ class SessionController {
     return SessionOverview(
       sessionType: sessionType,
       newExerciseCount: min(newExerciseCount, _newExerciseLimit(sessionType)),
-      reviewExerciseCount: min(reviewExerciseCount, config.reviewCount),
+      reviewExerciseCount: config.reviewCount < 0
+          ? reviewExerciseCount
+          : min(reviewExerciseCount, config.reviewCount),
       hasActiveSession: false,
     );
   }

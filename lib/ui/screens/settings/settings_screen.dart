@@ -33,14 +33,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const _wordNewKey = 'sessions.words.new_count';
   static const _sentenceNewKey = 'sessions.sentences.new_count';
   static const _characterNewKey = 'sessions.characters.new_count';
-  static const _reviewKey = 'sessions.reviews.max_count';
+  static const _reviewKey = 'sessions.reviews.max_count.v2';
+  static const _legacyReviewKey = 'sessions.reviews.max_count';
 
   AppThemeVariant _theme = AppThemeVariant.light;
   bool _charactersEnabled = true;
   int _wordNewCount = 4;
   int _sentenceNewCount = 3;
   int _characterNewCount = 5;
-  int _reviewCount = 9999;
+  int _reviewCount = -1;
   bool _loading = true;
 
   @override
@@ -59,13 +60,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         settings.get(_sentenceNewKey),
         settings.get(_characterNewKey),
         settings.get(_reviewKey),
+        settings.get(_legacyReviewKey),
       ]);
       _theme = _themeFromString(values[0]);
       _charactersEnabled = values[1] != 'false';
       _wordNewCount = int.tryParse(values[2] ?? '') ?? _wordNewCount;
       _sentenceNewCount = int.tryParse(values[3] ?? '') ?? _sentenceNewCount;
       _characterNewCount = int.tryParse(values[4] ?? '') ?? _characterNewCount;
-      _reviewCount = int.tryParse(values[5] ?? '') ?? _reviewCount;
+      final storedReviewCount = values[5] ?? values[6];
+      _reviewCount = int.tryParse(storedReviewCount ?? '') ?? _reviewCount;
+      if (values[5] == null && values[6] != null) {
+        if (_reviewCount == 9999) _reviewCount = -1;
+        await _save(_reviewKey, '$_reviewCount');
+      }
       widget.themeVariant?.value = _theme;
       _applySessionLimits();
       widget.onCharacterSessionsChanged?.call(_charactersEnabled);
@@ -85,9 +92,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Align(
                 alignment: Alignment.centerRight,
-                child: IconButton(
-                  tooltip: 'About Psitta',
+                child: TextButton.icon(
                   onPressed: () => _openAbout(context),
+                  label: const Text('About Psitta'),
                   icon: const Icon(Icons.info_outline),
                 ),
               ),
@@ -143,25 +150,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _countControl(
             label: 'New word exercises per session',
             value: _wordNewCount,
-            maxValue: 100,
+            sliderMax: 25,
             onChanged: (value) => _saveSessionCount(_wordNewKey, value, 0),
           ),
           _countControl(
             label: 'New sentence exercises per session',
             value: _sentenceNewCount,
-            maxValue: 100,
+            sliderMax: 25,
             onChanged: (value) => _saveSessionCount(_sentenceNewKey, value, 1),
           ),
           _countControl(
             label: 'New Kana exercises per session',
             value: _characterNewCount,
-            maxValue: 100,
+            sliderMax: 25,
             onChanged: (value) => _saveSessionCount(_characterNewKey, value, 2),
           ),
           _countControl(
             label: 'Maximum reviews per session',
             value: _reviewCount,
-            maxValue: 9999,
+            sliderMax: 100,
+            minValue: -1,
+            allowNegative: true,
             onChanged: (value) => _saveSessionCount(_reviewKey, value, 3),
           ),
         ],
@@ -172,18 +181,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _countControl({
     required String label,
     required int value,
-    required int maxValue,
+    int minValue = 0,
+    int maxValue = 999999,
+    required int sliderMax,
+    bool allowNegative = false,
     required ValueChanged<int> onChanged,
   }) {
     return _NumericSliderSetting(
       label: label,
       value: value,
+      minValue: minValue,
       maxValue: maxValue,
-      sliderMax: 100,
+      sliderMax: sliderMax,
       enabled: !_loading,
-      helperText: maxValue > 100
-          ? 'Slider: 0–100. Type $maxValue for no limit.'
-          : 'Choose with the slider or enter a value from 0 to $maxValue.',
+      allowNegative: allowNegative,
+      helperText: allowNegative
+          ? 'Slider: 0–100. Type -1 for no limit, or enter 0–$maxValue.'
+          : 'Slider: 0–$sliderMax. Type any value from 0 to $maxValue.',
       onChanged: onChanged,
     );
   }
@@ -322,18 +336,22 @@ class _SettingsSection extends StatelessWidget {
 class _NumericSliderSetting extends StatefulWidget {
   final String label;
   final int value;
+  final int minValue;
   final int maxValue;
   final int sliderMax;
   final bool enabled;
+  final bool allowNegative;
   final String helperText;
   final ValueChanged<int> onChanged;
 
   const _NumericSliderSetting({
     required this.label,
     required this.value,
+    required this.minValue,
     required this.maxValue,
     required this.sliderMax,
     required this.enabled,
+    required this.allowNegative,
     required this.helperText,
     required this.onChanged,
   });
@@ -381,9 +399,12 @@ class _NumericSliderSettingState extends State<_NumericSliderSetting> {
 
   void _commit() {
     final parsed = int.tryParse(_textController.text);
-    if (parsed == null || parsed < 0 || parsed > widget.maxValue) {
+    if (parsed == null ||
+        parsed < widget.minValue ||
+        parsed > widget.maxValue) {
       setState(() {
-        _errorText = 'Enter a whole number from 0 to ${widget.maxValue}.';
+        _errorText =
+            'Enter a whole number from ${widget.minValue} to ${widget.maxValue}.';
         _textController.text = '${widget.value}';
       });
       return;
@@ -407,6 +428,10 @@ class _NumericSliderSettingState extends State<_NumericSliderSetting> {
 
   @override
   Widget build(BuildContext context) {
+    final sliderValue = _displayValue < 0
+        ? widget.sliderMax.toDouble()
+        : _displayValue.clamp(0, widget.sliderMax).toDouble();
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
@@ -423,9 +448,19 @@ class _NumericSliderSettingState extends State<_NumericSliderSetting> {
                   focusNode: _focusNode,
                   enabled: widget.enabled,
                   textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
+                  keyboardType: TextInputType.numberWithOptions(
+                    signed: widget.allowNegative,
+                  ),
                   textInputAction: TextInputAction.done,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: widget.allowNegative
+                      ? [
+                          TextInputFormatter.withFunction((oldValue, newValue) {
+                            return RegExp(r'^-?[0-9]*$').hasMatch(newValue.text)
+                                ? newValue
+                                : oldValue;
+                          }),
+                        ]
+                      : [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
                     isDense: true,
                     border: const OutlineInputBorder(),
@@ -437,11 +472,11 @@ class _NumericSliderSettingState extends State<_NumericSliderSetting> {
             ],
           ),
           Slider(
-            value: _displayValue.clamp(0, widget.sliderMax).toDouble(),
+            value: sliderValue,
             min: 0,
             max: widget.sliderMax.toDouble(),
             divisions: widget.sliderMax,
-            label: '$_displayValue',
+            label: _displayValue < 0 ? 'No limit' : '$_displayValue',
             onChanged: widget.enabled ? _setFromSlider : null,
             onChangeEnd: widget.enabled
                 ? (value) => widget.onChanged(value.round())

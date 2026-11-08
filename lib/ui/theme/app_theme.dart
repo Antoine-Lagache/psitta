@@ -24,14 +24,23 @@ ThemeData buildAppTheme({AppThemeVariant variant = AppThemeVariant.light}) {
     AppThemeVariant.dark => const Color(0xFF424242),
     AppThemeVariant.psitta => const Color(0xFFDEDFD5),
   };
-  final filledButtonTheme = variant == AppThemeVariant.psitta
-      ? FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF262820),
-            foregroundColor: const Color(0xFFF6F5F0),
-          ),
-        )
-      : const FilledButtonThemeData();
+  final filledButtonTheme = switch (variant) {
+    AppThemeVariant.psitta => FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFF262820),
+        foregroundColor: const Color(0xFFF6F5F0),
+      ),
+    ),
+    AppThemeVariant.dark => FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFFC7C7C7),
+        foregroundColor: const Color(0xFF171717),
+        disabledBackgroundColor: const Color(0xFF343434),
+        disabledForegroundColor: const Color(0xFF8A8A8A),
+      ),
+    ),
+    AppThemeVariant.light => const FilledButtonThemeData(),
+  };
   return ThemeData(
     colorScheme: colorScheme,
     scaffoldBackgroundColor: background,
@@ -52,6 +61,16 @@ ThemeData buildAppTheme({AppThemeVariant variant = AppThemeVariant.light}) {
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: colorScheme.surfaceContainer,
     ),
+    sliderTheme: variant == AppThemeVariant.dark
+        ? const SliderThemeData(
+            activeTrackColor: Color(0xFFBDBDBD),
+            inactiveTrackColor: Color(0xFF484848),
+            thumbColor: Color(0xFFC7C7C7),
+            overlayColor: Color(0x29C7C7C7),
+            valueIndicatorColor: Color(0xFFBDBDBD),
+            valueIndicatorTextStyle: TextStyle(color: Color(0xFF171717)),
+          )
+        : null,
     filledButtonTheme: filledButtonTheme,
     useMaterial3: true,
   );
@@ -65,6 +84,9 @@ ColorScheme _buildColorScheme(Color seedColor, Brightness brightness) {
         ? DynamicSchemeVariant.monochrome
         : DynamicSchemeVariant.tonalSpot,
   ).copyWith(
+    surfaceContainerHighest: brightness == Brightness.dark
+        ? const Color(0xFF303030)
+        : null,
     error: const Color(0xFF424242),
     onError: Colors.white,
     errorContainer: const Color(0xFFE0E0E0),
