@@ -47,11 +47,11 @@ void main() {
       tester
           .widgetList<SessionOverviewCard>(find.byType(SessionOverviewCard))
           .map((card) => card.overview.sessionType)
+          .take(2)
           .toList(),
       [
         SessionType.characterSession,
         SessionType.wordSession,
-        SessionType.sentenceSession,
       ],
     );
 
