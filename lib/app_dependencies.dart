@@ -9,11 +9,13 @@ import 'package:psitta/infrastructure/persistence/database/sqlite_database.dart'
 import 'package:psitta/infrastructure/persistence/dao/app_setting_dao.dart';
 import 'package:psitta/infrastructure/persistence/release/character_exercise_release_importer.dart';
 import 'package:psitta/infrastructure/persistence/release/release_content_importer.dart';
+import 'package:psitta/infrastructure/persistence/release/released_content_installer.dart';
 import 'package:psitta/infrastructure/persistence/repositories/content_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_history_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/exercise_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/media_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/progress_repository.dart';
+import 'package:psitta/infrastructure/persistence/repositories/database_backup_repository.dart';
 import 'package:psitta/infrastructure/persistence/repositories/session_repository.dart';
 import 'package:psitta/ui/presentation/content/content_renderer.dart';
 import 'package:psitta/ui/presentation/content/field_renderer.dart';
@@ -42,8 +44,9 @@ class AppDependencies {
     final dailyStreakController = DailyStreakController(AppSettingDao(connection));
     settingsController = SettingsController(AppSettingDao(connection));
     progressController = ProgressController(
-      ProgressRepository(connection, migrationRunner: _database.migrationRunner),
-      afterRestore: installMissingReleasedContent,
+      ProgressRepository(connection),
+      DatabaseBackupRepository(connection, migrationRunner: _database.migrationRunner),
+      afterRestore: ReleasedContentInstaller(connection).installMissing,
     );
 
     contentController = ContentController(
@@ -79,13 +82,6 @@ class AppDependencies {
       await database.close();
       rethrow;
     }
-  }
-
-  /// Reinstalls bundled releases missing from a restored older backup.
-  Future<void> installMissingReleasedContent() async {
-    final connection = _database.database;
-    await ReleaseContentImporter(connection).importIfEmpty();
-    await CharacterExerciseReleaseImporter(connection).importIfNeeded();
   }
 
   Future<void> dispose() async {

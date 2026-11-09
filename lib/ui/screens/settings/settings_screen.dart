@@ -376,10 +376,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (confirmed != true) return;
     await _runDataOperation(() async {
-      await widget.progressController!.restoreDatabaseBackup(
-        backupBytes,
-        allowMigration: migrationRequired,
-      );
+      try {
+        await widget.progressController!.restoreDatabaseBackup(
+          backupBytes,
+          allowMigration: migrationRequired,
+        );
+      } on ContentImportAfterRestoreException {
+        widget.onProgressChanged?.call();
+        await _loadSettings();
+        rethrow;
+      }
       widget.onProgressChanged?.call();
       await _loadSettings();
     }, successMessage: 'Database restored.');
