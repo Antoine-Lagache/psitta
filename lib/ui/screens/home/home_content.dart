@@ -69,23 +69,38 @@ class HomeContent extends StatelessWidget {
   }
 
   List<Widget> _buildSessionCards() {
+    final orderedOverviews = [...overviews]
+      ..sort(
+        (first, second) => _displayOrder(first.sessionType).compareTo(
+          _displayOrder(second.sessionType),
+        ),
+      );
+
     return [
-      for (var index = 0; index < overviews.length; index++) ...[
+      for (var index = 0; index < orderedOverviews.length; index++) ...[
         SessionOverviewCard(
-          overview: overviews[index],
+          overview: orderedOverviews[index],
           isLoading:
               loadingCharacters &&
-              overviews[index].sessionType == SessionType.characterSession,
+              orderedOverviews[index].sessionType ==
+                  SessionType.characterSession,
           loadFailed:
               characterLoadFailed &&
-              overviews[index].sessionType == SessionType.characterSession,
-          onPressed: () => onSessionSelected(overviews[index]),
-          onAbandon: overviews[index].hasActiveSession
-              ? () => onSessionAbandon(overviews[index])
+              orderedOverviews[index].sessionType ==
+                  SessionType.characterSession,
+          onPressed: () => onSessionSelected(orderedOverviews[index]),
+          onAbandon: orderedOverviews[index].hasActiveSession
+              ? () => onSessionAbandon(orderedOverviews[index])
               : null,
         ),
-        if (index < overviews.length - 1) const SizedBox(height: 16),
+        if (index < orderedOverviews.length - 1) const SizedBox(height: 16),
       ],
     ];
   }
+
+  int _displayOrder(SessionType type) => switch (type) {
+    SessionType.characterSession => 0,
+    SessionType.wordSession => 1,
+    SessionType.sentenceSession => 2,
+  };
 }
