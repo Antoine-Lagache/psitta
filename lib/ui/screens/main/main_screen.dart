@@ -20,7 +20,6 @@ class MainScreen extends StatefulWidget {
   final SettingsController settingsController;
   final ContentRenderer contentRenderer;
   final ContentReleaseState contentReleaseState;
-  final Future<void> Function() installMissingReleasedContent;
   final ValueNotifier<AppThemeVariant>? themeVariant;
 
   const MainScreen({
@@ -30,7 +29,6 @@ class MainScreen extends StatefulWidget {
     required this.settingsController,
     required this.contentRenderer,
     required this.contentReleaseState,
-    required this.installMissingReleasedContent,
     this.themeVariant,
     super.key,
   });
@@ -121,7 +119,6 @@ class _MainScreenState extends State<MainScreen> {
           settingsController: widget.settingsController,
           sessionController: widget.sessionController,
           progressController: widget.progressController,
-          onDatabaseRestored: widget.installMissingReleasedContent,
           themeVariant: widget.themeVariant,
           onCharacterSessionsChanged: (enabled) => setState(() {
             _characterSessionsEnabled = enabled;

@@ -100,67 +100,61 @@ class ProgressRepository {
       // ATTACH/DETACH are connection-scoped SQLite operations and must run
       // outside a transaction. Detach a stale alias first in case a previous
       // restore failed while cleaning up.
-      final foreignKeysWereEnabled = await database.writeLock((tx) async {
+      await database.writeLock((tx) async {
         await _detachRestoreSourceIfAttached(tx);
         final result = await tx.get('PRAGMA foreign_keys');
         final wasEnabled = result['foreign_keys'] == 1;
         await tx.execute('PRAGMA foreign_keys = OFF');
         try {
           await tx.execute('ATTACH DATABASE ? AS restore_source', [path]);
+          await tx.execute('BEGIN IMMEDIATE');
+          try {
+            final version = await tx.get('PRAGMA restore_source.user_version');
+            final backupVersion = version['user_version'] as int;
+            if (backupVersion != schemaVersion) {
+              throw StateError('The backup could not be migrated to the current version.');
+            }
+
+            final sourceTables = await tx.getAll('''
+              SELECT name FROM restore_source.sqlite_master
+              WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+              ORDER BY name
+              ''');
+            final destinationTables = await tx.getAll('''
+              SELECT name FROM main.sqlite_master
+              WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+              ORDER BY name
+              ''');
+            final destinationNames = destinationTables
+                .map((row) => row['name'] as String)
+                .toList();
+            final sourceNames = sourceTables.map((row) => row['name'] as String).toList();
+
+            for (final table in destinationNames) {
+              await tx.execute('DELETE FROM main.${_quoteIdentifier(table)}');
+            }
+            for (final table in sourceNames) {
+              final name = _quoteIdentifier(table);
+              await tx.execute('INSERT INTO main.$name SELECT * FROM restore_source.$name');
+            }
+            await tx.execute('PRAGMA main.user_version = $schemaVersion');
+            final foreignKeyErrors = await tx.getAll('PRAGMA main.foreign_key_check');
+            if (foreignKeyErrors.isNotEmpty) {
+              throw const FormatException('The backup contains invalid database references.');
+            }
+            await tx.execute('COMMIT');
+          } on Object {
+            await tx.execute('ROLLBACK');
+            rethrow;
+          }
         } on Object {
           if (wasEnabled) await tx.execute('PRAGMA foreign_keys = ON');
           rethrow;
-        }
-        return wasEnabled;
-      });
-      try {
-        await database.writeTransaction((tx) async {
-          final version = await tx.get('PRAGMA restore_source.user_version');
-          final backupVersion = version['user_version'] as int;
-          if (backupVersion != schemaVersion) {
-            throw StateError('The backup could not be migrated to the current version.');
-          }
-
-          final sourceTables = await tx.getAll('''
-            SELECT name FROM restore_source.sqlite_master
-            WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
-            ORDER BY name
-            ''');
-          final destinationTables = await tx.getAll('''
-            SELECT name FROM main.sqlite_master
-            WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
-            ORDER BY name
-            ''');
-          final destinationNames = destinationTables
-              .map((row) => row['name'] as String)
-              .toList();
-          final sourceNames = sourceTables.map((row) => row['name'] as String).toList();
-
-          // Replacing every table can temporarily violate foreign keys (and
-          // some relations use immediate constraints). The source was fully
-          // integrity-checked before this transaction; validate the restored
-          // main database after re-enabling enforcement.
-          for (final table in destinationNames) {
-            await tx.execute('DELETE FROM main.${_quoteIdentifier(table)}');
-          }
-          for (final table in sourceNames) {
-            final name = _quoteIdentifier(table);
-            await tx.execute('INSERT INTO main.$name SELECT * FROM restore_source.$name');
-          }
-          await tx.execute('PRAGMA main.user_version = $schemaVersion');
-        });
-      } finally {
-        await database.writeLock((tx) async {
-          await tx.execute(
-            'PRAGMA foreign_keys = ${foreignKeysWereEnabled ? 'ON' : 'OFF'}',
-          );
+        } finally {
           await _detachRestoreSourceIfAttached(tx);
-        });
-      }
-      final foreignKeyErrors = await database.getAll('PRAGMA foreign_key_check');
-      if (foreignKeyErrors.isNotEmpty) {
-        throw StateError('The restored database contains invalid references.');
-      }
+          await tx.execute('PRAGMA foreign_keys = ${wasEnabled ? 'ON' : 'OFF'}');
+        }
+      });
       await database.refreshSchema();
     });
   }
@@ -240,7 +234,7 @@ class ProgressRepository {
       final columns = await source.getAll(
         'PRAGMA table_info(${_quoteIdentifier(table)})',
       );
-      result[table] = columns
+      final schema = columns
           .map(
             (column) => [
               column['name'],
@@ -251,6 +245,30 @@ class ProgressRepository {
             ].join('\u001f'),
           )
           .toList();
+      final foreignKeys = await source.getAll(
+        'PRAGMA foreign_key_list(${_quoteIdentifier(table)})',
+      );
+      schema.addAll(
+        foreignKeys.map(
+          (key) => 'FK:${[
+            key['id'],
+            key['seq'],
+            key['table'],
+            key['from'],
+            key['to'],
+            key['on_update'],
+            key['on_delete'],
+            key['match'],
+          ].join('\u001f')}',
+        ),
+      );
+      final indexes = await source.getAll(
+        "SELECT sql FROM sqlite_master WHERE type = 'index' "
+        'AND tbl_name = ? AND sql IS NOT NULL ORDER BY name',
+        [table],
+      );
+      schema.addAll(indexes.map((index) => 'INDEX:${index['sql']}'));
+      result[table] = schema;
     }
     return result;
   }

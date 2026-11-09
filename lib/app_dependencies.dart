@@ -43,6 +43,7 @@ class AppDependencies {
     settingsController = SettingsController(AppSettingDao(connection));
     progressController = ProgressController(
       ProgressRepository(connection, migrationRunner: _database.migrationRunner),
+      afterRestore: installMissingReleasedContent,
     );
 
     contentController = ContentController(

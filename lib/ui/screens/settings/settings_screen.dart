@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:psitta/application/controllers/progress_controller.dart';
+import 'package:psitta/application/controllers/progress_controller.dart'
+    show ContentImportAfterRestoreException, ProgressController;
 import 'package:psitta/application/controllers/session_controller.dart';
 import 'package:psitta/application/controllers/settings_controller.dart';
 import 'package:psitta/ui/screens/settings/about_screen.dart';
@@ -17,7 +18,6 @@ class SettingsScreen extends StatefulWidget {
   final ValueChanged<bool>? onCharacterSessionsChanged;
   final VoidCallback? onSessionLimitsChanged;
   final VoidCallback? onProgressChanged;
-  final Future<void> Function()? onDatabaseRestored;
 
   const SettingsScreen({
     this.settingsController,
@@ -27,7 +27,6 @@ class SettingsScreen extends StatefulWidget {
     this.onCharacterSessionsChanged,
     this.onSessionLimitsChanged,
     this.onProgressChanged,
-    this.onDatabaseRestored,
     super.key,
   });
 
@@ -73,11 +72,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ]);
       _theme = _themeFromString(values[0]);
       _charactersEnabled = values[1] != 'false';
-      _wordNewCount = int.tryParse(values[2] ?? '') ?? _wordNewCount;
-      _sentenceNewCount = int.tryParse(values[3] ?? '') ?? _sentenceNewCount;
-      _characterNewCount = int.tryParse(values[4] ?? '') ?? _characterNewCount;
+      _wordNewCount = int.tryParse(values[2] ?? '') ?? 4;
+      _sentenceNewCount = int.tryParse(values[3] ?? '') ?? 3;
+      _characterNewCount = int.tryParse(values[4] ?? '') ?? 5;
       final storedReviewCount = values[5] ?? values[6];
-      _reviewCount = int.tryParse(storedReviewCount ?? '') ?? _reviewCount;
+      _reviewCount = int.tryParse(storedReviewCount ?? '') ?? -1;
       if (values[5] == null && values[6] != null) {
         if (_reviewCount == 9999) _reviewCount = -1;
         await _save(_reviewKey, '$_reviewCount');
@@ -381,7 +380,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backupBytes,
         allowMigration: migrationRequired,
       );
-      await widget.onDatabaseRestored?.call();
       widget.onProgressChanged?.call();
       await _loadSettings();
     }, successMessage: 'Database restored.');
@@ -410,9 +408,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _showDataOperationError(Object error) {
     if (!mounted) return;
+    final message = error is ContentImportAfterRestoreException
+        ? 'Database restored, but bundled content could not be reinstalled: $error'
+        : 'Operation failed: $error';
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('Operation failed: $error')));
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _saveTheme(AppThemeVariant value) async {
