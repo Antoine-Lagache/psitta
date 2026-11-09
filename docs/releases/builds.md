@@ -1,7 +1,8 @@
 # Native application builds
 
 The `Build applications` GitHub Actions workflow builds candidates on
-`main` and `chatGPT/develop`; it does not create a GitHub Release or merge branches.
+`main` and `chatGPT/develop` when started manually; pushes do not trigger app builds.
+It does not create a GitHub Release or merge branches.
 The workflow pins Flutter 3.47.2 and resolves packages with `--enforce-lockfile`.
 The current lockfile requires Dart >=3.12 and Flutter >=3.44, even though the
 package's own declared Dart lower bound is 3.9.
@@ -28,8 +29,8 @@ be inspected using `lipo -info Psitta.app/Contents/MacOS/Psitta` on a Mac.
 ## Running the workflow
 
 Select **Actions → Build applications → Run workflow → main** for a release
-candidate, or choose `chatGPT/develop` for development builds. Changes matching
-the workflow's path filters also trigger builds on these branches.
+candidate, or choose `chatGPT/develop` for development builds. The workflow is
+manual-only so routine pushes and website updates do not start application builds.
 The five jobs run independently; one failure does not cancel the others.
 Download artifacts from the completed run. They expire after 30 days; they are
 build candidates, not permanent release downloads.
@@ -108,7 +109,8 @@ hashes and metadata, and rejects development-key APKs. It creates a draft contai
 Android, Windows and Linux downloads, platform metadata and `SHA256SUMS.txt`.
 Review the notes and tested artifacts, then publish the draft on GitHub.
 
-For each future release, update the app version/build number, release notes and
-workflow notes-file path. Update the website's explicit versioned download links
+For each future release, update the app version/build number and add a matching
+`docs/releases/release_notes_vX.Y.Z.md` file. The release workflow selects that
+file from the app version. Update the website's explicit versioned download links
 and prepend an entry to `release-notes.html`; the website does not automatically
 switch to new releases. Preserve existing release-history entries.

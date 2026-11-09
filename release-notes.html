@@ -41,7 +41,27 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
 <h1>Release notes</h1>
 <p><a class="button" href="index.html#download">Download Psitta</a></p>
 <p>Features, content and changes in each Psitta release, with the newest version first.</p>
-<p class="small">Versions: <a href="#v0-1-1">0.1.1</a> · <a href="#v0-1-0">0.1.0</a></p>
+<p class="small">Versions: <a href="#v0-2-0">0.2.0</a> · <a href="#v0-1-1">0.1.1</a> · <a href="#v0-1-0">0.1.0</a></p>
+<article class="release-entry" id="v0-2-0" aria-labelledby="version-0-2-0">
+<h2 id="version-0-2-0">Version 0.2.0</h2>
+<p class="small">Upcoming release · Downloads will be available after the build and publication.</p>
+<p>Version 0.2.0 adds Kana practice and makes study progress easier to understand, configure and back up.</p>
+<h3>Learning and scheduling</h3>
+<ul>
+<li>Adds a curated set of 218 hiragana and katakana exercises, with writing practice and example words.</li>
+<li>Adds 91 word exercises selected to reinforce the Kana characters in context: 309 new exercises in total.</li>
+<li>Introduces a dedicated Kana session. Its new-exercise limit can be changed, and Kana sessions can be disabled in Settings.</li>
+<li>Moves exercise scheduling to FSRS-6 and migrates existing review history when upgrading the database.</li>
+</ul>
+<h3>Statistics and settings</h3>
+<ul>
+<li>Shows the current daily streak and progress by exercise type, including exercises not started, in progress and mastered.</li>
+<li>Adds light, dark and Psitta color themes, plus configurable new-exercise and review limits.</li>
+<li>Adds progress reset and full-database backup and restore. Older backups require confirmation before migration; invalid backups and databases from newer versions are rejected.</li>
+</ul>
+<h3>Database updates</h3>
+<p>Bundled Kana content is installed into existing and new databases without replacing user progress. Database backup files include both exercise content and user data.</p>
+</article>
 <article class="release-entry" id="v0-1-1" aria-labelledby="version-0-1-1">
 <h2 id="version-0-1-1">Version 0.1.1</h2>
 <p class="small"><time datetime="2026-11-01">1 November 2026</time> · Maintenance release</p>

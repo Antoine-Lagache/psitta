@@ -41,6 +41,15 @@ if target == 'linux':
     from package_linux import build_deb
     build_deb(source, dist)
 
+version_match = re.search(
+    r'^version:\s*(\d+\.\d+\.\d+)\+(\d+)',
+    Path('pubspec.yaml').read_text(),
+    re.MULTILINE,
+)
+if not version_match:
+    raise SystemExit('Expected semantic version and numeric build number in pubspec.yaml')
+package_version = f'{version_match[1]}-{version_match[2]}'
+
 checksums = {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in dist.iterdir() if f.is_file()}
 info = {
     'target': target,
@@ -56,7 +65,7 @@ info = {
 (dist / 'README.txt').write_text('Psitta build candidate. See build-info.json for commit and checksums.\n'
     'Windows: run Psitta-*-windows-x64-setup.exe to install with a Start menu shortcut.\n'
     'Alternatively extract the portable ZIP completely and run psitta.exe.\n'
-    'Ubuntu 24.04 x64: install the .deb using sudo apt install ./psitta_0.1.0-2_amd64.deb, then open Psitta from the applications menu.\n'
+    f'Ubuntu 24.04 x64: install the .deb using sudo apt install ./psitta_{package_version}_amd64.deb, then open Psitta from the applications menu.\n'
     'The Linux tar.gz is an optional portable bundle.\n'
     'Android: see build-info.json for signing identity type. A different signing key cannot update an existing installation.\n'
     'Do not uninstall an existing app without preserving its progress.\n'

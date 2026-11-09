@@ -42,8 +42,8 @@ Maintainer: Antoine Lagache
 Homepage: https://psitta.net
 Installed-Size: {installed_size}
 Depends: libc6 (>= 2.39), libstdc++6 (>= 13.2), libgcc-s1, libgtk-3-0t64, libasound2t64
-Description: Japanese vocabulary and sentence practice with spaced repetition
- Psitta includes Japanese exercises, furigana and English translations.
+Description: Japanese kana, vocabulary and sentence practice with spaced repetition
+ Psitta includes kana, vocabulary and sentence exercises, furigana and English translations.
  This package targets Ubuntu 24.04 amd64.
 ''')
         # Package only application files: never include or delete user databases.
