@@ -418,9 +418,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final message = error is ContentImportAfterRestoreException
         ? 'Database restored, but bundled content could not be reinstalled: $error'
         : 'Operation failed: $error';
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _saveTheme(AppThemeVariant value) async {

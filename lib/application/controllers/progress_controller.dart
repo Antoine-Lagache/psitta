@@ -18,8 +18,11 @@ class ProgressController {
   final DatabaseBackupRepository _backups;
   final Future<void> Function()? _afterRestore;
 
-  ProgressController(this._repository, this._backups, {Future<void> Function()? afterRestore})
-    : _afterRestore = afterRestore;
+  ProgressController(
+    this._repository,
+    this._backups, {
+    Future<void> Function()? afterRestore,
+  }) : _afterRestore = afterRestore;
 
   int get currentSchemaVersion => _backups.schemaVersion;
 
@@ -30,7 +33,10 @@ class ProgressController {
   Future<int> inspectDatabaseBackup(Uint8List bytes) =>
       _backups.inspectDatabaseBackup(bytes);
 
-  Future<void> restoreDatabaseBackup(Uint8List bytes, {required bool allowMigration}) async {
+  Future<void> restoreDatabaseBackup(
+    Uint8List bytes, {
+    required bool allowMigration,
+  }) async {
     await _backups.restoreDatabaseBackup(bytes, allowMigration: allowMigration);
     try {
       await _afterRestore?.call();

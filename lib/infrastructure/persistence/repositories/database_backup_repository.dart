@@ -104,14 +104,18 @@ class DatabaseBackupRepository {
     final pending = <String, Set<String>>{};
     for (final table in tables) {
       final name = table['name'] as String;
-      final keys = await source.getAll('PRAGMA foreign_key_list(${_quoteIdentifier(name)})');
+      final keys = await source.getAll(
+        'PRAGMA foreign_key_list(${_quoteIdentifier(name)})',
+      );
       pending[name] = keys.map((key) => key['table'] as String).toSet();
     }
     final ordered = <String>[];
     while (pending.isNotEmpty) {
       final ready = pending.keys.where((name) => pending[name]!.isEmpty).toList();
       if (ready.isEmpty) {
-        throw const FormatException('Restoring this cyclic database schema is unsupported.');
+        throw const FormatException(
+          'Restoring this cyclic database schema is unsupported.',
+        );
       }
       ordered.addAll(ready);
       for (final name in ready) {

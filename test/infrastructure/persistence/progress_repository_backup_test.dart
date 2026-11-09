@@ -68,5 +68,4 @@ void main() {
       expect((await tx.get('PRAGMA foreign_keys'))['foreign_keys'], 1);
     });
   });
-
 }
