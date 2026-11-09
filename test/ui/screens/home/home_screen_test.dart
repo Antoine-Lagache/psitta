@@ -49,10 +49,7 @@ void main() {
           .map((card) => card.overview.sessionType)
           .take(2)
           .toList(),
-      [
-        SessionType.characterSession,
-        SessionType.wordSession,
-      ],
+      [SessionType.characterSession, SessionType.wordSession],
     );
 
     final wordCard = find.byWidgetPredicate(
