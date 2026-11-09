@@ -71,9 +71,8 @@ class HomeContent extends StatelessWidget {
   List<Widget> _buildSessionCards() {
     final orderedOverviews = [...overviews]
       ..sort(
-        (first, second) => _displayOrder(first.sessionType).compareTo(
-          _displayOrder(second.sessionType),
-        ),
+        (first, second) =>
+            _displayOrder(first.sessionType).compareTo(_displayOrder(second.sessionType)),
       );
 
     return [
@@ -82,12 +81,10 @@ class HomeContent extends StatelessWidget {
           overview: orderedOverviews[index],
           isLoading:
               loadingCharacters &&
-              orderedOverviews[index].sessionType ==
-                  SessionType.characterSession,
+              orderedOverviews[index].sessionType == SessionType.characterSession,
           loadFailed:
               characterLoadFailed &&
-              orderedOverviews[index].sessionType ==
-                  SessionType.characterSession,
+              orderedOverviews[index].sessionType == SessionType.characterSession,
           onPressed: () => onSessionSelected(orderedOverviews[index]),
           onAbandon: orderedOverviews[index].hasActiveSession
               ? () => onSessionAbandon(orderedOverviews[index])

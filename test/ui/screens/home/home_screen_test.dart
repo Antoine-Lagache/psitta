@@ -43,6 +43,18 @@ void main() {
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
 
+    expect(
+      tester
+          .widgetList<SessionOverviewCard>(find.byType(SessionOverviewCard))
+          .map((card) => card.overview.sessionType)
+          .toList(),
+      [
+        SessionType.characterSession,
+        SessionType.wordSession,
+        SessionType.sentenceSession,
+      ],
+    );
+
     final wordCard = find.byWidgetPredicate(
       (widget) =>
           widget is SessionOverviewCard &&
@@ -52,6 +64,8 @@ void main() {
       of: wordCard,
       matching: find.text('Abandon session'),
     );
+    await tester.ensureVisible(abandonButton);
+    await tester.pumpAndSettle();
     await tester.tap(abandonButton);
     await tester.pumpAndSettle();
     expect(
