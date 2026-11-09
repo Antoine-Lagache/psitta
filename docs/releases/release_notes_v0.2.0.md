@@ -20,6 +20,6 @@ Psitta 0.2.0 adds Kana practice and makes study progress easier to understand, c
 
 ## Downloads
 
-Builds for Android, Windows and Ubuntu will be attached to the GitHub release after they have been compiled and validated. macOS and iOS builds remain experimental and are not supported device-tested releases.
+Installers and portable builds for Android, Windows and Ubuntu are available on the [GitHub release page](https://github.com/Antoine-Lagache/psitta/releases/tag/v0.2.0). macOS and iOS builds remain experimental and are not supported device-tested releases.
 
 As before, learning data remains on the user's device. Keep an external copy of a database backup if it must be preserved across devices.
