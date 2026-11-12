@@ -3,7 +3,7 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart)](https://dart.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/Release-v0.1.0-blue)](https://github.com/Antoine-Lagache/psitta/releases/tag/v0.1.0)
+[![Release](https://img.shields.io/badge/Release-v0.2.0-blue)](https://github.com/Antoine-Lagache/psitta/releases/tag/v0.2.0)
 
 **Psitta** is an open-source language learning application built with Flutter.
 It combines vocabulary study and sentence practice with a custom spaced
@@ -15,8 +15,7 @@ application. Its learning engine has an explicitly documented mathematical model
 with separate layers for the interface, application workflows, learning rules,
 and persistence, so each part can evolve independently.
 
-The first version focuses on **Japanese**, with **1,297 words and 1,380 sentence
-groups (3,452 sentences)**, furigana, and English meanings and translations.
+The current release focuses on **Japanese**, with vocabulary, sentence and kana-writing exercises. It includes **1,297 words, 1,380 sentence groups (3,452 sentences), and 309 character exercises**, with furigana and English meanings and translations.
 
 Psitta is actively developed. Future updates will bring improvements and new
 features. Follow the [release notes](https://psitta.net/release-notes.html) for
@@ -58,7 +57,7 @@ workflow are not implemented.
 
 ## Download
 
-**[Download Psitta v0.1.0](https://github.com/Antoine-Lagache/psitta/releases/tag/v0.1.0)**,
+**[Download Psitta v0.2.0](https://github.com/Antoine-Lagache/psitta/releases/tag/v0.1.0)**,
 published on 25 October 2026. Downloads are public and do not require a GitHub account.
 
 | Platform | Download and installation |
@@ -78,7 +77,7 @@ limitations, and the release's `SHA256SUMS.txt` for file checksums.
 
 ## Platforms and release status
 
-Published release: **v0.1.0**. Version in source: **0.1.0+2**.
+Published release: **v0.2.0**. Version in source: **0.2.0+4**.
 
 | Platform | Current status |
 |---|---|
@@ -162,9 +161,7 @@ ChatGPT while retaining JMdict attribution for dictionary glosses. The corrected
 reading of 訳 is やく. The recommended 4-word / up-to-3-group schedule is retained
 as export metadata; the application does not enforce that joint timetable.
 
-The import is a one-time installation of v0.1. Updating a populated database
-to a revised corpus will need a versioned content migration that preserves
-learning progress. For the regeneration command and migration workflow, see
+The bundled snapshot provides the initial content for new installations. Existing databases receive content and schema changes through versioned migrations that preserve learning progress. For the regeneration command and migration workflow, see
 [bundled database generation](docs/content/bundled_database.md).
 
 Run the same checks as CI with:
