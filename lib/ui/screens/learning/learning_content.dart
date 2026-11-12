@@ -179,7 +179,24 @@ class LearningContent extends StatelessWidget {
   }
 
   Widget _buildGradeButton(Grade grade) {
+    // Grade colours remain the same in light, dark and Psitta themes.
+    final background = switch (grade) {
+      Grade.again => const Color(0xFFC62828),
+      Grade.hard => const Color(0xFFFFD54F),
+      Grade.good => const Color(0xFF2E7D32),
+      Grade.easy => const Color(0xFF1565C0),
+    };
+    final foreground = grade == Grade.hard ? const Color(0xFF212121) : Colors.white;
     return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        backgroundColor: background,
+        foregroundColor: foreground,
+        disabledBackgroundColor: background,
+        disabledForegroundColor: foreground.withAlpha(153),
+        overlayColor: foreground,
+        surfaceTintColor: Colors.transparent,
+        side: BorderSide.none,
+      ),
       onPressed: interactionEnabled ? () => onGradeSelected(grade) : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
