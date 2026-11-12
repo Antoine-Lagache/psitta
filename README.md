@@ -15,7 +15,7 @@ application. Its learning engine has an explicitly documented mathematical model
 with separate layers for the interface, application workflows, learning rules,
 and persistence, so each part can evolve independently.
 
-The current release focuses on **Japanese**, with vocabulary, sentence and kana-writing exercises. It includes **1,297 words, 1,380 sentence groups (3,452 sentences), and 309 character exercises**, with furigana and English meanings and translations.
+The current release focuses on **Japanese**, with vocabulary, sentence and kana-writing exercises. It includes **1,297 words, 1,380 sentence groups (3,452 sentences)**, with furigana and English meanings and translations.
 
 Psitta is actively developed. Future updates will bring improvements and new
 features. Follow the [release notes](https://psitta.net/release-notes.html) for
@@ -57,14 +57,14 @@ workflow are not implemented.
 
 ## Download
 
-**[Download Psitta v0.2.0](https://github.com/Antoine-Lagache/psitta/releases/tag/v0.1.0)**,
+**[Download Psitta v0.2.0](https://github.com/Antoine-Lagache/psitta/releases/tag/v0.2.0)**,
 published on 25 October 2026. Downloads are public and do not require a GitHub account.
 
 | Platform | Download and installation |
 |---|---|
 | Android | Open `Psitta-android.apk` and allow installation from your browser or file manager if requested. |
-| Windows x64 | Run `Psitta-0.1.0-windows-x64-setup.exe`. A portable ZIP is also available; extract it completely before running `psitta.exe`. |
-| Linux amd64 | Open `psitta_0.1.0-2_amd64.deb` with your software installer. Tested on Ubuntu 24.04; other distributions are not validated. A portable tar.gz is also available. |
+| Windows x64 | Download the installer or portable ZIP from the release page. Extract the ZIP completely before running `psitta.exe`. |
+| Linux amd64 | Install the `.deb` package with your software installer, or use the portable tar.gz. Tested on Ubuntu 24.04; other distributions are not validated. |
 
 Windows binaries are unsigned and may trigger SmartScreen or antivirus alerts.
 Android releases use the permanent Psitta signing key. Updates must have a
