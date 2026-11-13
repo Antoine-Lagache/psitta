@@ -11,6 +11,8 @@ final class BankChange {
   final BankChangeRef? previousChangeRef;
   final String changeType;
   final Map<String, Object?> payload;
+  late final String entityType;
+  late final String entityId;
 
   BankChange({
     required this.ref,
@@ -18,6 +20,9 @@ final class BankChange {
     required this.changeType,
     required Map<String, Object?> payload,
   }) : payload = _freezeJsonMap(payload) {
+    final identity = _readEntityIdentity(this.payload);
+    entityType = identity.$1;
+    entityId = identity.$2;
     if (previousChangeRef != null && previousChangeRef == ref) {
       throw ArgumentError('A change cannot be its own previous change');
     }
@@ -29,8 +34,29 @@ final class BankChange {
     }
   }
 
+  static (String, String) _readEntityIdentity(Map<String, Object?> payload) {
+    final entity = payload['entity'];
+    if (entity is! Map<String, Object?>) {
+      throw ArgumentError('A change payload must identify its entity');
+    }
+    final type = entity['type'];
+    final id = entity['id'];
+    if (type is! String || type.trim().isEmpty) {
+      throw ArgumentError('A change entity must have a non-empty type');
+    }
+    if (id is! String || id.trim().isEmpty) {
+      throw ArgumentError('A change entity must have a non-empty ID');
+    }
+    return (type, id);
+  }
+
   static Map<String, Object?> _freezeJsonMap(Map<String, Object?> value) {
-    final decoded = jsonDecode(jsonEncode(value));
+    late final Object? decoded;
+    try {
+      decoded = jsonDecode(jsonEncode(value));
+    } on JsonUnsupportedObjectError {
+      throw ArgumentError('A change payload must contain only JSON values');
+    }
     if (decoded is! Map<String, dynamic>) {
       throw ArgumentError('A change payload must encode as a JSON object');
     }

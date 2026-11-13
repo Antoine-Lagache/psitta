@@ -34,7 +34,10 @@ void main() {
     await testDatabase.database.execute('''
       INSERT INTO bank_change (
         commit_uid, change_id, change_type, payload_json
-      ) VALUES ('root', 0, 'setting', '{}')
+      ) VALUES (
+        'root', 0, 'setting',
+        '{"entity":{"type":"setting","id":"default"}}'
+      )
       ''');
     await testDatabase.database.execute(
       "UPDATE bank_commit SET is_frozen = 1 WHERE uid = 'root'",
@@ -47,7 +50,10 @@ void main() {
       INSERT INTO bank_change (
         commit_uid, change_id, previous_commit_uid, previous_change_id,
         change_type, payload_json
-      ) VALUES ('child', 0, 'root', 0, 'setting', '{}')
+      ) VALUES (
+        'child', 0, 'root', 0, 'setting',
+        '{"entity":{"type":"setting","id":"default"}}'
+      )
       ''');
     await testDatabase.database.execute(
       "UPDATE bank_commit SET is_frozen = 1 WHERE uid = 'child'",

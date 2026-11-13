@@ -1,11 +1,14 @@
 # Schéma cible de la base de données 0.3
 
 Ce document décrit le schéma cible après séparation entre contenu de banque et
-données utilisateur. La migration v3 crée déjà `learning_bank`, `bank_commit`
-et `bank_change`, ainsi que l'index garantissant un changement au plus par
-entité et par commit. Les autres transformations décrites ici constituent le
-schéma cible de la 0.3 ; elles ne sont pas encore appliquées par une migration.
-La conversion des lignes 0.2 est également à faire.
+données utilisateur. La migration v3 crée maintenant `exercise_progress` et
+`sentence_instance_progress`, puis ajoute des références nullable vers la
+progression aux tables SRS, historique et session. Ces références restent
+nullable et les anciennes colonnes restent présentes pour garder l'application
+0.2 fonctionnelle pendant la transition. Le fichier SQL associé donne la forme
+finale cible ; la prochaine étape remplira les références et retirera les
+colonnes legacy. Les tables de banque sont créées sans les validations métier
+supprimées du SQL.
 
 ## Principes retenus
 
@@ -85,15 +88,13 @@ son contenu : champs ordonnés, valeurs texte/HTML, groupe de phrases et phrases
 instances. Les médias y sont référencés par SHA-256 ; leurs changements
 d'ajout/retrait restent des entités distinctes de type `media`.
 
-L'index unique `bank_change_entity_per_commit_idx` sur
-`(commit_uid, json_extract(payload_json, '$.entity.type'),
-json_extract(payload_json, '$.entity.id'))` interdit deux changements de la
-même entité dans un commit. Le `CHECK` du payload impose une enveloppe objet et
-des identifiants d'entité non vides de type texte. Les références
-`previous_commit_uid`/`previous_change_id` garantissent l'existence du
-changement précédent ; l'applicatif doit vérifier qu'il concerne la même
-entité et que son commit est un ancêtre. Aucun CHECK/trigger SQLite simple ne
-garantit cette règle sur le graphe récursif.
+La règle « au plus un changement par entité et par commit », la forme JSON du
+payload, la cohérence de la paire de références précédente, l'absence de
+référence à soi-même et la validité du type d'opération sont contrôlées dans le
+domaine ou la couche applicative, avec des tests dédiés. Les FK SQL ne
+garantissent que l'existence des commits et changements référencés ; le
+résolveur vérifie que le changement précédent concerne la même entité et que
+son commit est un ancêtre.
 
 Le schéma ne peut pas garantir qu'un `learning_bank.head_commit_uid` est
 atteignable depuis un parent racine valide, que les langues racines sont

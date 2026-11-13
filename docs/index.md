@@ -28,6 +28,8 @@ and SRS rules needed by a developer entering the project.
     and version 1 schema.
   - [Database schema 0.3 target](architecture/database_schema_v0.3.md) — planned
     bank history, media catalog, user progress, and session references.
+    - [Target SQL DDL](architecture/database_schema_v0.3.sql) — proposed final
+      tables, before the data migration is implemented.
   - [Repositories](architecture/persistence_layer/repositories.md) — the APIs
     exposed to the application layer.
 

@@ -44,6 +44,7 @@ void main() {
           'content',
           'exercise',
           'exercise_history',
+          'exercise_progress',
           'field_definition',
           'field_value',
           'learning_bank',
@@ -51,6 +52,7 @@ void main() {
           'sentence_exercise',
           'sentence_group',
           'sentence_instance',
+          'sentence_instance_progress',
           'sentence_state',
           'session_result',
           'session_result_status_count',
@@ -87,6 +89,7 @@ void main() {
           'difficulty',
           'due',
           'last_review',
+          'exercise_progress_id',
         ],
         'word_exercise': ['exercise_id', 'content_id'],
         'sentence_exercise': ['exercise_id', 'sentence_group_id'],
@@ -105,6 +108,8 @@ void main() {
           'grade',
           'answered_at',
           'status',
+          'exercise_progress_id',
+          'sentence_id',
         ],
         'field_value': [
           'id',
@@ -121,6 +126,8 @@ void main() {
           'total_time_spent_microseconds',
           'started_at',
           'end_at',
+          'learning_bank_id',
+          'bank_commit_uid',
         ],
         'session_result_status_count': [
           'id_session_result',
@@ -132,12 +139,56 @@ void main() {
           'exercise_id',
           'status_index',
           'training_count',
+          'exercise_progress_id',
+        ],
+        'exercise_progress': [
+          'id',
+          'learning_bank_id',
+          'exercise_id',
+          'active_commit_uid',
+          'active_change_id',
+        ],
+        'sentence_instance_progress': [
+          'exercise_progress_id',
+          'sentence_id',
+          'shown_count',
+          'accumulated_score',
+          'is_in_learning',
         ],
       };
 
       for (final MapEntry(:key, :value) in expectedColumns.entries) {
         expect(await _columnNames(database, key), value, reason: 'Table $key');
       }
+    });
+
+    test('v3 stores bank rules outside SQL constraints', () async {
+      await createMigrationRunner().migrate(database);
+      await database.execute(
+        "INSERT INTO bank_commit (uid, parent_uid) VALUES ('root', NULL)",
+      );
+      await database.execute('''
+        INSERT INTO bank_change (
+          commit_uid, change_id, change_type, payload_json
+        ) VALUES
+          ('root', 0, 'add', 'not-json'),
+          ('root', 1, 'add', 'not-json'),
+          ('root', 2, 'add', '{"entity":{"type":"exercise","id":"e1"}}'),
+          ('root', 3, 'update', '{"entity":{"type":"exercise","id":"e1"}}')
+        ''');
+      expect(await testDatabase.countRows('bank_change'), 4);
+      expect(await database.getAll('PRAGMA foreign_key_check'), isEmpty);
+      final sqlRows = await database.getAll('''
+        SELECT name, sql
+        FROM sqlite_master
+        WHERE name IN ('bank_commit', 'bank_change')
+          OR (type = 'index' AND tbl_name = 'bank_change')
+          OR (type = 'trigger' AND tbl_name IN ('bank_commit', 'bank_change'))
+        ''');
+      final schemaSql = sqlRows.map((row) => row['sql'] ?? '').join(' ').toUpperCase();
+      expect(schemaSql, isNot(contains('CHECK')));
+      expect(schemaSql, isNot(contains('BANK_CHANGE_ENTITY_PER_COMMIT')));
+      expect(schemaSql, isNot(contains('FROZEN_')));
     });
 
     test('preserves schema and data after reopening the connection', () async {

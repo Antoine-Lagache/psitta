@@ -81,23 +81,10 @@ class DatabaseBackupRepository {
             for (final row in rows[table]!) {
               final columns = row.keys.map(_quoteIdentifier).join(', ');
               final placeholders = List.filled(row.length, '?').join(', ');
-              final insertedRow = Map<String, dynamic>.of(row);
-              if (table == 'bank_commit') {
-                insertedRow['is_frozen'] = 0;
-              }
               await tx.execute(
                 'INSERT INTO ${_quoteIdentifier(table)} ($columns) VALUES ($placeholders)',
-                insertedRow.values.toList(),
+                row.values.toList(),
               );
-            }
-          }
-          // Insert commit changes while commits are mutable, then restore the
-          // frozen flag. This preserves the immutability triggers during restore.
-          for (final commit in rows['bank_commit'] ?? const []) {
-            if (commit['is_frozen'] == 1) {
-              await tx.execute('UPDATE bank_commit SET is_frozen = 1 WHERE uid = ?', [
-                commit['uid'],
-              ]);
             }
           }
           final errors = await tx.getAll('PRAGMA foreign_key_check');
