@@ -95,10 +95,9 @@ class DatabaseBackupRepository {
           // frozen flag. This preserves the immutability triggers during restore.
           for (final commit in rows['bank_commit'] ?? const []) {
             if (commit['is_frozen'] == 1) {
-              await tx.execute(
-                'UPDATE bank_commit SET is_frozen = 1 WHERE uid = ?',
-                [commit['uid']],
-              );
+              await tx.execute('UPDATE bank_commit SET is_frozen = 1 WHERE uid = ?', [
+                commit['uid'],
+              ]);
             }
           }
           final errors = await tx.getAll('PRAGMA foreign_key_check');

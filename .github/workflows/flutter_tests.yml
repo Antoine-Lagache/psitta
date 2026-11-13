@@ -44,9 +44,6 @@ jobs:
       - name: Generate initial database
         run: flutter test tools/build_bundled_database.dart --reporter expanded
 
-      - name: Inspect formatter output
-        run: dart format --output=show lib/infrastructure/persistence/repositories/database_backup_repository.dart
-
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed lib test tools
 
