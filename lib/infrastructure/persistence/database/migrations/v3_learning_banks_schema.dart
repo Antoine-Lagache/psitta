@@ -24,7 +24,6 @@ class V3LearningBanksSchema implements DatabaseMigration {
 
         FOREIGN KEY (parent_uid)
           REFERENCES bank_commit(uid)
-          ON DELETE RESTRICT
       );
       ''');
 
@@ -53,7 +52,6 @@ class V3LearningBanksSchema implements DatabaseMigration {
 
         FOREIGN KEY (previous_commit_uid, previous_change_id)
           REFERENCES bank_change(commit_uid, change_id)
-          ON DELETE RESTRICT
       );
       ''');
 
@@ -105,6 +103,5 @@ class V3LearningBanksSchema implements DatabaseMigration {
         SELECT RAISE(ABORT, 'Cannot edit a change in a frozen bank commit');
       END;
       ''');
-
   }
 }

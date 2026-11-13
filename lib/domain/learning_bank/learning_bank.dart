@@ -8,10 +8,7 @@ final class LearningBank {
   final int id;
   final CommitUid headCommitUid;
 
-  LearningBank({
-    required this.id,
-    required this.headCommitUid,
-  }) {
+  LearningBank({required this.id, required this.headCommitUid}) {
     if (id <= 0) {
       throw ArgumentError.value(id, 'id', 'Must be a persisted local ID');
     }

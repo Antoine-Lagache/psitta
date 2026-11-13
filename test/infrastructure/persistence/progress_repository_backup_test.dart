@@ -28,12 +28,42 @@ void main() {
     await testDatabase.database.execute(
       'INSERT INTO word_exercise (exercise_id, content_id) VALUES (1, 1)',
     );
+    await testDatabase.database.execute(
+      "INSERT INTO bank_commit (uid, parent_uid, is_frozen) VALUES ('root', NULL, 0)",
+    );
+    await testDatabase.database.execute('''
+      INSERT INTO bank_change (
+        commit_uid, change_id, change_type, payload_json
+      ) VALUES ('root', 0, 'setting', '{}')
+      ''');
+    await testDatabase.database.execute(
+      "UPDATE bank_commit SET is_frozen = 1 WHERE uid = 'root'",
+    );
+    await testDatabase.database.execute('''
+      INSERT INTO bank_commit (uid, parent_uid, is_frozen)
+      VALUES ('child', 'root', 0)
+      ''');
+    await testDatabase.database.execute('''
+      INSERT INTO bank_change (
+        commit_uid, change_id, previous_commit_uid, previous_change_id,
+        change_type, payload_json
+      ) VALUES ('child', 0, 'root', 0, 'setting', '{}')
+      ''');
+    await testDatabase.database.execute(
+      "UPDATE bank_commit SET is_frozen = 1 WHERE uid = 'child'",
+    );
+    await testDatabase.database.execute(
+      "INSERT INTO learning_bank (id, head_commit_uid) VALUES (1, 'child')",
+    );
     final backup = await repository.createDatabaseBackup();
     await testDatabase.insertContent();
 
     await repository.restoreDatabaseBackup(backup, allowMigration: false);
     expect(await testDatabase.countRows('content'), 1);
     expect(await testDatabase.countRows('word_exercise'), 1);
+    expect(await testDatabase.countRows('bank_commit'), 2);
+    expect(await testDatabase.countRows('bank_change'), 2);
+    expect(await testDatabase.countRows('learning_bank'), 1);
     expect(await testDatabase.database.getAll('PRAGMA foreign_key_check'), isEmpty);
 
     await repository.restoreDatabaseBackup(backup, allowMigration: false);

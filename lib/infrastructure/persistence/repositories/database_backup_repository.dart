@@ -71,6 +71,9 @@ class DatabaseBackupRepository {
           rows[table] = await backup.getAll('SELECT * FROM ${_quoteIdentifier(table)}');
         }
         await database.writeTransaction((tx) async {
+          // The bank history intentionally contains self-referencing foreign
+          // keys. Defer checks so the full snapshot can be replaced atomically.
+          await tx.execute('PRAGMA defer_foreign_keys = ON');
           for (final table in order.reversed) {
             await tx.execute('DELETE FROM ${_quoteIdentifier(table)}');
           }
@@ -78,9 +81,22 @@ class DatabaseBackupRepository {
             for (final row in rows[table]!) {
               final columns = row.keys.map(_quoteIdentifier).join(', ');
               final placeholders = List.filled(row.length, '?').join(', ');
+              final insertedRow = table == 'bank_commit'
+                  ? {...row, 'is_frozen': 0}
+                  : row;
               await tx.execute(
                 'INSERT INTO ${_quoteIdentifier(table)} ($columns) VALUES ($placeholders)',
-                row.values.toList(),
+                insertedRow.values.toList(),
+              );
+            }
+          }
+          // Insert commit changes while commits are mutable, then restore the
+          // frozen flag. This preserves the immutability triggers during restore.
+          for (final commit in rows['bank_commit'] ?? const []) {
+            if (commit['is_frozen'] == 1) {
+              await tx.execute(
+                'UPDATE bank_commit SET is_frozen = 1 WHERE uid = ?',
+                [commit['uid']],
               );
             }
           }
@@ -95,7 +111,7 @@ class DatabaseBackupRepository {
     });
   }
 
-  /// Parent tables precede children. Cyclic schemas are explicitly unsupported.
+  /// Parent tables precede children; self-references are deferred on restore.
   Future<List<String>> _dependencyOrder(sqlite.SqliteDatabase source) async {
     final tables = await source.getAll(
       "SELECT name FROM sqlite_master WHERE type = 'table' "
@@ -107,7 +123,10 @@ class DatabaseBackupRepository {
       final keys = await source.getAll(
         'PRAGMA foreign_key_list(${_quoteIdentifier(name)})',
       );
-      pending[name] = keys.map((key) => key['table'] as String).toSet();
+      pending[name] = keys
+          .map((key) => key['table'] as String)
+          .where((parent) => parent != name)
+          .toSet();
     }
     final ordered = <String>[];
     while (pending.isNotEmpty) {
