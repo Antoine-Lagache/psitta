@@ -32,18 +32,21 @@ void main() {
           '''),
       );
 
-      expect(version['user_version'], 2);
+      expect(version['user_version'], 3);
       expect(
         tableRows.map((row) => row['name']),
         orderedEquals([
           'active_session_exercise',
           'app_setting',
+          'bank_change',
+          'bank_commit',
           'character_exercise',
           'content',
           'exercise',
           'exercise_history',
           'field_definition',
           'field_value',
+          'learning_bank',
           'media',
           'sentence_exercise',
           'sentence_group',
@@ -61,6 +64,16 @@ void main() {
       await createMigrationRunner().migrate(database);
 
       const expectedColumns = {
+        'bank_commit': ['uid', 'parent_uid', 'is_frozen'],
+        'bank_change': [
+          'commit_uid',
+          'change_id',
+          'previous_commit_uid',
+          'previous_change_id',
+          'change_type',
+          'payload_json',
+        ],
+        'learning_bank': ['id', 'head_commit_uid'],
         'exercise': ['id', 'type', 'training_count_max'],
         'content': ['id'],
         'field_definition': ['id', 'value_type', 'side'],
@@ -138,7 +151,7 @@ void main() {
       final contentRows = await database.get('SELECT COUNT(*) AS count FROM content');
       final foreignKeys = await database.get('PRAGMA foreign_keys;');
 
-      expect(version['user_version'], 2);
+      expect(version['user_version'], 3);
       expect(contentRows['count'], 1);
       expect(foreignKeys['foreign_keys'], 1);
     });
