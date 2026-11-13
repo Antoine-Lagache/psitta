@@ -81,9 +81,10 @@ class DatabaseBackupRepository {
             for (final row in rows[table]!) {
               final columns = row.keys.map(_quoteIdentifier).join(', ');
               final placeholders = List.filled(row.length, '?').join(', ');
-              final insertedRow = table == 'bank_commit'
-                  ? {...row, 'is_frozen': 0}
-                  : row;
+              final insertedRow = Map<String, dynamic>.of(row);
+              if (table == 'bank_commit') {
+                insertedRow['is_frozen'] = 0;
+              }
               await tx.execute(
                 'INSERT INTO ${_quoteIdentifier(table)} ($columns) VALUES ($placeholders)',
                 insertedRow.values.toList(),
