@@ -62,42 +62,8 @@ class V3LearningBanksSchema implements DatabaseMigration {
       ON bank_change (previous_commit_uid, previous_change_id);
       ''');
 
-    // Multiple legacy catalog rows can describe identical file bytes. Keep
-    // one catalog row and repoint content fields before enforcing uniqueness.
     await database.execute('''
-      UPDATE field_value
-      SET media_id = (
-        SELECT MIN(media.id)
-        FROM media
-        WHERE media.sha256 = (
-          SELECT duplicate.sha256
-          FROM media AS duplicate
-          WHERE duplicate.id = field_value.media_id
-        )
-      )
-      WHERE media_id IN (
-        SELECT id
-        FROM media
-        WHERE sha256 IN (
-          SELECT sha256
-          FROM media
-          GROUP BY sha256
-          HAVING COUNT(*) > 1
-        )
-      );
-      ''');
-
-    await database.execute('''
-      DELETE FROM media
-      WHERE id NOT IN (
-        SELECT MIN(id)
-        FROM media
-        GROUP BY sha256
-      );
-      ''');
-
-    await database.execute('''
-      CREATE UNIQUE INDEX media_sha256_uq ON media (sha256);
+      CREATE UNIQUE INDEX media_sha256_unique_idx ON media (sha256);
       ''');
 
     await database.execute('''
@@ -111,23 +77,14 @@ class V3LearningBanksSchema implements DatabaseMigration {
       );
       ''');
 
-    // Frozen commits and their changes are immutable. Deleting an unfrozen
-    // child commit remains possible only when no bank or descendant refers to it.
+    // Frozen commits and their changes are immutable. Commit deletion remains
+    // available when no bank or descendant references the commit.
     await database.execute('''
       CREATE TRIGGER bank_commit_frozen_update
       BEFORE UPDATE ON bank_commit
       WHEN OLD.is_frozen = 1
       BEGIN
         SELECT RAISE(ABORT, 'A frozen bank commit is immutable');
-      END;
-      ''');
-
-    await database.execute('''
-      CREATE TRIGGER bank_commit_frozen_delete
-      BEFORE DELETE ON bank_commit
-      WHEN OLD.is_frozen = 1
-      BEGIN
-        SELECT RAISE(ABORT, 'A frozen bank commit cannot be deleted');
       END;
       ''');
 
@@ -149,13 +106,5 @@ class V3LearningBanksSchema implements DatabaseMigration {
       END;
       ''');
 
-    await database.execute('''
-      CREATE TRIGGER bank_change_frozen_delete
-      BEFORE DELETE ON bank_change
-      WHEN (SELECT is_frozen FROM bank_commit WHERE uid = OLD.commit_uid) = 1
-      BEGIN
-        SELECT RAISE(ABORT, 'Cannot delete a change from a frozen bank commit');
-      END;
-      ''');
   }
 }
