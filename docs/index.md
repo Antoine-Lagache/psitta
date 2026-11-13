@@ -26,6 +26,8 @@ and SRS rules needed by a developer entering the project.
   DAOs, mappers, and transaction boundaries.
   - [Database](architecture/persistence_layer/database.md) — database lifecycle
     and version 1 schema.
+  - [Database schema 0.3 target](architecture/database_schema_v0.3.md) — planned
+    bank history, media catalog, user progress, and session references.
   - [Repositories](architecture/persistence_layer/repositories.md) — the APIs
     exposed to the application layer.
 

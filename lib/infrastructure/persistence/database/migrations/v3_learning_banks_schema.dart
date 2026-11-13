@@ -35,7 +35,14 @@ class V3LearningBanksSchema implements DatabaseMigration {
         previous_change_id INTEGER,
         change_type TEXT NOT NULL CHECK (length(trim(change_type)) > 0),
         payload_json TEXT NOT NULL
-          CHECK (json_valid(payload_json) AND json_type(payload_json) = 'object'),
+          CHECK (
+            json_valid(payload_json)
+            AND json_type(payload_json) = 'object'
+            AND json_type(payload_json, '$.entity.type') = 'text'
+            AND length(trim(json_extract(payload_json, '$.entity.type'))) > 0
+            AND json_type(payload_json, '$.entity.id') = 'text'
+            AND length(trim(json_extract(payload_json, '$.entity.id'))) > 0
+          ),
 
         PRIMARY KEY (commit_uid, change_id),
         CHECK (
@@ -58,6 +65,15 @@ class V3LearningBanksSchema implements DatabaseMigration {
     await database.execute('''
       CREATE INDEX bank_change_previous_ref_idx
       ON bank_change (previous_commit_uid, previous_change_id);
+      ''');
+
+    await database.execute('''
+      CREATE UNIQUE INDEX bank_change_entity_per_commit_idx
+      ON bank_change (
+        commit_uid,
+        json_extract(payload_json, '$.entity.type'),
+        json_extract(payload_json, '$.entity.id')
+      );
       ''');
 
     await database.execute('''
