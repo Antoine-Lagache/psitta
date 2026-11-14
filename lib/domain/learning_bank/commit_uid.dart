@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+
 /// Portable identity of an immutable or locally mutable bank commit.
 ///
 /// The UID also identifies the exact bank state represented by the commit.
@@ -25,4 +27,9 @@ final class CommitUid {
 
   @override
   String toString() => value;
+
+  factory CommitUid.generateUUID() {
+    final value = const Uuid().v4();
+    return CommitUid(value);
+  }
 }

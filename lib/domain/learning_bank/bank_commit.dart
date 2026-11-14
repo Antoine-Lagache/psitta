@@ -24,13 +24,9 @@ final class BankCommit {
 
   void validateChanges(Iterable<BankChange> changes) {
     ensureCanBeEdited();
-    final entities = <(String, String)>{};
     for (final change in changes) {
       if (change.ref.commitUid != uid) {
         throw ArgumentError('Every change must belong to this commit');
-      }
-      if (!entities.add((change.entityType, change.entityId))) {
-        throw ArgumentError('A commit cannot change the same entity twice');
       }
     }
   }

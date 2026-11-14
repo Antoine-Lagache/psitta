@@ -27,8 +27,10 @@ class V3LearningBanksSchema implements DatabaseMigration {
       CREATE TABLE bank_change (
         commit_uid TEXT NOT NULL,
         change_id INTEGER NOT NULL,
+
         previous_commit_uid TEXT,
         previous_change_id INTEGER,
+        
         change_type TEXT NOT NULL,
         payload_json TEXT NOT NULL,
 
@@ -68,8 +70,10 @@ class V3LearningBanksSchema implements DatabaseMigration {
         id INTEGER PRIMARY KEY,
         learning_bank_id INTEGER NOT NULL,
         exercise_id TEXT NOT NULL,
+        
         active_commit_uid TEXT NOT NULL,
         active_change_id INTEGER NOT NULL,
+
         UNIQUE (learning_bank_id, exercise_id),
         FOREIGN KEY (learning_bank_id)
           REFERENCES learning_bank(id) ON DELETE CASCADE,
