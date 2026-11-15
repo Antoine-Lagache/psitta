@@ -22,9 +22,10 @@ supprimées du SQL.
   description, les paramètres par défaut et les opérations sur les médias sont
   des changements de banque. Leur état courant est résolu depuis la chaîne de
   commits.
-- Les identifiants d'entité sont dans `payload_json`, sous une enveloppe
-  `entity` contenant `type` et `id`. Un commit ne peut contenir qu'un changement
-  par entité.
+- Les identifiants d'entité sont dans `payload_json`. Le type d'entité et
+  l'opération sont portés par `change_type` (par exemple `add exercise` ou
+  `update setting`) ; le payload contient l'identifiant stable et l'état complet
+  de l'entité. Un commit ne peut contenir qu'un changement par entité.
 - `media` est un catalogue local des fichiers physiques. Le SHA-256 identifie
   le contenu binaire et permet de partager le même fichier entre exercices,
   commits et banques.
@@ -63,8 +64,8 @@ et les commits qui en dépendent sont supprimés.
 | `change_id INTEGER NOT NULL` | Identifiant local au commit |
 | `previous_commit_uid TEXT NULL` | Commit du changement précédent de la même entité |
 | `previous_change_id INTEGER NULL` | Identifiant du changement précédent |
-| `change_type TEXT NOT NULL` | Opération, par exemple ajout, remplacement ou retrait |
-| `payload_json TEXT NOT NULL` | Entité modifiée et données de l'opération |
+| `change_type TEXT NOT NULL` | Opération et type d'entité, par exemple `add exercise` |
+| `payload_json TEXT NOT NULL` | Identifiant stable et état complet de l'entité |
 
 Clé primaire : `(commit_uid, change_id)`. `change_id` est un entier local au
 commit, attribuable par exemple par `MAX(change_id) + 1` dans une transaction.
@@ -73,20 +74,114 @@ référence une ligne de `bank_change`. La validation que ce précédent apparti
 à un ancêtre du commit et concerne la même entité est faite par le résolveur
 applicatif.
 
-Le payload porte une enveloppe de ce type :
+Le type d'entité est implicite dans `change_type`, donc il n'est pas répété dans
+le JSON. La liste des valeurs de `change_type` retenue pour la 0.3 est :
+
+- `add bank languages`
+- `add bank description`
+- `add exercise`
+- `add sentence group`
+- `add sentence`
+- `add content`
+- `add media`
+- `remove media`
+- `add setting`
+- `update setting`
+
+Les changements de langues n'existent qu'à la racine et ne sont pas modifiables
+dans les descendants. Les modifications de paramètres sont des changements
+distincts par clé. La réinitialisation des paramètres du brouillon supprime les
+changements correspondants de ce brouillon ; il n'y a pas de `remove setting`
+en 0.3.
+
+Chaque payload contient l'identifiant stable de l'entité et son état complet.
+Une mise à jour n'est pas un patch : elle sérialise toute la nouvelle entité.
+Le changement précédent permet de retrouver l'état antérieur et de recalculer
+un diff si nécessaire. Les identifiants locaux SQLite ne sont jamais
+sérialisés comme identifiants de contenu.
+
+Exemples indicatifs des payloads :
 
 ```json
 {
-  "entity": { "type": "exercise", "id": "word-0001" },
-  "value": { }
+  "exercise_id": "word-0001",
+  "exercise_type": "word",
+  "content_id": "content-word-0001"
 }
 ```
 
-L'opération (`add`, `update`, `remove`, etc.) est dans `change_type`, pas
-dupliquée dans le payload. Un changement d'exercice contient sa définition et
-son contenu : champs ordonnés, valeurs texte/HTML, groupe de phrases et phrases
-instances. Les médias y sont référencés par SHA-256 ; leurs changements
-d'ajout/retrait restent des entités distinctes de type `media`.
+Un exercice phrase référence un groupe ; le groupe porte l'ordre des phrases,
+et chaque phrase référence son contenu séparément :
+
+```json
+{
+  "exercise_id": "sentence-0001",
+  "exercise_type": "sentence",
+  "sentence_group_id": "group-0001"
+}
+```
+
+```json
+{
+  "sentence_group_id": "group-0001",
+  "sentence_ids": ["sentence-0001", "sentence-0002"]
+}
+```
+
+```json
+{
+  "sentence_id": "sentence-0001",
+  "content_id": "content-sentence-0001"
+}
+```
+
+Chaque champ de contenu embarque les métadonnées de définition nécessaires ;
+il n'y a pas de changement indépendant de définition de champ. `value_type`,
+`side` et `display_order` sont des valeurs sémantiques, pas des clés locales :
+
+```json
+{
+  "content_id": "content-word-0001",
+  "fields": [
+    {
+      "value_type": "html",
+      "side": "front",
+      "display_order": 0,
+      "text_value": "<p>日本語</p>"
+    },
+    {
+      "value_type": "audio",
+      "side": "front",
+      "display_order": 1,
+      "media_sha256": "…"
+    }
+  ]
+}
+```
+
+Les métadonnées d'un média ajouté sont décrites par son changement, tandis que
+les contenus d'exercices y font référence par SHA-256. Les paramètres sont une
+entité clé-valeur par changement :
+
+```json
+{
+  "sha256": "…",
+  "mime_type": "audio/ogg",
+  "size": 12345
+}
+```
+
+```json
+{
+  "key": "new_words_per_day",
+  "value": "10"
+}
+```
+
+L'ordre actuel des exercices et leurs identifiants ne changent pas en 0.3 ; il
+n'y a pas de colonne `exercise_order` supplémentaire. Les changements de
+phrase, groupe, contenu et média restent des entités distinctes : chaque
+changement ne décrit qu'une entité.
 
 La règle « au plus un changement par entité et par commit », la forme JSON du
 payload, la cohérence de la paire de références précédente, l'absence de
