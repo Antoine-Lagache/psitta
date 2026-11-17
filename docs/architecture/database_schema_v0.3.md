@@ -29,6 +29,9 @@ supprimées du SQL.
 - `media` est un catalogue local des fichiers physiques. Le SHA-256 identifie
   le contenu binaire et permet de partager le même fichier entre exercices,
   commits et banques.
+- En 0.3, le commit racine est assemblé après l'installation de tout le contenu
+  livré, y compris les audios et leurs références HTML. L'ajout des audios au
+  corpus initial ne crée donc pas de commit enfant séparé.
 - La progression, le SRS, l'historique des réponses et les sessions sont des
   données utilisateur, séparées du contenu versionné.
 
@@ -106,7 +109,8 @@ Exemples indicatifs des payloads :
 {
   "exercise_id": "word-0001",
   "exercise_type": "word",
-  "content_id": "content-word-0001"
+  "content_id": "content-word-0001",
+  "training_count_max": 0
 }
 ```
 
@@ -117,7 +121,8 @@ et chaque phrase référence son contenu séparément :
 {
   "exercise_id": "sentence-0001",
   "exercise_type": "sentence",
-  "sentence_group_id": "group-0001"
+  "sentence_group_id": "group-0001",
+  "training_count_max": 3
 }
 ```
 
@@ -134,6 +139,12 @@ et chaque phrase référence son contenu séparément :
   "content_id": "content-sentence-0001"
 }
 ```
+
+L'association entre les phrases et le groupe est portée par la liste ordonnée
+`sentence_ids` du changement de groupe. Chaque ID numérique hérité de la base
+0.2 est sérialisé en chaîne décimale sans changer sa valeur ; les clés
+numériques propres à SQLite (valeurs de `field_definition`, `field_value` et
+`media`) ne sont jamais exportées.
 
 Chaque champ de contenu embarque les métadonnées de définition nécessaires ;
 il n'y a pas de changement indépendant de définition de champ. `value_type`,
@@ -160,8 +171,12 @@ il n'y a pas de changement indépendant de définition de champ. `value_type`,
 ```
 
 Les métadonnées d'un média ajouté sont décrites par son changement, tandis que
-les contenus d'exercices y font référence par SHA-256. Les paramètres sont une
-entité clé-valeur par changement :
+les contenus d'exercices y font référence par SHA-256. Dans un champ HTML, la
+référence est écrite dans `src` ou `poster` sous la forme `media://<sha256>` ;
+le résolveur remplace cette URI par le chemin local à l'affichage. Les HTML et
+les changements `add media` sont tous inclus dans le commit racine assemblé
+après l'installation du corpus 0.3. Les paramètres sont une entité clé-valeur
+par changement :
 
 ```json
 {
