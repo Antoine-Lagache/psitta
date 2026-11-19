@@ -23,7 +23,6 @@ final class BankCommit {
   }
 
   void validateChanges(Iterable<BankChange> changes) {
-    ensureCanBeEdited();
     for (final change in changes) {
       if (change.ref.commitUid != uid) {
         throw ArgumentError('Every change must belong to this commit');

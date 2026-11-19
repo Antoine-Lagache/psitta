@@ -169,7 +169,15 @@ final class LegacyBankContentMapper {
       return const _MappedContent([], {});
     }
 
-    final rows = await database.getAll('''
+    final orderedContentIds = contentIds.toList()..sort();
+    final rows = <Map<String, Object?>>[];
+    // Keep below SQLite's historical 999 bind-parameter limit. The corpus
+    // contains several thousand content records, so one IN clause is unsafe.
+    const batchSize = 500;
+    for (var offset = 0; offset < orderedContentIds.length; offset += batchSize) {
+      final batch = orderedContentIds.skip(offset).take(batchSize).toList();
+      final placeholders = List.filled(batch.length, '?').join(', ');
+      rows.addAll(await database.getAll('''
       SELECT
         c.id AS content_id,
         fv.display_order,
@@ -181,15 +189,10 @@ final class LegacyBankContentMapper {
       LEFT JOIN field_value fv ON fv.content_id = c.id
       LEFT JOIN field_definition fd ON fd.id = fv.field_definition_id
       LEFT JOIN media m ON m.id = fv.media_id
-      WHERE c.id IN (
-        SELECT content_id FROM word_exercise
-        UNION
-        SELECT content_id FROM character_exercise
-        UNION
-        SELECT content_id FROM sentence_instance
-      )
+      WHERE c.id IN ($placeholders)
       ORDER BY c.id, fv.display_order, fv.id
-      ''');
+      ''', batch));
+    }
 
     final fieldsByContent = <int, List<Map<String, Object?>>>{};
     final referencedMediaShas = <String>{};
@@ -198,6 +201,10 @@ final class LegacyBankContentMapper {
       final fields = fieldsByContent.putIfAbsent(contentId, () => []);
       if (row['display_order'] == null) {
         continue;
+      }
+
+      if (row['value_type'] == null || row['side'] == null) {
+        throw StateError('Content $contentId references a missing field definition');
       }
 
       final field = <String, Object?>{
@@ -242,7 +249,7 @@ final class LegacyBankContentMapper {
     }
 
     final changes = <LegacyBankContentChange>[];
-    for (final id in contentIds.toList()..sort()) {
+    for (final id in orderedContentIds) {
       final fields = fieldsByContent[id];
       if (fields == null) {
         throw StateError('Referenced content $id does not exist');
