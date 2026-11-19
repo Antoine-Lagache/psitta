@@ -1,6 +1,9 @@
 import 'dart:collection';
 
 import 'package:html/parser.dart' as html_parser;
+import 'package:psitta/domain/learning_bank/bank_change.dart';
+import 'package:psitta/domain/learning_bank/bank_change_ref.dart';
+import 'package:psitta/domain/learning_bank/commit_uid.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 /// A portable bank change prepared from the pre-bank content tables.
@@ -23,6 +26,23 @@ final class LegacyBankContentChange {
 /// definitions, field values, or media files.
 final class LegacyBankContentMapper {
   const LegacyBankContentMapper();
+
+  /// Maps legacy rows to root-commit changes with deterministic local IDs.
+  Future<List<BankChange>> mapDomainChanges(
+    sqlite.SqliteWriteContext database, {
+    required CommitUid commitUid,
+  }) async {
+    final legacyChanges = await map(database);
+    return List.unmodifiable([
+      for (var index = 0; index < legacyChanges.length; index++)
+        BankChange(
+          ref: BankChangeRef(commitUid: commitUid, changeId: index),
+          previousChangeRef: null,
+          changeType: legacyChanges[index].changeType,
+          payload: legacyChanges[index].payload,
+        ),
+    ]);
+  }
 
   Future<List<LegacyBankContentChange>> map(
     sqlite.SqliteWriteContext database,
