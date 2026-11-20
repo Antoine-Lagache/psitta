@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'package:path/path.dart' as path;
 
 import 'package:html/parser.dart' as html_parser;
 import 'package:psitta/domain/learning_bank/bank_change.dart';
@@ -94,6 +95,8 @@ final class LegacyBankContentMapper {
       final Map<String, Object?> payload = {
         'exercise_id': _id(exerciseId),
         'exercise_type': type,
+        // Preserve the existing deterministic editorial ordering.
+        'priority_order': exerciseId,
         'training_count_max': row['training_count_max'] as int,
       };
 
@@ -168,6 +171,7 @@ final class LegacyBankContentMapper {
           changeType: 'add media',
           payload: {
             'sha256': media['sha256'],
+            'filename': media['filename'],
             'mime_type': media['mime_type'],
             'size': media['size'],
           },
@@ -250,11 +254,12 @@ final class LegacyBankContentMapper {
       fields.add(field);
     }
 
-    final mediaRows = await database.getAll('SELECT sha256, mime_type, size FROM media');
+    final mediaRows = await database.getAll('SELECT sha256, path, mime_type, size FROM media');
     final mediaBySha = <String, Map<String, Object?>>{
       for (final row in mediaRows)
         row['sha256'] as String: {
           'sha256': row['sha256'],
+          'filename': path.basename(row['path'] as String),
           'mime_type': row['mime_type'],
           'size': row['size'],
         },
@@ -293,9 +298,68 @@ final class LegacyBankContentMapper {
     for (final element in fragment.querySelectorAll('[src], [poster]')) {
       for (final attribute in ['src', 'poster']) {
         final value = element.attributes[attribute];
-        if (value == null || !value.startsWith('media://')) continue;
-        final sha256 = value.substring('media://'.length);
-        if (sha256.isEmpty) {
+        if (value == null) continue;
+        const prefix = 'psitta://media/';
+        if (!value.startsWith(prefix)) continue;
+        final sha256 = value.substring(prefix.length);
+        if (!RegExp(r'^[a-fA-F0-9]{64}
+          throw const FormatException('HTML media reference must contain a SHA-256');
+        }
+        hashes.add(sha256);
+      }
+    }
+    return hashes;
+  }
+
+  static int _compareChanges(
+    LegacyBankContentChange left,
+    LegacyBankContentChange right,
+  ) {
+    final typeOrder = _changeOrder(left.changeType).compareTo(
+      _changeOrder(right.changeType),
+    );
+    if (typeOrder != 0) return typeOrder;
+    final leftId = _entityId(left);
+    final rightId = _entityId(right);
+    if (left.changeType == 'add media') {
+      return leftId.compareTo(rightId);
+    }
+    return int.parse(leftId).compareTo(int.parse(rightId));
+  }
+
+  static int _changeOrder(String type) => switch (type) {
+    'add media' => 0,
+    'add content' => 1,
+    'add sentence' => 2,
+    'add sentence group' => 3,
+    'add exercise' => 4,
+    _ => throw StateError('Unsupported generated change type "$type"'),
+  };
+
+  static String _entityId(LegacyBankContentChange change) => switch (change.changeType) {
+    'add media' => change.payload['sha256'] as String,
+    'add content' => change.payload['content_id'] as String,
+    'add sentence' => change.payload['sentence_id'] as String,
+    'add sentence group' => change.payload['sentence_group_id'] as String,
+    'add exercise' => change.payload['exercise_id'] as String,
+    _ => throw StateError('Unsupported generated change type "${change.changeType}"'),
+  };
+
+  static int _requiredInt(Object? value, String type, int exerciseId) {
+    if (value is int) return value;
+    throw StateError('Legacy $type exercise $exerciseId has no required content reference');
+  }
+
+  static String _id(int id) => id.toString();
+}
+
+final class _MappedContent {
+  final List<LegacyBankContentChange> changes;
+  final Map<String, Map<String, Object?>> mediaBySha;
+
+  const _MappedContent(this.changes, this.mediaBySha);
+}
+).hasMatch(sha256)) {
           throw const FormatException('HTML media reference has an empty SHA-256');
         }
         hashes.add(sha256);
