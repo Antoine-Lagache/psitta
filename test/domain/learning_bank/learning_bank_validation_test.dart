@@ -15,6 +15,18 @@ void main() {
       );
     });
 
+    test('format version must be positive', () {
+      expect(
+        () => BankCommit(
+          uid: CommitUid('commit-a'),
+          parentUid: null,
+          isFrozen: false,
+          formatVersion: 0,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('frozen commit cannot be edited', () {
       final commit = BankCommit(
         uid: CommitUid('commit-a'),
