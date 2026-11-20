@@ -253,7 +253,9 @@ final class LegacyBankContentMapper {
       fields.add(field);
     }
 
-    final mediaRows = await database.getAll('SELECT sha256, path, mime_type, size FROM media');
+    final mediaRows = await database.getAll(
+      'SELECT sha256, path, mime_type, size FROM media',
+    );
     final mediaBySha = <String, Map<String, Object?>>{
       for (final row in mediaRows)
         row['sha256'] as String: {
@@ -301,7 +303,7 @@ final class LegacyBankContentMapper {
         const prefix = 'psitta://media/';
         if (!value.startsWith(prefix)) continue;
         final sha256 = value.substring(prefix.length);
-        if (!RegExp(r'^[a-fA-F0-9]{64} const FormatException('HTML media reference must contain a SHA-256');
+        if (!RegExp(r'^[a-fA-F0-9]{64}
         }
         hashes.add(sha256);
       }
