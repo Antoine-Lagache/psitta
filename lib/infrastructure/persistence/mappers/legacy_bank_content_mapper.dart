@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'package:path/path.dart' as path;
 
 import 'package:html/parser.dart' as html_parser;
 import 'package:psitta/domain/learning_bank/bank_change.dart';
@@ -259,7 +258,7 @@ final class LegacyBankContentMapper {
       for (final row in mediaRows)
         row['sha256'] as String: {
           'sha256': row['sha256'],
-          'filename': path.basename(row['path'] as String),
+          'filename': (row['path'] as String).split(RegExp(r'[/\\]')).last,
           'mime_type': row['mime_type'],
           'size': row['size'],
         },
