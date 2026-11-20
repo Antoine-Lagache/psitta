@@ -11,7 +11,12 @@ final class BankCommit {
   final bool isFrozen;
   final int formatVersion;
 
-  BankCommit({required this.uid, required this.parentUid, required this.isFrozen, this.formatVersion = 1}) {
+  BankCommit({
+    required this.uid,
+    required this.parentUid,
+    required this.isFrozen,
+    this.formatVersion = 1,
+  }) {
     if (formatVersion < 1) {
       throw ArgumentError.value(formatVersion, 'formatVersion', 'Must be positive');
     }
