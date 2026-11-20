@@ -6,6 +6,7 @@ CREATE TABLE bank_commit (
   uid TEXT PRIMARY KEY NOT NULL,
   parent_uid TEXT,
   is_frozen INTEGER NOT NULL DEFAULT 0,
+  format_version INTEGER NOT NULL DEFAULT 1,
   FOREIGN KEY (parent_uid) REFERENCES bank_commit(uid)
 );
 
