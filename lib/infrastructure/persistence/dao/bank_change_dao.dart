@@ -19,13 +19,14 @@ final class BankChangeDao {
 
     await transaction.execute(
       '''
-      INSERT INTO bank_commit (uid, parent_uid, is_frozen)
-      VALUES (?, ?, ?)
+      INSERT INTO bank_commit (uid, parent_uid, is_frozen, format_version)
+      VALUES (?, ?, ?, ?)
       ''',
       [
         commit.uid.value,
         commit.parentUid?.value,
         commit.isFrozen ? 1 : 0,
+        commit.formatVersion,
       ],
     );
 
