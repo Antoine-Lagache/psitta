@@ -55,6 +55,7 @@ racine.
 | `uid TEXT PRIMARY KEY` | Identité portable du commit et de l'état qu'il représente |
 | `parent_uid TEXT NULL` | Parent unique ; nul pour un commit racine |
 | `is_frozen INTEGER NOT NULL` | `0` pour un brouillon modifiable, `1` pour un commit figé |
+| `format_version INTEGER NOT NULL` | Version du format des changements de ce commit (1 pour le format initial) |
 
 Un commit figé ne peut pas être modifié. Il reste supprimable lorsque la banque
 et les commits qui en dépendent sont supprimés.
@@ -110,6 +111,7 @@ Exemples indicatifs des payloads :
   "exercise_id": "word-0001",
   "exercise_type": "word",
   "content_id": "content-word-0001",
+  "priority_order": 10,
   "training_count_max": 0
 }
 ```
@@ -122,6 +124,7 @@ et chaque phrase référence son contenu séparément :
   "exercise_id": "sentence-0001",
   "exercise_type": "sentence",
   "sentence_group_id": "group-0001",
+  "priority_order": 10,
   "training_count_max": 3
 }
 ```
@@ -172,7 +175,7 @@ il n'y a pas de changement indépendant de définition de champ. `value_type`,
 
 Les métadonnées d'un média ajouté sont décrites par son changement, tandis que
 les contenus d'exercices y font référence par SHA-256. Dans un champ HTML, la
-référence est écrite dans `src` ou `poster` sous la forme `media://<sha256>` ;
+référence est écrite dans `src` ou `poster` sous la forme `psitta://media/<sha256>` ;
 le résolveur remplace cette URI par le chemin local à l'affichage. Les HTML et
 les changements `add media` sont tous inclus dans le commit racine assemblé
 après l'installation du corpus 0.3. Les paramètres sont une entité clé-valeur
@@ -182,19 +185,20 @@ par changement :
 {
   "sha256": "…",
   "mime_type": "audio/ogg",
-  "size": 12345
+  "size": 12345,
+  "filename": "example.ogg"
 }
 ```
 
 ```json
 {
+  "profile": "default",
   "key": "new_words_per_day",
-  "value": "10"
+  "value": 10
 }
 ```
 
-L'ordre actuel des exercices et leurs identifiants ne changent pas en 0.3 ; il
-n'y a pas de colonne `exercise_order` supplémentaire. Les changements de
+`priority_order` est un entier non unique dans le JSON de chaque exercice. Les égalités sont autorisées ; un critère secondaire déterministe départage les exercices. L'ordre exact et sa sémantique pour la sélection des sessions doivent rester cohérents avec le planificateur. Les changements de
 phrase, groupe, contenu et média restent des entités distinctes : chaque
 changement ne décrit qu'une entité.
 
@@ -352,7 +356,7 @@ même.
 `app_setting(key, value)` reste le stockage des paramètres globaux de
 l'application, par exemple le thème et les statistiques globales. Les
 paramètres propres à une banque sont des entités `setting` dans `bank_change`.
-En 0.3, il n'y a qu'un profil par défaut ; le bouton de réinitialisation retire
+Chaque paramètre de banque est identifié par `(profile, key)` ; sa valeur dans le JSON est typée (nombre, booléen ou chaîne), contrairement à la représentation textuelle des anciens paramètres SQL. Les clés absentes sont résolues par les valeurs par défaut du code Dart. En 0.3, il n'y a qu'un profil `default` ; le bouton de réinitialisation retire
 les changements de ce profil dans le commit brouillon.
 
 ## Tables de contenu à retirer après conversion
@@ -379,3 +383,13 @@ conservées avec les nouvelles références décrites plus haut.
 3. Le backup/restauration doit conserver commits figés, références aux commits
    précédents et progressions, y compris lors d'une restauration atomique.
 4. Les insertions de média doivent être dédupliquées par SHA-256 dans les DAO.
+## Décisions de format validées pour la 0.3
+
+- `format_version = 1` dans `bank_commit` versionne le format des payloads, indépendamment de l'UID du commit. Un lecteur refuse un format inconnu plutôt que de l'interpréter approximativement.
+- Les changements contiennent des snapshots complets de chaque entité modifiée, et non des patches ; une entité inchangée n'est pas répétée.
+- `add exercise` contient `priority_order` (entier non unique). La migration depuis la 0.2 doit établir une priorité initiale stable.
+- `add media` contient au minimum `sha256`, `filename`, `mime_type`, `size`. Le nom est une métadonnée éditoriale et non une identité physique.
+- Les références HTML de médias utilisent `psitta://media/<sha256>` et sont résolues localement.
+- `add setting` et `update setting` contiennent `profile`, `key`, `value` (JSON typé). La 0.3 n'utilise que `default`.
+- Les métadonnées additionnelles de licence et les dépendances pédagogiques sont reportées à une évolution du format ; elles ne font pas partie de la 0.3.
+- Les mises à jour futures conservent la progression lorsque l'identité de l'exercice est préservée ; un exercice supprimé puis recréé avec un nouvel identifiant reçoit une nouvelle progression. Les commits téléchargés peuvent rester inactifs.
