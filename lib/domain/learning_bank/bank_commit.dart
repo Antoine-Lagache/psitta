@@ -9,8 +9,12 @@ final class BankCommit {
   final CommitUid uid;
   final CommitUid? parentUid;
   final bool isFrozen;
+  final int formatVersion;
 
-  BankCommit({required this.uid, required this.parentUid, required this.isFrozen}) {
+  BankCommit({required this.uid, required this.parentUid, required this.isFrozen, this.formatVersion = 1}) {
+    if (formatVersion < 1) {
+      throw ArgumentError.value(formatVersion, 'formatVersion', 'Must be positive');
+    }
     if (parentUid == uid) {
       throw ArgumentError('A commit cannot be its own parent');
     }
