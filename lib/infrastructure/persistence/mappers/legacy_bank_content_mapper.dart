@@ -303,63 +303,12 @@ final class LegacyBankContentMapper {
         const prefix = 'psitta://media/';
         if (!value.startsWith(prefix)) continue;
         final sha256 = value.substring(prefix.length);
-        if (!RegExp(r'^[a-fA-F0-9]{64}
-        }
-        hashes.add(sha256);
-      }
-    }
-    return hashes;
-  }
-
-  static int _compareChanges(
-    LegacyBankContentChange left,
-    LegacyBankContentChange right,
-  ) {
-    final typeOrder = _changeOrder(left.changeType).compareTo(
-      _changeOrder(right.changeType),
-    );
-    if (typeOrder != 0) return typeOrder;
-    final leftId = _entityId(left);
-    final rightId = _entityId(right);
-    if (left.changeType == 'add media') {
-      return leftId.compareTo(rightId);
-    }
-    return int.parse(leftId).compareTo(int.parse(rightId));
-  }
-
-  static int _changeOrder(String type) => switch (type) {
-    'add media' => 0,
-    'add content' => 1,
-    'add sentence' => 2,
-    'add sentence group' => 3,
-    'add exercise' => 4,
-    _ => throw StateError('Unsupported generated change type "$type"'),
-  };
-
-  static String _entityId(LegacyBankContentChange change) => switch (change.changeType) {
-    'add media' => change.payload['sha256'] as String,
-    'add content' => change.payload['content_id'] as String,
-    'add sentence' => change.payload['sentence_id'] as String,
-    'add sentence group' => change.payload['sentence_group_id'] as String,
-    'add exercise' => change.payload['exercise_id'] as String,
-    _ => throw StateError('Unsupported generated change type "${change.changeType}"'),
-  };
-
-  static int _requiredInt(Object? value, String type, int exerciseId) {
-    if (value is int) return value;
-    throw StateError('Legacy $type exercise $exerciseId has no required content reference');
-  }
-
-  static String _id(int id) => id.toString();
-}
-
-final class _MappedContent {
-  final List<LegacyBankContentChange> changes;
-  final Map<String, Map<String, Object?>> mediaBySha;
-
-  const _MappedContent(this.changes, this.mediaBySha);
-}
-).hasMatch(sha256)) {
+        final valid = sha256.length == 64 &&
+            sha256.codeUnits.every((unit) =>
+                (unit >= 48 && unit <= 57) ||
+                (unit >= 65 && unit <= 70) ||
+                (unit >= 97 && unit <= 102));
+        if (!valid) {
           throw const FormatException('HTML media reference must contain a SHA-256');
         }
         hashes.add(sha256);
