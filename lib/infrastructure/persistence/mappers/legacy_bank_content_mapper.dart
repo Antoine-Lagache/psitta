@@ -301,8 +301,7 @@ final class LegacyBankContentMapper {
         const prefix = 'psitta://media/';
         if (!value.startsWith(prefix)) continue;
         final sha256 = value.substring(prefix.length);
-        if (!RegExp(r'^[a-fA-F0-9]{64}
-          throw const FormatException('HTML media reference must contain a SHA-256');
+        if (!RegExp(r'^[a-fA-F0-9]{64} const FormatException('HTML media reference must contain a SHA-256');
         }
         hashes.add(sha256);
       }
@@ -359,7 +358,7 @@ final class _MappedContent {
   const _MappedContent(this.changes, this.mediaBySha);
 }
 ).hasMatch(sha256)) {
-          throw const FormatException('HTML media reference has an empty SHA-256');
+          throw const FormatException('HTML media reference must contain a SHA-256');
         }
         hashes.add(sha256);
       }
