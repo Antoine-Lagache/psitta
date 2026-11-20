@@ -66,7 +66,7 @@ void main() {
       await createMigrationRunner().migrate(database);
 
       const expectedColumns = {
-        'bank_commit': ['uid', 'parent_uid', 'is_frozen'],
+        'bank_commit': ['uid', 'parent_uid', 'is_frozen', 'format_version'],
         'bank_change': [
           'commit_uid',
           'change_id',
