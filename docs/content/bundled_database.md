@@ -118,3 +118,17 @@ not a guarantee provided by the runtime scheduler.
 Existing populated databases are **not** updated. To test these exercises without
 losing real progress, use a separate clean installation/profile. Clearing app data
 also installs the new corpus on next launch, but deletes local learning progress.
+
+## Transitional v0.3 bank snapshot
+
+The generator now builds a frozen root commit and one installed bank from the
+clean imported corpus using `BundledBankBuilder`. Its UID is derived from the
+SHA-256 of the ordered JSON snapshots (including the format version, metadata,
+and media references), not from user data or a randomly generated UUID.
+The manifest records this UID. Independent builds of the same corpus must
+produce the same bank rows; the snapshot equivalence test checks this.
+
+The current corpus is a development snapshot: the final root UID will change
+when the official audio references are added. No released root is mutated.
+Legacy tables and runtime repositories remain in place during this transition;
+existing user databases are not populated by this build-only helper.

@@ -26,14 +26,15 @@ void main() {
       await tx.execute('INSERT INTO sentence_instance VALUES (1, 1, 2)');
       await tx.execute('INSERT INTO character_exercise VALUES (3, 3)');
       await tx.execute("INSERT INTO field_definition VALUES (1, 'html', 'front')");
-      await tx.execute(
-        'INSERT INTO media VALUES (1, ?, ?, ?, ?)',
-        ['local/audio.ogg', 'audio/ogg', 123, hash],
-      );
-      await tx.execute(
-        'INSERT INTO field_value VALUES (1, 1, 1, ?, NULL, 0)',
-        ['<audio src="psitta://media/$hash"></audio>'],
-      );
+      await tx.execute('INSERT INTO media VALUES (1, ?, ?, ?, ?)', [
+        'local/audio.ogg',
+        'audio/ogg',
+        123,
+        hash,
+      ]);
+      await tx.execute('INSERT INTO field_value VALUES (1, 1, 1, ?, NULL, 0)', [
+        '<audio src="psitta://media/$hash"></audio>',
+      ]);
       await tx.execute("INSERT INTO field_value VALUES (2, 2, 1, 'sentence', NULL, 0)");
       await tx.execute("INSERT INTO field_value VALUES (3, 3, 1, 'kana', NULL, 0)");
     });

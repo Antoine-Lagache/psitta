@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psitta/infrastructure/persistence/database/migration_registry.dart';
 import 'package:psitta/infrastructure/persistence/database/psitta_sqlite_open_factory.dart';
+import 'package:psitta/infrastructure/persistence/release/bundled_bank_builder.dart';
 import 'package:psitta/infrastructure/persistence/release/character_exercise_release_importer.dart';
 import 'package:psitta/infrastructure/persistence/release/release_content_importer.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
@@ -34,6 +35,9 @@ void main() {
         database,
         loadAsset: (path) => File(path).readAsBytes(),
       ).importIfNeeded();
+      final rootUid = await BundledBankBuilder().build(database);
+      expect((await database.get('SELECT COUNT(*) FROM bank_commit')).values.single, 1);
+      expect((await database.get('SELECT COUNT(*) FROM learning_bank')).values.single, 1);
       expect((await database.get('PRAGMA integrity_check')).values.single, 'ok');
       expect(await database.getAll('PRAGMA foreign_key_check'), isEmpty);
       final version = (await database.get('PRAGMA user_version'))['user_version'];
@@ -51,6 +55,7 @@ void main() {
       final metadata = {
         'format_version': 1,
         'database_version': version,
+        'bank_root_uid': rootUid.value,
         'database_bytes': bytes.length,
         'database_sha256': sha256.convert(bytes).toString(),
         'gzip_sha256': sha256.convert(compressed).toString(),

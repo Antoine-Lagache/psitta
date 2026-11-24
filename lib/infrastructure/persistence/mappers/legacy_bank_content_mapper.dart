@@ -46,10 +46,7 @@ final class LegacyBankContentMapper {
     final metadata = [
       LegacyBankContentChange(
         changeType: 'add bank languages',
-        payload: {
-          'source_language': sourceLanguage,
-          'target_language': targetLanguage,
-        },
+        payload: {'source_language': sourceLanguage, 'target_language': targetLanguage},
       ),
       LegacyBankContentChange(
         changeType: 'add bank description',

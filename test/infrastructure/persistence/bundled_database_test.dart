@@ -7,6 +7,7 @@ import 'package:psitta/infrastructure/persistence/database/migration_registry.da
 import 'package:psitta/infrastructure/persistence/database/migration_runner.dart';
 import 'package:psitta/infrastructure/persistence/database/migrations/database_migration.dart';
 import 'package:psitta/infrastructure/persistence/database/sqlite_database.dart';
+import 'package:psitta/infrastructure/persistence/release/bundled_bank_builder.dart';
 import 'package:psitta/infrastructure/persistence/release/bundled_database_installer.dart';
 import 'package:psitta/infrastructure/persistence/release/character_exercise_release_importer.dart';
 import 'package:psitta/infrastructure/persistence/release/release_content_importer.dart';
@@ -52,6 +53,7 @@ void main() {
         reference.database,
         loadAsset: (p) => File(p).readAsBytes(),
       ).importIfNeeded();
+      final rootUid = await BundledBankBuilder().build(reference.database);
       final importMs = timer.elapsedMilliseconds;
       timer.reset();
       final installed = await owner.open();
@@ -81,6 +83,7 @@ void main() {
       }
       final metadata =
           jsonDecode(await File('assets/database/manifest.json').readAsString()) as Map;
+      expect(metadata['bank_root_uid'], rootUid.value);
       expect(
         metadata['database_version'],
         lessThanOrEqualTo(createMigrationRunner().latestVersion),
