@@ -44,9 +44,7 @@ final class LegacyBankContentMapper {
     ]);
   }
 
-  Future<List<LegacyBankContentChange>> map(
-    sqlite.SqliteWriteContext database,
-  ) async {
+  Future<List<LegacyBankContentChange>> map(sqlite.SqliteWriteContext database) async {
     final changes = <LegacyBankContentChange>[];
 
     final referencedContentIds = <int>{};
@@ -202,7 +200,8 @@ final class LegacyBankContentMapper {
     for (var offset = 0; offset < orderedContentIds.length; offset += batchSize) {
       final batch = orderedContentIds.skip(offset).take(batchSize).toList();
       final placeholders = List.filled(batch.length, '?').join(', ');
-      rows.addAll(await database.getAll('''
+      rows.addAll(
+        await database.getAll('''
       SELECT
         c.id AS content_id,
         fv.display_order,
@@ -216,7 +215,8 @@ final class LegacyBankContentMapper {
       LEFT JOIN media m ON m.id = fv.media_id
       WHERE c.id IN ($placeholders)
       ORDER BY c.id, fv.display_order, fv.id
-      ''', batch));
+      ''', batch),
+      );
     }
 
     final fieldsByContent = <int, List<Map<String, Object?>>>{};
@@ -326,9 +326,9 @@ final class LegacyBankContentMapper {
     LegacyBankContentChange left,
     LegacyBankContentChange right,
   ) {
-    final typeOrder = _changeOrder(left.changeType).compareTo(
-      _changeOrder(right.changeType),
-    );
+    final typeOrder = _changeOrder(
+      left.changeType,
+    ).compareTo(_changeOrder(right.changeType));
     if (typeOrder != 0) return typeOrder;
     final leftId = _entityId(left);
     final rightId = _entityId(right);
@@ -358,7 +358,9 @@ final class LegacyBankContentMapper {
 
   static int _requiredInt(Object? value, String type, int exerciseId) {
     if (value is int) return value;
-    throw StateError('Legacy $type exercise $exerciseId has no required content reference');
+    throw StateError(
+      'Legacy $type exercise $exerciseId has no required content reference',
+    );
   }
 
   static String _id(int id) => id.toString();

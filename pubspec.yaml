@@ -24,6 +24,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.6.0+eol
   sqlite_async: ^0.14.4
   url_launcher: ^6.3.2
+  uuid: ^4.6.0
 
 dev_dependencies:
   flutter_test:

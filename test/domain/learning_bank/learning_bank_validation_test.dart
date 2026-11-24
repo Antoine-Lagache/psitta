@@ -119,10 +119,7 @@ void main() {
         payload: const {'exercise_id': 'word-1'},
       );
 
-      expect(
-        () => commit.validateChanges([change(0), change(1)]),
-        throwsArgumentError,
-      );
+      expect(() => commit.validateChanges([change(0), change(1)]), throwsArgumentError);
     });
 
     test('entity identity distinguishes kinds and setting profiles', () {

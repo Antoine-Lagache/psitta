@@ -38,11 +38,8 @@ final class BankChange {
     'add sentence' => ('sentence', _requiredId('sentence_id'), ''),
     'add content' => ('content', _requiredId('content_id'), ''),
     'add media' || 'remove media' => ('media', _requiredId('sha256'), ''),
-    'add setting' || 'update setting' => (
-      'setting',
-      _requiredId('profile'),
-      _requiredId('key'),
-    ),
+    'add setting' ||
+    'update setting' => ('setting', _requiredId('profile'), _requiredId('key')),
     _ => throw ArgumentError.value(changeType, 'changeType', 'Unsupported change type'),
   };
 
