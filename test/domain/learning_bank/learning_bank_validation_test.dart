@@ -51,8 +51,8 @@ void main() {
         () => BankChange(
           ref: ref,
           previousChangeRef: ref,
-          changeType: 'update',
-          payload: const {'entity': {'type': 'exercise', 'id': 'word-1'}},
+          changeType: 'add exercise',
+          payload: const {'exercise_id': 'word-1'},
         ),
         throwsArgumentError,
       );
@@ -65,8 +65,8 @@ void main() {
         () => BankChange(
           ref: BankChangeRef(commitUid: commitUid, changeId: 1),
           previousChangeRef: BankChangeRef(commitUid: commitUid, changeId: 0),
-          changeType: 'update',
-          payload: const {'entity': {'type': 'exercise', 'id': 'word-1'}},
+          changeType: 'add exercise',
+          payload: const {'exercise_id': 'word-1'},
         ),
         throwsArgumentError,
       );
@@ -78,7 +78,7 @@ void main() {
           ref: BankChangeRef(commitUid: CommitUid('commit-a'), changeId: 0),
           previousChangeRef: null,
           changeType: '  ',
-          payload: const {'entity': {'type': 'exercise', 'id': 'word-1'}},
+          payload: const {'exercise_id': 'word-1'},
         ),
         throwsArgumentError,
       );
@@ -89,27 +89,24 @@ void main() {
         () => BankChange(
           ref: BankChangeRef(commitUid: CommitUid('commit-a'), changeId: 0),
           previousChangeRef: null,
-          changeType: 'add',
+          changeType: 'add exercise',
           payload: {'invalid': Object()},
         ),
         throwsArgumentError,
       );
     });
 
-    test('change payload must identify an entity with a type and ID', () {
+    test('change payload must identify the target entity', () {
       BankChange createChange(Map<String, Object?> payload) => BankChange(
         ref: BankChangeRef(commitUid: CommitUid('commit-a'), changeId: 0),
         previousChangeRef: null,
-        changeType: 'add',
+        changeType: 'add exercise',
         payload: payload,
       );
 
       expect(() => createChange(const {}), throwsArgumentError);
-      expect(() => createChange(const {'entity': {}}), throwsArgumentError);
-      expect(
-        () => createChange(const {'entity': {'type': 'exercise', 'id': ''}}),
-        throwsArgumentError,
-      );
+      expect(() => createChange(const {'exercise_id': 1}), throwsArgumentError);
+      expect(() => createChange(const {'exercise_id': ''}), throwsArgumentError);
     });
 
     test('commit cannot contain two changes to one entity', () {
@@ -118,14 +115,38 @@ void main() {
       BankChange change(int changeId) => BankChange(
         ref: BankChangeRef(commitUid: uid, changeId: changeId),
         previousChangeRef: null,
-        changeType: 'update',
-        payload: const {'entity': {'type': 'exercise', 'id': 'word-1'}},
+        changeType: 'add exercise',
+        payload: const {'exercise_id': 'word-1'},
       );
 
       expect(
         () => commit.validateChanges([change(0), change(1)]),
         throwsArgumentError,
       );
+    });
+
+    test('entity identity distinguishes kinds and setting profiles', () {
+      final uid = CommitUid('commit-a');
+      final commit = BankCommit(uid: uid, parentUid: null, isFrozen: false);
+      BankChange change(int id, String type, Map<String, Object?> payload) => BankChange(
+        ref: BankChangeRef(commitUid: uid, changeId: id),
+        previousChangeRef: null,
+        changeType: type,
+        payload: payload,
+      );
+
+      final exercise = change(0, 'add exercise', {'exercise_id': '1'});
+      final content = change(1, 'add content', {'content_id': '1'});
+      final setting = change(2, 'add setting', {'profile': 'default', 'key': 'limit'});
+      final other = change(3, 'add setting', {'profile': 'custom', 'key': 'limit'});
+      final update = change(4, 'update setting', {'profile': 'default', 'key': 'limit'});
+
+      expect(
+        () => commit.validateChanges([exercise, content, setting, other]),
+        returnsNormally,
+      );
+      expect(() => commit.validateChanges([setting, update]), throwsArgumentError);
+      expect(() => commit.validateChanges([exercise, exercise]), throwsArgumentError);
     });
 
     test('commit changes must belong to that commit', () {
@@ -137,8 +158,8 @@ void main() {
       final change = BankChange(
         ref: BankChangeRef(commitUid: CommitUid('commit-b'), changeId: 0),
         previousChangeRef: null,
-        changeType: 'add',
-        payload: const {'entity': {'type': 'exercise', 'id': 'word-1'}},
+        changeType: 'add exercise',
+        payload: const {'exercise_id': 'word-1'},
       );
 
       expect(() => commit.validateChanges([change]), throwsArgumentError);

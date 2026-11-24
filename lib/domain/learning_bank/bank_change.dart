@@ -4,13 +4,13 @@ import 'bank_change_ref.dart';
 
 /// One change to one logical entity, stored as a typed JSON payload.
 ///
-/// The operation types and payload schemas are intentionally left to the
-/// change-model design; they must identify their target inside the payload.
+/// The operation identifies the entity kind; the payload identifies its target.
 final class BankChange {
   final BankChangeRef ref;
   final BankChangeRef? previousChangeRef;
   final String changeType;
   final Map<String, Object?> payload;
+  late final (String, String, String) entityIdentity;
 
   BankChange({
     required this.ref,
@@ -27,6 +27,31 @@ final class BankChange {
     if (changeType.trim().isEmpty) {
       throw ArgumentError.value(changeType, 'changeType', 'Must not be empty');
     }
+    entityIdentity = _resolveEntityIdentity();
+  }
+
+  (String, String, String) _resolveEntityIdentity() => switch (changeType) {
+    'add bank languages' => ('bank languages', '', ''),
+    'add bank description' => ('bank description', '', ''),
+    'add exercise' => ('exercise', _requiredId('exercise_id'), ''),
+    'add sentence group' => ('sentence group', _requiredId('sentence_group_id'), ''),
+    'add sentence' => ('sentence', _requiredId('sentence_id'), ''),
+    'add content' => ('content', _requiredId('content_id'), ''),
+    'add media' || 'remove media' => ('media', _requiredId('sha256'), ''),
+    'add setting' || 'update setting' => (
+      'setting',
+      _requiredId('profile'),
+      _requiredId('key'),
+    ),
+    _ => throw ArgumentError.value(changeType, 'changeType', 'Unsupported change type'),
+  };
+
+  String _requiredId(String key) {
+    final value = payload[key];
+    if (value is! String || value.trim().isEmpty) {
+      throw ArgumentError.value(value, key, 'Must be a non-empty string');
+    }
+    return value;
   }
 
   static Map<String, Object?> _freezeJsonMap(Map<String, Object?> value) {

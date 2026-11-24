@@ -117,7 +117,9 @@ final class LegacyBankContentMapper {
         case 'sentence':
           final groupId = _requiredInt(row['sentence_group_id'], 'sentence', exerciseId);
           if (!sentenceGroupIds.contains(groupId)) {
-            throw StateError('Sentence exercise $exerciseId references missing group $groupId');
+            throw StateError(
+              'Sentence exercise $exerciseId references missing group $groupId',
+            );
           }
           sentenceExerciseGroupIds.add(groupId);
           payload['sentence_group_id'] = _id(groupId);
@@ -303,11 +305,14 @@ final class LegacyBankContentMapper {
         const prefix = 'psitta://media/';
         if (!value.startsWith(prefix)) continue;
         final sha256 = value.substring(prefix.length);
-        final valid = sha256.length == 64 &&
-            sha256.codeUnits.every((unit) =>
-                (unit >= 48 && unit <= 57) ||
-                (unit >= 65 && unit <= 70) ||
-                (unit >= 97 && unit <= 102));
+        final valid =
+            sha256.length == 64 &&
+            sha256.codeUnits.every(
+              (unit) =>
+                  (unit >= 48 && unit <= 57) ||
+                  (unit >= 65 && unit <= 70) ||
+                  (unit >= 97 && unit <= 102),
+            );
         if (!valid) {
           throw const FormatException('HTML media reference must contain a SHA-256');
         }

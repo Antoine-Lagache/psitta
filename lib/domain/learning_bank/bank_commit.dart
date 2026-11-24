@@ -32,9 +32,17 @@ final class BankCommit {
   }
 
   void validateChanges(Iterable<BankChange> changes) {
+    final entities = <(String, String, String)>{};
+    final changeIds = <int>{};
     for (final change in changes) {
       if (change.ref.commitUid != uid) {
         throw ArgumentError('Every change must belong to this commit');
+      }
+      if (!changeIds.add(change.ref.changeId)) {
+        throw ArgumentError('A commit cannot contain duplicate change IDs');
+      }
+      if (!entities.add(change.entityIdentity)) {
+        throw ArgumentError('A commit cannot contain two changes to one entity');
       }
     }
   }
