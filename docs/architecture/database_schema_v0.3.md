@@ -393,3 +393,18 @@ conservées avec les nouvelles références décrites plus haut.
 - `add setting` et `update setting` contiennent `profile`, `key`, `value` (JSON typé). La 0.3 n'utilise que `default`.
 - Les métadonnées additionnelles de licence et les dépendances pédagogiques sont reportées à une évolution du format ; elles ne font pas partie de la 0.3.
 - Les mises à jour futures conservent la progression lorsque l'identité de l'exercice est préservée ; un exercice supprimé puis recréé avec un nouvel identifiant reçoit une nouvelle progression. Les commits téléchargés peuvent rester inactifs.
+
+## Conversion du corpus officiel
+
+`LegacyBankContentMapper.mapRootCommit` reçoit l'UID portable fourni par la
+release, les langues (`source_language`, `target_language`), la description
+(`description`) et les valeurs par défaut du profil `default`. Il ne lit ni
+`app_setting` ni les données de progression. Les clés des paramètres sont
+triées avant attribution des identifiants de changements.
+
+Le commit doit être construit à partir du corpus officiel complet (audios
+inclus), et non recalculé indépendamment depuis les bases des utilisateurs.
+L'UID définitif sera attribué à ce corpus figé lors de sa construction ;
+les tests utilisent un UID réservé aux fixtures. Les paramètres personnalisés
+et la correspondance entre identifiants legacy et progression sont traités
+séparément lors de la migration utilisateur.

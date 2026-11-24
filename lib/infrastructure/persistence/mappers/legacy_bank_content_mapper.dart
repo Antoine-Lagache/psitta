@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:html/parser.dart' as html_parser;
 import 'package:psitta/domain/learning_bank/bank_change.dart';
 import 'package:psitta/domain/learning_bank/bank_change_ref.dart';
+import 'package:psitta/domain/learning_bank/bank_commit.dart';
 import 'package:psitta/domain/learning_bank/commit_uid.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
@@ -27,12 +28,62 @@ final class LegacyBankContentChange {
 final class LegacyBankContentMapper {
   const LegacyBankContentMapper();
 
+  /// Converts an official corpus, never a user's mutable database.
+  ///
+  /// The release supplies the UID and metadata. No device-local settings or
+  /// progress are read, and no random identity is generated here.
+  Future<({BankCommit commit, List<BankChange> changes})> mapRootCommit(
+    sqlite.SqliteWriteContext database, {
+    required CommitUid commitUid,
+    required String sourceLanguage,
+    required String targetLanguage,
+    required String description,
+    required Map<String, Object> defaultSettings,
+  }) async {
+    if (sourceLanguage.trim().isEmpty || targetLanguage.trim().isEmpty) {
+      throw ArgumentError('Bank languages must not be empty');
+    }
+    final metadata = [
+      LegacyBankContentChange(
+        changeType: 'add bank languages',
+        payload: {
+          'source_language': sourceLanguage,
+          'target_language': targetLanguage,
+        },
+      ),
+      LegacyBankContentChange(
+        changeType: 'add bank description',
+        payload: {'description': description},
+      ),
+      for (final key in defaultSettings.keys.toList()..sort())
+        LegacyBankContentChange(
+          changeType: 'add setting',
+          payload: {'profile': 'default', 'key': key, 'value': defaultSettings[key]},
+        ),
+    ];
+    for (final value in defaultSettings.values) {
+      if (value is! num && value is! bool && value is! String) {
+        throw ArgumentError('Bank settings must be scalar JSON values');
+      }
+    }
+    final changes = _toDomainChanges([...metadata, ...await map(database)], commitUid);
+    final commit = BankCommit(uid: commitUid, parentUid: null, isFrozen: true);
+    commit.validateChanges(changes);
+    return (commit: commit, changes: changes);
+  }
+
   /// Maps legacy rows to root-commit changes with deterministic local IDs.
   Future<List<BankChange>> mapDomainChanges(
     sqlite.SqliteWriteContext database, {
     required CommitUid commitUid,
   }) async {
-    final legacyChanges = await map(database);
+    return _toDomainChanges(await map(database), commitUid);
+  }
+
+  static List<BankChange> _toDomainChanges(
+    List<LegacyBankContentChange> legacyChanges,
+    CommitUid commitUid,
+  ) {
     return List.unmodifiable([
       for (var index = 0; index < legacyChanges.length; index++)
         BankChange(
