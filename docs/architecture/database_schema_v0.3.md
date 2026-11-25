@@ -408,3 +408,16 @@ L'UID définitif sera attribué à ce corpus figé lors de sa construction ;
 les tests utilisent un UID réservé aux fixtures. Les paramètres personnalisés
 et la correspondance entre identifiants legacy et progression sont traités
 séparément lors de la migration utilisateur.
+
+## Identifiants typés du domaine (transition)
+
+Les identifiants locaux de progression, banque, session, historique et média
+sont des entiers positifs typés. Les références éditoriales ExerciseId,
+ContentId, SentenceId et SentenceGroupId désignent un changement exact par
+(CommitUid, change_id), où change_id est non négatif. Une correction change
+la référence éditoriale mais ne change pas l'identité locale de progression.
+Les types distincts ne sont jamais égaux, même si leurs valeurs coïncident.
+Les identifiants internes aux payloads seront des entiers, notamment pour
+le départage de priority_order par exercise_id. Ils ne sont pas les références
+éditoriales du domaine. La représentation SQL/JSON historique reste en place
+jusqu'à l'étape de conversion et de migration correspondante.
