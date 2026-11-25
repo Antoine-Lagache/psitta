@@ -1,7 +1,6 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/learning_bank/bank_change.dart';
-import 'package:psitta/domain/learning_bank/bank_change_ref.dart';
 import 'package:psitta/domain/learning_bank/bank_commit.dart';
-import 'package:psitta/domain/learning_bank/commit_uid.dart';
 import 'package:test/test.dart';
 
 void main() {

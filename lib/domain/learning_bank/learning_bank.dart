@@ -1,4 +1,4 @@
-import 'commit_uid.dart';
+import '../identity/entity_id.dart';
 
 /// A locally installed bank entry pointing at its current commit.
 ///

@@ -1,10 +1,9 @@
 import 'dart:collection';
 
 import 'package:html/parser.dart' as html_parser;
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/learning_bank/bank_change.dart';
-import 'package:psitta/domain/learning_bank/bank_change_ref.dart';
 import 'package:psitta/domain/learning_bank/bank_commit.dart';
-import 'package:psitta/domain/learning_bank/commit_uid.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 /// A portable bank change prepared from the pre-bank content tables.

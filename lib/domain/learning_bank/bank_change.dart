@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'bank_change_ref.dart';
+import '../identity/entity_id.dart';
 
 /// One change to one logical entity, stored as a typed JSON payload.
 ///

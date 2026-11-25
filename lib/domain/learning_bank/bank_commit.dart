@@ -1,5 +1,5 @@
+import '../identity/entity_id.dart';
 import 'bank_change.dart';
-import 'commit_uid.dart';
 
 /// One node in a bank's single-parent commit chain.
 ///

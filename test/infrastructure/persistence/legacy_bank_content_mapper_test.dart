@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:psitta/domain/learning_bank/commit_uid.dart';
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/infrastructure/persistence/dao/bank_change_dao.dart';
 import 'package:psitta/infrastructure/persistence/mappers/legacy_bank_content_mapper.dart';
 import 'package:test/test.dart';
