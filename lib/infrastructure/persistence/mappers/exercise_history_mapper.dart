@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/history/exercise_history_entry.dart';
 import 'package:psitta/domain/srs/grade.dart';
@@ -10,7 +11,7 @@ class ExerciseHistoryMapper {
 
   static ExerciseHistoryPersistence toPersistence(ExerciseHistoryEntry domain) {
     return ExerciseHistoryPersistence(
-      id: domain.id,
+      id: domain.id?.value,
       exerciseId: domain.exerciseId,
       sentenceInstanceId: domain.sentenceInstanceId,
       grade: domain.grade.toInt(),
@@ -21,7 +22,7 @@ class ExerciseHistoryMapper {
 
   static ExerciseHistoryEntry toDomain(ExerciseHistoryPersistence persistence) {
     return ExerciseHistoryEntry(
-      id: persistence.id,
+      id: persistence.id == null ? null : ExerciseHistoryId(persistence.id!),
       exerciseId: persistence.exerciseId,
       grade: Grade.fromInt(persistence.grade),
       answeredAt: safeParseDate(persistence.answeredAt)!,

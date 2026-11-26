@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/exercise/sentence_exercise.dart';
 import 'package:psitta/domain/exercise/word_exercise.dart';
@@ -50,11 +51,11 @@ void main() {
 
       session.beginSession(startedAt);
       final sessionId = await repository.save(session);
-      session.intermediateResult.id = sessionId;
+      session.intermediateResult.id = SessionResultId(sessionId);
 
       final activeResults = await repository.getAllActiveSessionResult();
       expect(activeResults, hasLength(1));
-      expect(activeResults.single.id, sessionId);
+      expect(activeResults.single.id, SessionResultId(sessionId));
       expect(activeResults.single.sessionType, SessionType.wordSession);
       expect(activeResults.single.startedAt?.toUtc(), startedAt);
       expect(activeResults.single.endAt, isNull);
@@ -126,7 +127,7 @@ void main() {
       final answeredAt = startedAt.add(const Duration(minutes: 2));
 
       session.beginSession(startedAt);
-      session.intermediateResult.id = await repository.save(session);
+      session.intermediateResult.id = SessionResultId(await repository.save(session));
       final answeredExercise = session.currentExercise;
       session.submitAnswer(
         SubmittedExerciseAnswer(grade: Grade.again, answeredAt: answeredAt),
@@ -177,7 +178,7 @@ void main() {
       final endedAt = answeredAt.add(const Duration(seconds: 5));
 
       session.beginSession(startedAt);
-      session.intermediateResult.id = await repository.save(session);
+      session.intermediateResult.id = SessionResultId(await repository.save(session));
       final answeredExercise = session.currentExercise;
       session.submitAnswer(
         SubmittedExerciseAnswer(grade: Grade.easy, answeredAt: answeredAt),
@@ -226,7 +227,7 @@ void main() {
       final startedAt = DateTime.utc(2026, 9, 5, 11);
 
       session.beginSession(startedAt);
-      session.intermediateResult.id = await repository.save(session);
+      session.intermediateResult.id = SessionResultId(await repository.save(session));
 
       final activeResult = (await repository.getAllActiveSessionResult()).single;
       final restored = await repository.getActiveSession(activeResult, SRSConfig());
@@ -250,7 +251,7 @@ void main() {
       final endedAt = startedAt.add(const Duration(minutes: 4));
 
       session.beginSession(startedAt);
-      session.intermediateResult.id = await repository.save(session);
+      session.intermediateResult.id = SessionResultId(await repository.save(session));
       session.addTimeSpent(const Duration(minutes: 4));
       session.endSession(endedAt);
 
@@ -270,7 +271,7 @@ void main() {
       final startedAt = DateTime.utc(2026, 9, 5, 12);
 
       session.beginSession(startedAt);
-      session.intermediateResult.id = await repository.save(session);
+      session.intermediateResult.id = SessionResultId(await repository.save(session));
       exercise.status = ExerciseStatus.learning;
       exercise.srsState = learningSrsState(
         exerciseId: exercise.id,
@@ -319,7 +320,7 @@ void main() {
       for (final startedAt in starts) {
         final session = createWordSession(exercise);
         session.beginSession(startedAt);
-        session.intermediateResult.id = await repository.save(session);
+        session.intermediateResult.id = SessionResultId(await repository.save(session));
         session.endSession(startedAt.add(const Duration(minutes: 1)));
         await repository.completeSession(session);
       }
@@ -343,10 +344,10 @@ void main() {
       final startedAt = DateTime.utc(2026, 9, 5, 10);
 
       active.beginSession(startedAt);
-      active.intermediateResult.id = await repository.save(active);
+      active.intermediateResult.id = SessionResultId(await repository.save(active));
 
       completed.beginSession(startedAt.add(const Duration(hours: 1)));
-      completed.intermediateResult.id = await repository.save(completed);
+      completed.intermediateResult.id = SessionResultId(await repository.save(completed));
       completed.endSession(startedAt.add(const Duration(hours: 1, minutes: 5)));
       await repository.completeSession(completed);
 
@@ -364,9 +365,9 @@ void main() {
       final second = createWordSession(secondExercise);
 
       first.beginSession(startedAt);
-      first.intermediateResult.id = await repository.save(first);
+      first.intermediateResult.id = SessionResultId(await repository.save(first));
       second.beginSession(startedAt.add(const Duration(minutes: 1)));
-      second.intermediateResult.id = await repository.save(second);
+      second.intermediateResult.id = SessionResultId(await repository.save(second));
 
       final activeSessions = await repository.getAllActiveSessionResult();
 

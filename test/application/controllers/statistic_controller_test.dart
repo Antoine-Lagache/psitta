@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/application/controllers/statistic_controller.dart';
 import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/exercise/word_exercise.dart';
@@ -56,11 +57,11 @@ void main() {
 
       final unfinished = createSession(exercise);
       unfinished.beginSession(startedAt);
-      unfinished.intermediateResult.id = await sessionRepository.save(unfinished);
+      unfinished.intermediateResult.id = SessionResultId(await sessionRepository.save(unfinished));
 
       final completed = createSession(exercise);
       completed.beginSession(startedAt.add(const Duration(hours: 1)));
-      completed.intermediateResult.id = await sessionRepository.save(completed);
+      completed.intermediateResult.id = SessionResultId(await sessionRepository.save(completed));
       completed.addTimeSpent(const Duration(minutes: 3));
       completed.endSession(startedAt.add(const Duration(hours: 1, minutes: 3)));
       await sessionRepository.completeSession(completed);
@@ -79,13 +80,13 @@ void main() {
 
       final first = createSession(await createWordExercise());
       first.beginSession(dayStart.subtract(const Duration(minutes: 5)));
-      first.intermediateResult.id = await sessionRepository.save(first);
+      first.intermediateResult.id = SessionResultId(await sessionRepository.save(first));
       first.endSession(dayStart.add(const Duration(minutes: 5)));
       await sessionRepository.completeSession(first);
 
       final second = createSession(await createWordExercise());
       second.beginSession(dayEnd.subtract(const Duration(minutes: 5)));
-      second.intermediateResult.id = await sessionRepository.save(second);
+      second.intermediateResult.id = SessionResultId(await sessionRepository.save(second));
       second.endSession(dayEnd.add(const Duration(minutes: 5)));
       await sessionRepository.completeSession(second);
 
@@ -111,7 +112,7 @@ void main() {
       final answeredAt = startedAt.add(const Duration(minutes: 1));
       final session = createSession(exercise);
       session.beginSession(startedAt);
-      session.intermediateResult.id = await sessionRepository.save(session);
+      session.intermediateResult.id = SessionResultId(await sessionRepository.save(session));
       final answeredExercise = session.currentExercise;
 
       session.submitAnswer(

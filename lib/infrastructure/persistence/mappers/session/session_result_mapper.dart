@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/sessions/session_result.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/infrastructure/persistence/models/session_result/session_result_persistence.dart';
@@ -9,7 +10,7 @@ class SessionResultMapper {
 
   static SessionResultPersistence toPersistence(SessionResult domain) {
     return SessionResultPersistence(
-      id: domain.id,
+      id: domain.id?.value,
       sessionTypeIndex: domain.sessionType.code,
       uniqueExercisesCompleted: domain.numberOfUniqueExercisesCompleted,
       // ExerciseStatus codes currently match their positions in this list.
@@ -31,7 +32,7 @@ class SessionResultMapper {
     }
 
     return SessionResult(
-        id: persistence.id,
+        id: persistence.id == null ? null : SessionResultId(persistence.id!),
         sessionType: SessionType.fromCode(persistence.sessionTypeIndex),
         totalTimeSpent: safeToDuration(persistence.totalTimeSpent),
       )

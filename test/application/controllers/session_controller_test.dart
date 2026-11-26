@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'dart:async';
 
 import 'package:psitta/application/controllers/content_controller.dart';
@@ -190,7 +191,7 @@ void main() {
         config: SRSConfig(),
       );
       session.beginSession(now);
-      session.intermediateResult.id = await sessionRepository.save(session);
+      session.intermediateResult.id = SessionResultId(await sessionRepository.save(session));
 
       final wordOverview = overviewOf(
         await createController().getSessionOverviews(),

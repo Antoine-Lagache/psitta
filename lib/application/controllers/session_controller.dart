@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'dart:math';
 
 import 'package:psitta/application/controllers/content_controller.dart';
@@ -124,7 +125,7 @@ class SessionController {
       session.beginSession(_now());
 
       final id = await _sessionRepository.save(session);
-      session.intermediateResult.id = id;
+      session.intermediateResult.id = SessionResultId(id);
       _startTimingSegment();
       _activeSession = session;
 
@@ -181,7 +182,7 @@ class SessionController {
     }
 
     final counts = await _sessionRepository.countActiveSessionExercisesByStatus(
-      sessionResultId,
+      sessionResultId.value,
     );
     var reviewExerciseCount = 0;
 
@@ -355,7 +356,7 @@ class SessionController {
       if (sessionId == null) {
         throw StateError('An active persisted session must have an id');
       }
-      await _sessionRepository.deleteSessionResult(sessionId);
+      await _sessionRepository.deleteSessionResult(sessionId.value);
       return true;
     });
   }
@@ -445,6 +446,6 @@ class SessionController {
       return -1;
     }
 
-    return (right.id ?? -1).compareTo(left.id ?? -1);
+    return (right.id?.value ?? -1).compareTo(left.id?.value ?? -1);
   }
 }

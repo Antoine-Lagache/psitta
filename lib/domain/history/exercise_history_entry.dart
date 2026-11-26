@@ -1,8 +1,9 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/exercise/exercise.dart';
 
 /// Immutable record of one submitted answer and its pre-answer exercise status.
 class ExerciseHistoryEntry {
-  final int? id;
+  final ExerciseHistoryId? id;
   final int exerciseId;
 
   final Grade grade;

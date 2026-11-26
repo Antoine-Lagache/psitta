@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 
@@ -5,7 +6,7 @@ export 'package:psitta/domain/exercise/exercise_status.dart';
 
 /// Mutable aggregate owned by [Session] and persisted as the session result.
 class SessionResult {
-  int? id;
+  SessionResultId? id;
 
   SessionType sessionType;
 

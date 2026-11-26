@@ -87,7 +87,7 @@ class SessionRepository {
 
   /// Rebuilds an unfinished session from its result and exercise snapshots.
   Future<Session> getActiveSession(SessionResult sessionResult, SRSConfig config) async {
-    final sessionResultId = sessionResult.id!;
+    final sessionResultId = sessionResult.id!.value;
 
     final sessionExercisesPercistence = await _sessionExerciseDao.getAll(sessionResultId);
     final sessionExercisesDomain = sessionExercisesPercistence
@@ -168,7 +168,7 @@ class SessionRepository {
       throw ArgumentError('Cannot update a Session whose SessionResult has no id');
     }
 
-    final sessionResultId = sessionResult.id!;
+    final sessionResultId = sessionResult.id!.value;
 
     await database.writeTransaction((txn) async {
       final sessionResultPersistence = SessionResultMapper.toPersistence(sessionResult);
@@ -194,7 +194,7 @@ class SessionRepository {
       throw ArgumentError('Cannot update a Session whose SessionResult has no id');
     }
 
-    final sessionResultId = sessionResult.id!;
+    final sessionResultId = sessionResult.id!.value;
 
     await database.writeTransaction((txn) async {
       await _exerciseRepository.saveInTransaction(txn, answeredExercise);
@@ -226,7 +226,7 @@ class SessionRepository {
       throw ArgumentError('Cannot update a Session whose SessionResult has no id');
     }
 
-    final sessionResultId = sessionResult.id!;
+    final sessionResultId = sessionResult.id!.value;
 
     return database.writeTransaction((txn) async {
       final sessionResultPersistence = SessionResultMapper.toPersistence(sessionResult);

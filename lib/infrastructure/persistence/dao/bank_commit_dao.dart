@@ -41,12 +41,7 @@ final class BankCommitDao {
       INSERT INTO bank_commit (uid, parent_uid, is_frozen, format_version)
       VALUES (?, ?, ?, ?)
       ''',
-      [
-        row['uid'],
-        row['parent_uid'],
-        row['is_frozen'],
-        row['format_version'],
-      ],
+      [row['uid'], row['parent_uid'], row['is_frozen'], row['format_version']],
     );
   }
 

@@ -37,7 +37,9 @@ final class LearningBankDao {
     LearningBankId id,
     CommitUid head,
   ) async {
-    final row = LearningBankMapper.toPersistence(LearningBank(id: id, headCommitUid: head));
+    final row = LearningBankMapper.toPersistence(
+      LearningBank(id: id, headCommitUid: head),
+    );
     await transaction.execute(
       'UPDATE learning_bank SET head_commit_uid = ? WHERE id = ?',
       [row['head_commit_uid'], row['id']],
