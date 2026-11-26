@@ -1,8 +1,7 @@
-import 'dart:convert';
-
 import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/learning_bank/bank_change.dart';
 import 'package:psitta/domain/learning_bank/bank_commit.dart';
+import 'package:psitta/infrastructure/persistence/mappers/bank_change_mapper.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
 import 'bank_commit_dao.dart';
@@ -17,7 +16,7 @@ final class BankChangeDao {
       'SELECT * FROM bank_change WHERE commit_uid = ? AND change_id = ?',
       [ref.commitUid.value, ref.changeId],
     );
-    return rows.isEmpty ? null : _fromRow(rows.single);
+    return rows.isEmpty ? null : BankChangeMapper.toDomain(rows.single);
   }
 
   Future<List<BankChange>> getByCommit(
@@ -28,7 +27,7 @@ final class BankChangeDao {
       'SELECT * FROM bank_change WHERE commit_uid = ? ORDER BY change_id',
       [uid.value],
     );
-    return rows.map(_fromRow).toList(growable: false);
+    return rows.map(BankChangeMapper.toDomain).toList(growable: false);
   }
 
   /// Inserts a complete new commit, including frozen snapshots.
@@ -58,10 +57,7 @@ final class BankChangeDao {
     await _insertAll(transaction, additions);
   }
 
-  Future<void> delete(
-    sqlite.SqliteWriteContext transaction,
-    BankChangeRef ref,
-  ) async {
+  Future<void> delete(sqlite.SqliteWriteContext transaction, BankChangeRef ref) async {
     final commit = await BankCommitDao().getById(transaction, ref.commitUid);
     if (commit == null) throw StateError('Missing bank commit: ${ref.commitUid}');
     commit.ensureCanBeEdited();
@@ -76,6 +72,7 @@ final class BankChangeDao {
     Iterable<BankChange> changes,
   ) async {
     for (final change in changes) {
+      final row = BankChangeMapper.toPersistence(change);
       await transaction.execute(
         '''
         INSERT INTO bank_change (
@@ -88,33 +85,14 @@ final class BankChangeDao {
         ) VALUES (?, ?, ?, ?, ?, ?)
         ''',
         [
-          change.ref.commitUid.value,
-          change.ref.changeId,
-          change.previousChangeRef?.commitUid.value,
-          change.previousChangeRef?.changeId,
-          change.changeType,
-          jsonEncode(change.payload),
+          row['commit_uid'],
+          row['change_id'],
+          row['previous_commit_uid'],
+          row['previous_change_id'],
+          row['change_type'],
+          row['payload_json'],
         ],
       );
     }
-  }
-
-  static BankChange _fromRow(Map<String, Object?> row) {
-    final previousUid = row['previous_commit_uid'] as String?;
-    final previousId = row['previous_change_id'] as int?;
-    if ((previousUid == null) != (previousId == null)) {
-      throw StateError('Incomplete previous change reference');
-    }
-    return BankChange(
-      ref: BankChangeRef(
-        commitUid: CommitUid(row['commit_uid'] as String),
-        changeId: row['change_id'] as int,
-      ),
-      previousChangeRef: previousUid == null
-          ? null
-          : BankChangeRef(commitUid: CommitUid(previousUid), changeId: previousId!),
-      changeType: row['change_type'] as String,
-      payload: jsonDecode(row['payload_json'] as String) as Map<String, Object?>,
-    );
   }
 }

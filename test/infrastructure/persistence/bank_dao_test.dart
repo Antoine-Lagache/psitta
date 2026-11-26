@@ -16,13 +16,12 @@ void main() {
   final root = CommitUid('root');
   final child = CommitUid('child');
 
-  BankChange setting(CommitUid uid, int id, {BankChangeRef? previous}) =>
-      BankChange(
-        ref: BankChangeRef(commitUid: uid, changeId: id),
-        previousChangeRef: previous,
-        changeType: previous == null ? 'add setting' : 'update setting',
-        payload: {'profile': 'default', 'key': 'limit', 'value': id},
-      );
+  BankChange setting(CommitUid uid, int id, {BankChangeRef? previous}) => BankChange(
+    ref: BankChangeRef(commitUid: uid, changeId: id),
+    previousChangeRef: previous,
+    changeType: previous == null ? 'add setting' : 'update setting',
+    payload: {'profile': 'default', 'key': 'limit', 'value': id},
+  );
 
   setUp(() async {
     db = await PersistenceTestDatabase.create();
@@ -75,14 +74,13 @@ void main() {
 
   test('draft changes reject duplicate identities and frozen edits', () async {
     await db.database.writeTransaction((tx) async {
-      await commits.insert(
-        tx,
-        BankCommit(uid: root, parentUid: null, isFrozen: false),
-      );
+      await commits.insert(tx, BankCommit(uid: root, parentUid: null, isFrozen: false));
       await changes.insertAll(tx, root, [setting(root, 0)]);
     });
     await expectLater(
-      db.database.writeTransaction((tx) => changes.insertAll(tx, root, [setting(root, 1)])),
+      db.database.writeTransaction(
+        (tx) => changes.insertAll(tx, root, [setting(root, 1)]),
+      ),
       throwsArgumentError,
     );
     await db.database.writeTransaction((tx) async {
@@ -95,7 +93,9 @@ void main() {
       throwsStateError,
     );
     await expectLater(
-      db.database.writeTransaction((tx) => changes.insertAll(tx, root, [setting(root, 2)])),
+      db.database.writeTransaction(
+        (tx) => changes.insertAll(tx, root, [setting(root, 2)]),
+      ),
       throwsStateError,
     );
     expect(await db.countRows('bank_change'), 1);
