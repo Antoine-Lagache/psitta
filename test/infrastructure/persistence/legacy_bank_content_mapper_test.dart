@@ -118,7 +118,12 @@ void main() {
           final id = payload['exercise_id'] as int;
           expect(payload['priority_order'], id);
           if (payload['exercise_type'] == 'sentence') {
-            verify(payload['sentence_group_ref'], 'add sentence group', 'sentence_group_id', 1);
+            verify(
+              payload['sentence_group_ref'],
+              'add sentence group',
+              'sentence_group_id',
+              1,
+            );
           } else {
             verify(payload['content_ref'], 'add content', 'content_id', id);
           }

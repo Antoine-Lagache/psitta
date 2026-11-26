@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../identity/entity_id.dart';
+import 'bank_entity_identity.dart';
 
 /// One change to one logical entity, stored as a typed JSON payload.
 ///
@@ -10,7 +11,6 @@ final class BankChange {
   final BankChangeRef? previousChangeRef;
   final String changeType;
   final Map<String, Object?> payload;
-  late final (String, Object, String) entityIdentity;
 
   BankChange({
     required this.ref,
@@ -27,19 +27,19 @@ final class BankChange {
     if (changeType.trim().isEmpty) {
       throw ArgumentError.value(changeType, 'changeType', 'Must not be empty');
     }
-    entityIdentity = _resolveEntityIdentity();
+    getEntityIdentity();
   }
 
-  (String, Object, String) _resolveEntityIdentity() => switch (changeType) {
-    'add bank languages' => ('bank languages', '', ''),
-    'add bank description' => ('bank description', '', ''),
-    'add exercise' => ('exercise', _requiredInteger('exercise_id'), ''),
-    'add sentence group' => ('sentence group', _requiredInteger('sentence_group_id'), ''),
-    'add sentence' => ('sentence', _requiredInteger('sentence_id'), ''),
-    'add content' => ('content', _requiredInteger('content_id'), ''),
-    'add media' || 'remove media' => ('media', _requiredId('sha256'), ''),
+  BankEntityIdentity<Object?> getEntityIdentity() => switch (changeType) {
+    'add bank languages' => const BankLanguagesIdentity(),
+    'add bank description' => const BankDescriptionIdentity(),
+    'add exercise' => ExerciseIdentity(_requiredInteger('exercise_id')),
+    'add sentence group' => SentenceGroupIdentity(_requiredInteger('sentence_group_id')),
+    'add sentence' => SentenceIdentity(_requiredInteger('sentence_id')),
+    'add content' => ContentIdentity(_requiredInteger('content_id')),
+    'add media' || 'remove media' => MediaIdentity(_requiredId('sha256')),
     'add setting' ||
-    'update setting' => ('setting', _requiredId('profile'), _requiredId('key')),
+    'update setting' => SettingIdentity((_requiredId('profile'), _requiredId('key'))),
     _ => throw ArgumentError.value(changeType, 'changeType', 'Unsupported change type'),
   };
 

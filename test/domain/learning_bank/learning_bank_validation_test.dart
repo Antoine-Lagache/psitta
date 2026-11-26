@@ -1,6 +1,7 @@
 import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/learning_bank/bank_change.dart';
 import 'package:psitta/domain/learning_bank/bank_commit.dart';
+import 'package:psitta/domain/learning_bank/bank_entity_identity.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -138,12 +139,34 @@ void main() {
       final other = change(3, 'add setting', {'profile': 'custom', 'key': 'limit'});
       final update = change(4, 'update setting', {'profile': 'default', 'key': 'limit'});
 
+      expect(exercise.getEntityIdentity(), const ExerciseIdentity(1));
+      expect(content.getEntityIdentity(), const ContentIdentity(1));
+      expect(setting.getEntityIdentity(), update.getEntityIdentity());
       expect(
         () => commit.validateChanges([exercise, content, setting, other]),
         returnsNormally,
       );
       expect(() => commit.validateChanges([setting, update]), throwsArgumentError);
       expect(() => commit.validateChanges([exercise, exercise]), throwsArgumentError);
+    });
+
+    test('typed identities have value equality and distinct entity kinds', () {
+      final identities = <BankEntityIdentity<Object?>>{
+        const ExerciseIdentity(1),
+        const ContentIdentity(1),
+        const SentenceIdentity(1),
+        const SentenceGroupIdentity(1),
+        const MediaIdentity('1'),
+        const SettingIdentity(('default', '1')),
+        const BankLanguagesIdentity(),
+        const BankDescriptionIdentity(),
+      };
+      expect(identities, hasLength(8));
+      expect(identities.add(const ExerciseIdentity(1)), isFalse);
+      expect(identities.add(const ExerciseIdentity(2)), isTrue);
+      expect(identities.add(const BankLanguagesIdentity()), isFalse);
+      expect(identities.add(const SettingIdentity(('custom', '1'))), isTrue);
+      expect(const ExerciseIdentity(1).hashCode, const ExerciseIdentity(1).hashCode);
     });
 
     test('commit changes must belong to that commit', () {

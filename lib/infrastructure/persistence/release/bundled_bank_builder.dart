@@ -46,11 +46,7 @@ final class BundledBankBuilder {
       final digest = sha256.convert(utf8.encode(serialized));
       final uid = CommitUid('psitta-root-$digest');
       final root = await map(uid);
-      await BankChangeDao().insertCommit(
-        tx,
-        commit: root.commit,
-        changes: root.changes,
-      );
+      await BankChangeDao().insertCommit(tx, commit: root.commit, changes: root.changes);
       await tx.execute('INSERT INTO learning_bank (head_commit_uid) VALUES (?)', [
         uid.value,
       ]);

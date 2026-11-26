@@ -1,5 +1,6 @@
 import '../identity/entity_id.dart';
 import 'bank_change.dart';
+import 'bank_entity_identity.dart';
 
 /// One node in a bank's single-parent commit chain.
 ///
@@ -32,7 +33,7 @@ final class BankCommit {
   }
 
   void validateChanges(Iterable<BankChange> changes) {
-    final entities = <(String, Object, String)>{};
+    final entities = <BankEntityIdentity<Object?>>{};
     final changeIds = <int>{};
     for (final change in changes) {
       if (change.ref.commitUid != uid) {
@@ -41,7 +42,7 @@ final class BankCommit {
       if (!changeIds.add(change.ref.changeId)) {
         throw ArgumentError('A commit cannot contain duplicate change IDs');
       }
-      if (!entities.add(change.entityIdentity)) {
+      if (!entities.add(change.getEntityIdentity())) {
         throw ArgumentError('A commit cannot contain two changes to one entity');
       }
     }
