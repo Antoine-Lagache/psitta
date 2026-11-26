@@ -2,6 +2,7 @@ import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/exercise/sentence_exercise.dart';
 import 'package:psitta/domain/exercise/character_exercise.dart';
 import 'package:psitta/domain/history/exercise_history_entry.dart';
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/sessions/session.dart';
 import 'package:psitta/domain/srs/srs_config.dart';
 import 'package:psitta/domain/srs/srs_state.dart';
@@ -355,13 +356,14 @@ void main() {
 
       session.beginSession(answeredAt);
       final persistedSessionId = await sessionRepository.save(session);
-      session.intermediateResult.id = persistedSessionId;
+      session.intermediateResult.id = SessionResultId(persistedSessionId);
       final answeredExercise = session.currentExercise;
       session.submitAnswer(
         SubmittedExerciseAnswer(grade: Grade.again, answeredAt: answeredAt),
       );
 
-      session.intermediateResult.id = -1;
+      // Use a valid typed ID that does not identify a persisted session.
+      session.intermediateResult.id = SessionResultId(persistedSessionId + 1);
       await expectLater(
         sessionRepository.saveAnswerProgress(session, answeredExercise),
         throwsA(anything),

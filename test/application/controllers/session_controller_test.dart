@@ -191,7 +191,9 @@ void main() {
         config: SRSConfig(),
       );
       session.beginSession(now);
-      session.intermediateResult.id = SessionResultId(await sessionRepository.save(session));
+      session.intermediateResult.id = SessionResultId(
+        await sessionRepository.save(session),
+      );
 
       final wordOverview = overviewOf(
         await createController().getSessionOverviews(),
