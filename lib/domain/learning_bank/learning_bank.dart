@@ -5,12 +5,8 @@ import '../identity/entity_id.dart';
 /// [id] is local to this user's database. The portable identity of the
 /// represented bank state is [headCommitUid].
 final class LearningBank {
-  final int id;
+  final LearningBankId id;
   final CommitUid headCommitUid;
 
-  LearningBank({required this.id, required this.headCommitUid}) {
-    if (id <= 0) {
-      throw ArgumentError.value(id, 'id', 'Must be a persisted local ID');
-    }
-  }
+  LearningBank({required this.id, required this.headCommitUid});
 }

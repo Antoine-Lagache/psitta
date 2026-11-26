@@ -6,7 +6,9 @@ sealed class BankEntityIdentity<T> {
 
   @override
   bool operator ==(Object other) =>
-      other is BankEntityIdentity<T> && runtimeType == other.runtimeType && value == other.value;
+      other is BankEntityIdentity<T> &&
+      runtimeType == other.runtimeType &&
+      value == other.value;
 
   @override
   int get hashCode => Object.hash(runtimeType, value);

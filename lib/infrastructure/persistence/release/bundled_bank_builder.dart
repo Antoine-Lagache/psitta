@@ -5,6 +5,7 @@ import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/learning_bank/bank_change.dart';
 import 'package:psitta/domain/learning_bank/bank_commit.dart';
 import 'package:psitta/infrastructure/persistence/dao/bank_change_dao.dart';
+import 'package:psitta/infrastructure/persistence/dao/learning_bank_dao.dart';
 import 'package:psitta/infrastructure/persistence/mappers/legacy_bank_content_mapper.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
@@ -47,9 +48,7 @@ final class BundledBankBuilder {
       final uid = CommitUid('psitta-root-$digest');
       final root = await map(uid);
       await BankChangeDao().insertCommit(tx, commit: root.commit, changes: root.changes);
-      await tx.execute('INSERT INTO learning_bank (head_commit_uid) VALUES (?)', [
-        uid.value,
-      ]);
+      await LearningBankDao().insert(tx, uid);
       return uid;
     });
   }
