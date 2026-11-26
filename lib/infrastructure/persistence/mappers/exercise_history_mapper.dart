@@ -12,7 +12,7 @@ class ExerciseHistoryMapper {
   static ExerciseHistoryPersistence toPersistence(ExerciseHistoryEntry domain) {
     return ExerciseHistoryPersistence(
       id: domain.id?.value,
-      exerciseId: domain.exerciseId,
+      exerciseId: domain.exerciseId.value,
       sentenceInstanceId: domain.sentenceInstanceId,
       grade: domain.grade.toInt(),
       answeredAt: toIsoUtc(domain.answeredAt)!,
@@ -23,7 +23,7 @@ class ExerciseHistoryMapper {
   static ExerciseHistoryEntry toDomain(ExerciseHistoryPersistence persistence) {
     return ExerciseHistoryEntry(
       id: persistence.id == null ? null : ExerciseHistoryId(persistence.id!),
-      exerciseId: persistence.exerciseId,
+      exerciseId: ExerciseProgressId(persistence.exerciseId),
       grade: Grade.fromInt(persistence.grade),
       answeredAt: safeParseDate(persistence.answeredAt)!,
       status: ExerciseStatus.fromCode(persistence.status),

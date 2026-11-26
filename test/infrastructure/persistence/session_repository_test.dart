@@ -91,7 +91,7 @@ void main() {
         exercise.status = status;
         if (status == ExerciseStatus.learning || status == ExerciseStatus.relearning) {
           exercise.srsState = learningSrsState(
-            exerciseId: exercise.id,
+            exerciseId: exercise.id.value,
             interval: const Duration(minutes: 1),
             lastReview: now,
             relearning: status == ExerciseStatus.relearning,
@@ -137,7 +137,7 @@ void main() {
       await repository.saveAnswerProgress(session, answeredExercise);
 
       expect(answeredExercise.newHistoryEntry, isEmpty);
-      final persistedExercise = await exerciseRepository.getById(exercise.id);
+      final persistedExercise = await exerciseRepository.getById(exercise.id.value);
       expect(persistedExercise, isA<WordExercise>());
       expect(persistedExercise!.status, ExerciseStatus.toReview);
       expect(persistedExercise.srsState.lastReview?.toUtc(), answeredAt);
@@ -145,7 +145,7 @@ void main() {
 
       final history = await ExerciseHistoryRepository(
         database,
-      ).getList(exerciseId: exercise.id);
+      ).getList(exerciseId: exercise.id.value);
       expect(history, hasLength(1));
       expect(history.single.exerciseId, exercise.id);
       expect(history.single.grade, Grade.again);
@@ -199,7 +199,7 @@ void main() {
       expect(results.single.numberOfUniqueExercisesCompleted, 1);
       expect(results.single.getNumberOfAnswersByStatus(ExerciseStatus.newExercise), 1);
       expect(
-        await ExerciseHistoryRepository(database).getList(exerciseId: exercise.id),
+        await ExerciseHistoryRepository(database).getList(exerciseId: exercise.id.value),
         hasLength(1),
       );
     });
@@ -232,7 +232,7 @@ void main() {
       final activeResult = (await repository.getAllActiveSessionResult()).single;
       final restored = await repository.getActiveSession(activeResult, SRSConfig());
       final resume = restored.getResumeList().single;
-      expect(resume.exerciseId, exerciseId);
+      expect(resume.exerciseId, ExerciseProgressId(exerciseId));
       expect(resume.status, ExerciseStatus.consolidating);
       expect(resume.trainingCount, 1);
 
@@ -274,7 +274,7 @@ void main() {
       session.intermediateResult.id = SessionResultId(await repository.save(session));
       exercise.status = ExerciseStatus.learning;
       exercise.srsState = learningSrsState(
-        exerciseId: exercise.id,
+        exerciseId: exercise.id.value,
         interval: const Duration(minutes: 1),
         lastReview: startedAt,
       );

@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/exercise/exercise.dart';
 import 'package:psitta/domain/exercise/character_exercise.dart';
 import 'package:psitta/domain/exercise/sentence_exercise.dart';
@@ -96,7 +97,7 @@ class SessionRepository {
 
     final List<Exercise> exercises = [];
     for (final ExerciseResume sessionExercise in sessionExercisesDomain) {
-      final exercisePersistence = await _exerciseDao.getById(sessionExercise.exerciseId);
+      final exercisePersistence = await _exerciseDao.getById(sessionExercise.exerciseId.value);
       exercises.add(await _toDomain(exercisePersistence!, sessionExercise));
     }
     return Session(
@@ -115,7 +116,7 @@ class SessionRepository {
       case WordExercisePersistence word:
         return WordExercise(
           contentId: word.contentId,
-          id: word.id!,
+          id: ExerciseProgressId(word.id!),
           status: resume.status,
           srsState: SRSStateMapper.toDomainSrsState(word.srsState, exerciseId: word.id!),
         );
@@ -138,7 +139,7 @@ class SessionRepository {
           sentences: sentences,
           trainingCountMax: sentence.trainingCountMax,
           trainingCount: resume.trainingCount,
-          id: sentence.id!,
+          id: ExerciseProgressId(sentence.id!),
           status: resume.status,
           srsState: SRSStateMapper.toDomainSrsState(
             sentence.srsState,
@@ -150,7 +151,7 @@ class SessionRepository {
           contentId: character.contentId,
           trainingCountMax: character.trainingCountMax,
           trainingCount: resume.trainingCount,
-          id: character.id!,
+          id: ExerciseProgressId(character.id!),
           status: resume.status,
           srsState: SRSStateMapper.toDomainSrsState(
             character.srsState,

@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/exercise/character_exercise.dart';
 import 'package:psitta/infrastructure/persistence/mappers/exercise/srs_state_mapper.dart';
@@ -12,7 +13,7 @@ class CharacterExerciseMapper {
     bool hasHistory,
   ) {
     return CharacterExercise(
-      id: persistence.id!,
+      id: ExerciseProgressId(persistence.id!),
       status: hasHistory ? ExerciseStatus.toReview : ExerciseStatus.newExercise,
       srsState: SRSStateMapper.toDomainSrsState(
         persistence.srsState,
@@ -25,7 +26,7 @@ class CharacterExerciseMapper {
 
   static CharacterExercisePersistence characterToPersistence(CharacterExercise domain) {
     return CharacterExercisePersistence(
-      id: domain.id,
+      id: domain.id.value,
       srsState: SRSStateMapper.toPersistenceSrsState(domain.srsState),
       trainingCountMax: domain.trainingCountMax,
       contentId: domain.contentId,

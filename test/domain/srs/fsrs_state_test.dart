@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:fsrs/fsrs.dart' as fsrs;
 import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/srs/fsrs_scheduler_config.dart';
@@ -13,7 +14,7 @@ void main() {
   }
 
   test('new state has no scheduled review or model estimates', () {
-    final state = SRSState(exerciseId: 7);
+    final state = SRSState(exerciseId: ExerciseProgressId(7));
     expect(state.nextReview, isNull);
     expect(state.lastReview, isNull);
     expect(state.interval, Duration.zero);
@@ -37,7 +38,7 @@ void main() {
       Grade.easy: const Duration(days: 16),
     };
     for (final entry in ratings.entries) {
-      final state = SRSState(exerciseId: 7);
+      final state = SRSState(exerciseId: ExerciseProgressId(7));
       final expected = scheduler
           .reviewCard(fsrs.Card(cardId: 7), entry.value, reviewDateTime: start)
           .card;
@@ -58,7 +59,7 @@ void main() {
   });
 
   test('learning graduates, a failed review relearns, and Good graduates again', () {
-    final state = SRSState(exerciseId: 7);
+    final state = SRSState(exerciseId: ExerciseProgressId(7));
     answer(state, Grade.good, start);
     expect(state.interval, const Duration(minutes: 10));
     expect(state.learningStepIndex, 1);
@@ -86,7 +87,7 @@ void main() {
   });
 
   test('clones and copies do not share mutable card state', () {
-    final original = SRSState(exerciseId: 7);
+    final original = SRSState(exerciseId: ExerciseProgressId(7));
     final clone = SRSState.clone(original);
     answer(clone, Grade.easy, start);
     expect(original.lastReview, isNull);
@@ -95,11 +96,11 @@ void main() {
     answer(clone, Grade.again, clone.nextReview!);
     expect(original.nextReview, due);
     expect(original.isInLearning, isFalse);
-    expect(() => original.copyFrom(SRSState(exerciseId: 8)), throwsArgumentError);
+    expect(() => original.copyFrom(SRSState(exerciseId: ExerciseProgressId(8))), throwsArgumentError);
   });
 
   test('normalizes local instants and rejects reverse chronological answers', () {
-    final state = SRSState(exerciseId: 7);
+    final state = SRSState(exerciseId: ExerciseProgressId(7));
     answer(state, Grade.good, start.toLocal());
     expect(state.lastReview, start);
     expect(state.lastReview!.isUtc, isTrue);
@@ -119,8 +120,8 @@ void main() {
   });
 
   test('review previews stay deterministic over a late-review history', () {
-    final first = SRSState(exerciseId: 7);
-    final replay = SRSState(exerciseId: 7);
+    final first = SRSState(exerciseId: ExerciseProgressId(7));
+    final replay = SRSState(exerciseId: ExerciseProgressId(7));
     var at = start;
     for (final grade in [Grade.easy, Grade.good, Grade.hard, Grade.again, Grade.good]) {
       final preview = first.previewInterval(

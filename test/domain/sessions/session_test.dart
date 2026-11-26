@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/exercise/sentence_exercise.dart';
 import 'package:psitta/domain/sentences/sentence_instance.dart';
@@ -17,9 +18,9 @@ void main() {
           sentences: [SentenceInstance(id: 1, contentId: 1, state: sentenceState)],
         ),
         trainingCountMax: 1,
-        id: 1,
+        id: ExerciseProgressId(1),
         status: ExerciseStatus.newExercise,
-        srsState: SRSState(),
+        srsState: SRSState(exerciseId: ExerciseProgressId(1)),
       );
       final session = Session(
         exercises: [exercise],
@@ -53,9 +54,9 @@ void main() {
           sentences: [SentenceInstance(id: 1, contentId: 1, state: sentenceState)],
         ),
         trainingCountMax: 1,
-        id: 1,
+        id: ExerciseProgressId(1),
         status: ExerciseStatus.newExercise,
-        srsState: SRSState(),
+        srsState: SRSState(exerciseId: ExerciseProgressId(1)),
       );
       final session = Session(
         exercises: [exercise],
@@ -81,9 +82,9 @@ void main() {
           sentences: [SentenceInstance(id: 1, contentId: 1, state: SentenceState())],
         ),
         trainingCountMax: 1,
-        id: 1,
+        id: ExerciseProgressId(1),
         status: ExerciseStatus.consolidating,
-        srsState: SRSState(),
+        srsState: SRSState(exerciseId: ExerciseProgressId(1)),
       );
       final session = Session(
         exercises: [exercise],
@@ -108,9 +109,9 @@ void main() {
           sentences: [SentenceInstance(id: 1, contentId: 1, state: SentenceState())],
         ),
         trainingCountMax: 1,
-        id: 1,
+        id: ExerciseProgressId(1),
         status: ExerciseStatus.newExercise,
-        srsState: SRSState(),
+        srsState: SRSState(exerciseId: ExerciseProgressId(1)),
       );
       final session = Session(
         exercises: [exercise],

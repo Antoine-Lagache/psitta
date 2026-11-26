@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:fsrs/fsrs.dart' as fsrs;
 import 'package:psitta/domain/srs/srs_state.dart';
 import 'package:psitta/infrastructure/persistence/models/exercise/srs_state_persistence.dart';
@@ -14,7 +15,7 @@ class SRSStateMapper {
     required int exerciseId,
   }) {
     return SRSState(
-      exerciseId: exerciseId,
+      exerciseId: ExerciseProgressId(exerciseId),
       state: fsrs.State.fromValue(persistence.state),
       step: persistence.step,
       stability: persistence.stability,

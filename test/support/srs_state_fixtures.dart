@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:fsrs/fsrs.dart' as fsrs;
 import 'package:psitta/domain/srs/srs_state.dart';
 
@@ -9,7 +10,7 @@ SRSState reviewSrsState({
   double difficulty = 5,
 }) {
   return SRSState(
-    exerciseId: exerciseId,
+    exerciseId: ExerciseProgressId(exerciseId),
     state: fsrs.State.review,
     stability: stability,
     difficulty: difficulty,
@@ -26,7 +27,7 @@ SRSState learningSrsState({
   bool relearning = false,
 }) {
   return SRSState(
-    exerciseId: exerciseId,
+    exerciseId: ExerciseProgressId(exerciseId),
     state: relearning ? fsrs.State.relearning : fsrs.State.learning,
     step: step,
     due: lastReview.add(interval),

@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/exercise/exercise_resume.dart';
@@ -14,7 +15,7 @@ export 'package:psitta/domain/srs/srs_state.dart';
 
 /// Base runtime model that coordinates intra-session status and SRS state.
 abstract class Exercise {
-  final int id;
+  final ExerciseProgressId id;
   ExerciseStatus status;
 
   SRSState srsState;

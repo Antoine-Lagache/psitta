@@ -53,7 +53,7 @@ void main() {
 
       expect(exercise, isA<WordExercise>());
       final wordExercise = exercise as WordExercise;
-      expect(wordExercise.id, exerciseId);
+      expect(wordExercise.id, ExerciseProgressId(exerciseId));
       expect(wordExercise.contentId, contentId);
       expect(wordExercise.status, ExerciseStatus.newExercise);
       expect(wordExercise.trainingCountMax, 0);
@@ -88,7 +88,7 @@ void main() {
 
       expect(exercise, isA<SentenceExercise>());
       final sentenceExercise = exercise as SentenceExercise;
-      expect(sentenceExercise.id, exerciseId);
+      expect(sentenceExercise.id, ExerciseProgressId(exerciseId));
       expect(sentenceExercise.groupId, sentenceGroupId);
       expect(sentenceExercise.trainingCountMax, 1);
       expect(sentenceExercise.trainingCount, 1);
@@ -110,7 +110,7 @@ void main() {
 
         expect(exercise, isA<CharacterExercise>());
         final characterExercise = exercise! as CharacterExercise;
-        expect(characterExercise.id, exerciseId);
+        expect(characterExercise.id, ExerciseProgressId(exerciseId));
         expect(characterExercise.contentId, contentId);
         expect(characterExercise.trainingCountMax, 1);
         expect(characterExercise.trainingCount, 1);
@@ -147,7 +147,7 @@ void main() {
       final exercises = await repository.getNewExercises(10, 'word');
 
       expect(exercises, hasLength(1));
-      expect(exercises.first.id, exerciseId);
+      expect(exercises.first.id, ExerciseProgressId(exerciseId));
       expect(exercises.first, isA<WordExercise>());
     });
 
@@ -157,7 +157,7 @@ void main() {
       final exercise = await repository.getById(exerciseId) as WordExercise;
       exercise.newHistoryEntry.add(
         ExerciseHistoryEntry(
-          exerciseId: exerciseId,
+          exerciseId: ExerciseProgressId(exerciseId),
           grade: Grade.good,
           answeredAt: DateTime.utc(2026, 9, 18),
           status: ExerciseStatus.consolidating,
@@ -166,7 +166,7 @@ void main() {
       await repository.save(exercise);
 
       final newExercises = await repository.getNewExercises(10, 'word');
-      expect(newExercises.map((item) => item.id), contains(exerciseId));
+      expect(newExercises.map((item) => item.id), contains(ExerciseProgressId(exerciseId)));
       expect(await repository.countNewExercises('word'), 1);
       expect(await repository.countDueExercises(DateTime.utc(2026, 9, 18), 'word'), 0);
     });
@@ -189,7 +189,7 @@ void main() {
       final exercises = await repository.getDueExercises(DateTime.now(), 10, 'word');
 
       expect(exercises, hasLength(1));
-      expect(exercises.first.id, exerciseId);
+      expect(exercises.first.id, ExerciseProgressId(exerciseId));
     });
 
     test('countNewExercises counts exercises with no FSRS review by type', () async {
@@ -210,7 +210,7 @@ void main() {
       );
       reviewedWord.newHistoryEntry.add(
         ExerciseHistoryEntry(
-          exerciseId: wordExerciseId,
+          exerciseId: ExerciseProgressId(wordExerciseId),
           grade: Grade.good,
           answeredAt: DateTime.utc(2026, 9, 18),
           status: ExerciseStatus.newExercise,
@@ -313,7 +313,7 @@ void main() {
 
       final wordExercise = exercise as WordExercise;
       wordExercise.srsState = SRSState(
-        exerciseId: exerciseId,
+        exerciseId: ExerciseProgressId(exerciseId),
         state: fsrs.State.review,
         stability: 12.5,
         difficulty: 5.25,
@@ -325,7 +325,7 @@ void main() {
       final savedExercise = await repository.getById(exerciseId);
 
       expect(savedExercise, isNotNull);
-      expect(savedExercise!.id, exerciseId);
+      expect(savedExercise!.id, ExerciseProgressId(exerciseId));
       expect(savedExercise.srsState.state, fsrs.State.review);
       expect(savedExercise.srsState.step, isNull);
       expect(savedExercise.srsState.stability, 12.5);
@@ -411,7 +411,7 @@ void main() {
 
       wordExercise.newHistoryEntry.add(
         ExerciseHistoryEntry(
-          exerciseId: exerciseId,
+          exerciseId: ExerciseProgressId(exerciseId),
           grade: Grade.good,
           answeredAt: DateTime.utc(2026, 9, 4, 12),
           status: ExerciseStatus.newExercise,
@@ -431,7 +431,7 @@ void main() {
       final resetExercise = await repository.getById(exerciseId);
 
       expect(resetExercise, isNotNull);
-      expect(resetExercise!.id, exerciseId);
+      expect(resetExercise!.id, ExerciseProgressId(exerciseId));
       expect(resetExercise.status, ExerciseStatus.newExercise);
       expect(resetExercise.srsState.state, fsrs.State.learning);
       expect(resetExercise.srsState.interval, Duration.zero);
@@ -468,7 +468,7 @@ void main() {
       );
       exercise.newHistoryEntry.add(
         ExerciseHistoryEntry(
-          exerciseId: exerciseId,
+          exerciseId: ExerciseProgressId(exerciseId),
           grade: Grade.hard,
           answeredAt: reviewedAt,
           status: ExerciseStatus.newExercise,

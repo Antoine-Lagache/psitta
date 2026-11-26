@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:fsrs/fsrs.dart' as fsrs;
 import 'package:psitta/domain/answer/exercise_answer.dart';
 import 'package:psitta/domain/srs/fsrs_scheduler_config.dart';
@@ -12,7 +13,7 @@ class SRSState {
   fsrs.Card _card;
 
   SRSState({
-    int exerciseId = 0,
+    ExerciseProgressId? exerciseId,
     fsrs.State state = fsrs.State.learning,
     int? step,
     double? stability,
@@ -20,7 +21,7 @@ class SRSState {
     DateTime? due,
     DateTime? lastReview,
   }) : _card = fsrs.Card(
-         cardId: exerciseId,
+         cardId: exerciseId?.value ?? 0,
          state: state,
          step: step,
          stability: stability,
@@ -33,7 +34,9 @@ class SRSState {
 
   SRSState.clone(SRSState other) : _card = other._card.copyWith();
 
-  int get exerciseId => _card.cardId;
+  /// A new, unbound FSRS state uses zero internally, never as a domain ID.
+  ExerciseProgressId? get exerciseId =>
+      _card.cardId == 0 ? null : ExerciseProgressId(_card.cardId);
   fsrs.State get state => _card.state;
   int? get step => _card.step;
   double? get stability => _card.stability;

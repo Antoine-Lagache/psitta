@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/exercise/exercise_resume.dart';
 import 'package:psitta/domain/exercise/exercise_status.dart';
 
@@ -9,7 +10,7 @@ class SessionExerciseMapper {
 
   static ExerciseResume toDomain(SessionExercisePersistence persistence) {
     return ExerciseResume(
-      exerciseId: persistence.exerciseId,
+      exerciseId: ExerciseProgressId(persistence.exerciseId),
       status: ExerciseStatus.fromCode(persistence.statusCode),
       trainingCount: persistence.trainingCount,
     );
@@ -17,7 +18,7 @@ class SessionExerciseMapper {
 
   static SessionExercisePersistence toPersistence(ExerciseResume domain) {
     return SessionExercisePersistence(
-      exerciseId: domain.exerciseId,
+      exerciseId: domain.exerciseId.value,
       statusCode: domain.status.code,
       trainingCount: domain.trainingCount,
     );

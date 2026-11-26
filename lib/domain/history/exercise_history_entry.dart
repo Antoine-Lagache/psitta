@@ -4,7 +4,7 @@ import 'package:psitta/domain/exercise/exercise.dart';
 /// Immutable record of one submitted answer and its pre-answer exercise status.
 class ExerciseHistoryEntry {
   final ExerciseHistoryId? id;
-  final int exerciseId;
+  final ExerciseProgressId exerciseId;
 
   final Grade grade;
   final DateTime answeredAt;
@@ -26,7 +26,7 @@ class ExerciseHistoryEntry {
 
   factory ExerciseHistoryEntry.fromAnswer({
     required SubmittedExerciseAnswer answer,
-    required int exerciseId,
+    required ExerciseProgressId exerciseId,
     required ExerciseStatus status,
     int? sentenceInstanceId,
   }) {

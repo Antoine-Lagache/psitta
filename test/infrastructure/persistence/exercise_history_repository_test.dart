@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/srs/grade.dart';
 import 'package:psitta/infrastructure/persistence/dao/exercise_history_dao.dart';
@@ -88,7 +89,7 @@ void main() {
 
       expect(entries, hasLength(2));
       expect(entries.first.id, isNotNull);
-      expect(entries.first.exerciseId, firstExerciseId);
+      expect(entries.first.exerciseId, ExerciseProgressId(firstExerciseId));
       expect(entries.first.grade, Grade.good);
       expect(entries.first.status, ExerciseStatus.learning);
       expect(entries.first.answeredAt.toUtc(), middle);
@@ -120,7 +121,7 @@ void main() {
 
       expect(
         entries.map((entry) => entry.exerciseId),
-        orderedEquals([secondExerciseId, firstExerciseId]),
+        orderedEquals([ExerciseProgressId(secondExerciseId), ExerciseProgressId(firstExerciseId)]),
       );
     });
   });

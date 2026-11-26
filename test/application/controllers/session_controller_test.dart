@@ -119,7 +119,7 @@ void main() {
         final dueExercise =
             await exerciseRepository.getById(exerciseIds.first) as WordExercise;
         dueExercise.srsState = reviewSrsState(
-          exerciseId: dueExercise.id,
+          exerciseId: dueExercise.id.value,
           interval: const Duration(days: 1),
           lastReview: now.subtract(const Duration(days: 2)),
         );
@@ -176,7 +176,7 @@ void main() {
         exercise.status = status;
         if (status == ExerciseStatus.learning || status == ExerciseStatus.relearning) {
           exercise.srsState = learningSrsState(
-            exerciseId: exercise.id,
+            exerciseId: exercise.id.value,
             interval: const Duration(minutes: 1),
             lastReview: now,
             relearning: status == ExerciseStatus.relearning,

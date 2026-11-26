@@ -1,3 +1,4 @@
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/exercise/exercise.dart';
 import 'package:psitta/domain/exercise/character_exercise.dart';
 import 'package:psitta/domain/exercise/word_exercise.dart';
@@ -8,9 +9,9 @@ void main() {
     test('the shared consolidation phase does not update FSRS and counts successes', () {
       final exercise = CharacterExercise(
         contentId: 1,
-        id: 1,
+        id: ExerciseProgressId(1),
         status: ExerciseStatus.consolidating,
-        srsState: SRSState(),
+        srsState: SRSState(exerciseId: ExerciseProgressId(1)),
         trainingCountMax: 1,
       );
       final originalSrsState = exercise.srsState;
@@ -40,9 +41,9 @@ void main() {
     test('word exercises cannot configure additional training', () {
       final exercise = WordExercise(
         contentId: 1,
-        id: 1,
+        id: ExerciseProgressId(1),
         status: ExerciseStatus.newExercise,
-        srsState: SRSState(),
+        srsState: SRSState(exerciseId: ExerciseProgressId(1)),
       );
 
       expect(exercise.trainingCountMax, 0);
