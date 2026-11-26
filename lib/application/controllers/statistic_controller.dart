@@ -3,6 +3,7 @@ import 'package:psitta/application/models/statistics/session_statistics.dart';
 import 'package:psitta/application/models/statistics/exercise_progress_counts.dart';
 import 'package:psitta/application/controllers/daily_streak_controller.dart';
 import 'package:psitta/domain/history/exercise_history_entry.dart';
+import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/sessions/session_result.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
 import 'package:psitta/domain/srs/grade.dart';
@@ -124,7 +125,7 @@ class StatisticController {
     final numberOfAnswersByGrade = List<int>.filled(Grade.values.length, 0);
     final numberOfAnswersByStatus = List<int>.filled(ExerciseStatus.values.length, 0);
 
-    final exerciseIds = <int>{};
+    final exerciseIds = <ExerciseProgressId>{};
 
     for (final entry in history) {
       numberOfAnswersByGrade[entry.grade.toInt() - 1]++;

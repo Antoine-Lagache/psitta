@@ -97,7 +97,9 @@ class SessionRepository {
 
     final List<Exercise> exercises = [];
     for (final ExerciseResume sessionExercise in sessionExercisesDomain) {
-      final exercisePersistence = await _exerciseDao.getById(sessionExercise.exerciseId.value);
+      final exercisePersistence = await _exerciseDao.getById(
+        sessionExercise.exerciseId.value,
+      );
       exercises.add(await _toDomain(exercisePersistence!, sessionExercise));
     }
     return Session(

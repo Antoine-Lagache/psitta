@@ -166,7 +166,10 @@ void main() {
       await repository.save(exercise);
 
       final newExercises = await repository.getNewExercises(10, 'word');
-      expect(newExercises.map((item) => item.id), contains(ExerciseProgressId(exerciseId)));
+      expect(
+        newExercises.map((item) => item.id),
+        contains(ExerciseProgressId(exerciseId)),
+      );
       expect(await repository.countNewExercises('word'), 1);
       expect(await repository.countDueExercises(DateTime.utc(2026, 9, 18), 'word'), 0);
     });

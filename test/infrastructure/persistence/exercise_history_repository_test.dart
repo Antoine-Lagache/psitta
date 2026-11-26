@@ -121,7 +121,10 @@ void main() {
 
       expect(
         entries.map((entry) => entry.exerciseId),
-        orderedEquals([ExerciseProgressId(secondExerciseId), ExerciseProgressId(firstExerciseId)]),
+        orderedEquals([
+          ExerciseProgressId(secondExerciseId),
+          ExerciseProgressId(firstExerciseId),
+        ]),
       );
     });
   });

@@ -96,7 +96,10 @@ void main() {
     answer(clone, Grade.again, clone.nextReview!);
     expect(original.nextReview, due);
     expect(original.isInLearning, isFalse);
-    expect(() => original.copyFrom(SRSState(exerciseId: ExerciseProgressId(8))), throwsArgumentError);
+    expect(
+      () => original.copyFrom(SRSState(exerciseId: ExerciseProgressId(8))),
+      throwsArgumentError,
+    );
   });
 
   test('normalizes local instants and rejects reverse chronological answers', () {
