@@ -51,7 +51,7 @@ void main() {
           ref: ref,
           previousChangeRef: ref,
           changeType: 'add exercise',
-          payload: const {'exercise_id': 'word-1'},
+          payload: const {'exercise_id': 1},
         ),
         throwsArgumentError,
       );
@@ -65,7 +65,7 @@ void main() {
           ref: BankChangeRef(commitUid: commitUid, changeId: 1),
           previousChangeRef: BankChangeRef(commitUid: commitUid, changeId: 0),
           changeType: 'add exercise',
-          payload: const {'exercise_id': 'word-1'},
+          payload: const {'exercise_id': 1},
         ),
         throwsArgumentError,
       );
@@ -77,7 +77,7 @@ void main() {
           ref: BankChangeRef(commitUid: CommitUid('commit-a'), changeId: 0),
           previousChangeRef: null,
           changeType: '  ',
-          payload: const {'exercise_id': 'word-1'},
+          payload: const {'exercise_id': 1},
         ),
         throwsArgumentError,
       );
@@ -104,7 +104,8 @@ void main() {
       );
 
       expect(() => createChange(const {}), throwsArgumentError);
-      expect(() => createChange(const {'exercise_id': 1}), throwsArgumentError);
+      expect(() => createChange(const {'exercise_id': -1}), throwsArgumentError);
+      expect(() => createChange(const {'exercise_id': '1'}), throwsArgumentError);
       expect(() => createChange(const {'exercise_id': ''}), throwsArgumentError);
     });
 
@@ -115,7 +116,7 @@ void main() {
         ref: BankChangeRef(commitUid: uid, changeId: changeId),
         previousChangeRef: null,
         changeType: 'add exercise',
-        payload: const {'exercise_id': 'word-1'},
+        payload: const {'exercise_id': 1},
       );
 
       expect(() => commit.validateChanges([change(0), change(1)]), throwsArgumentError);
@@ -131,8 +132,8 @@ void main() {
         payload: payload,
       );
 
-      final exercise = change(0, 'add exercise', {'exercise_id': '1'});
-      final content = change(1, 'add content', {'content_id': '1'});
+      final exercise = change(0, 'add exercise', {'exercise_id': 1});
+      final content = change(1, 'add content', {'content_id': 1});
       final setting = change(2, 'add setting', {'profile': 'default', 'key': 'limit'});
       final other = change(3, 'add setting', {'profile': 'custom', 'key': 'limit'});
       final update = change(4, 'update setting', {'profile': 'default', 'key': 'limit'});
@@ -155,7 +156,7 @@ void main() {
         ref: BankChangeRef(commitUid: CommitUid('commit-b'), changeId: 0),
         previousChangeRef: null,
         changeType: 'add exercise',
-        payload: const {'exercise_id': 'word-1'},
+        payload: const {'exercise_id': 1},
       );
 
       expect(() => commit.validateChanges([change]), throwsArgumentError);

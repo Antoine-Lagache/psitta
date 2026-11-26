@@ -24,7 +24,7 @@ supprimées du SQL.
   commits.
 - Les identifiants d'entité sont dans `payload_json`. Le type d'entité et
   l'opération sont portés par `change_type` (par exemple `add exercise` ou
-  `update setting`) ; le payload contient l'identifiant stable et l'état complet
+  `update setting`) ; le payload contient l'identifiant entier local au type et au commit et l'état complet
   de l'entité. Un commit ne peut contenir qu'un changement par entité.
 - `media` est un catalogue local des fichiers physiques. Le SHA-256 identifie
   le contenu binaire et permet de partager le même fichier entre exercices,
@@ -69,7 +69,7 @@ et les commits qui en dépendent sont supprimés.
 | `previous_commit_uid TEXT NULL` | Commit du changement précédent de la même entité |
 | `previous_change_id INTEGER NULL` | Identifiant du changement précédent |
 | `change_type TEXT NOT NULL` | Opération et type d'entité, par exemple `add exercise` |
-| `payload_json TEXT NOT NULL` | Identifiant stable et état complet de l'entité |
+| `payload_json TEXT NOT NULL` | Identifiant interne et état complet de l'entité |
 
 Clé primaire : `(commit_uid, change_id)`. `change_id` est un entier local au
 commit, attribuable par exemple par `MAX(change_id) + 1` dans une transaction.
@@ -98,7 +98,10 @@ distincts par clé. La réinitialisation des paramètres du brouillon supprime l
 changements correspondants de ce brouillon ; il n'y a pas de `remove setting`
 en 0.3.
 
-Chaque payload contient l'identifiant stable de l'entité et son état complet.
+Chaque payload d'exercice, contenu, phrase ou groupe contient un identifiant
+entier unique par type et commit, ainsi que son état complet. Les références
+entre entités désignent les changements exacts par `(commit_uid, change_id)`.
+Le changement ne répète jamais sa propre clé primaire dans son payload.
 Une mise à jour n'est pas un patch : elle sérialise toute la nouvelle entité.
 Le changement précédent permet de retrouver l'état antérieur et de recalculer
 un diff si nécessaire. Les identifiants locaux SQLite ne sont jamais
@@ -108,9 +111,9 @@ Exemples indicatifs des payloads :
 
 ```json
 {
-  "exercise_id": "word-0001",
+  "exercise_id": 1,
   "exercise_type": "word",
-  "content_id": "content-word-0001",
+  "content_ref": {"commit_uid": "root", "change_id": 10},
   "priority_order": 10,
   "training_count_max": 0
 }
@@ -121,9 +124,9 @@ et chaque phrase référence son contenu séparément :
 
 ```json
 {
-  "exercise_id": "sentence-0001",
+  "exercise_id": 2,
   "exercise_type": "sentence",
-  "sentence_group_id": "group-0001",
+  "sentence_group_ref": {"commit_uid": "root", "change_id": 13},
   "priority_order": 10,
   "training_count_max": 3
 }
@@ -131,21 +134,21 @@ et chaque phrase référence son contenu séparément :
 
 ```json
 {
-  "sentence_group_id": "group-0001",
-  "sentence_ids": ["sentence-0001", "sentence-0002"]
+  "sentence_group_id": 1,
+  "sentence_refs": [{"commit_uid": "root", "change_id": 11}, {"commit_uid": "root", "change_id": 12}]
 }
 ```
 
 ```json
 {
-  "sentence_id": "sentence-0001",
-  "content_id": "content-sentence-0001"
+  "sentence_id": 1,
+  "content_ref": {"commit_uid": "root", "change_id": 10}
 }
 ```
 
 L'association entre les phrases et le groupe est portée par la liste ordonnée
-`sentence_ids` du changement de groupe. Chaque ID numérique hérité de la base
-0.2 est sérialisé en chaîne décimale sans changer sa valeur ; les clés
+`sentence_refs` du changement de groupe. Chaque ID numérique hérité de la base
+0.2 est conservé comme entier ; les clés
 numériques propres à SQLite (valeurs de `field_definition`, `field_value` et
 `media`) ne sont jamais exportées.
 
@@ -155,7 +158,7 @@ il n'y a pas de changement indépendant de définition de champ. `value_type`,
 
 ```json
 {
-  "content_id": "content-word-0001",
+  "content_id": 1,
   "fields": [
     {
       "value_type": "html",
@@ -198,7 +201,7 @@ par changement :
 }
 ```
 
-`priority_order` est un entier non unique dans le JSON de chaque exercice. Les égalités sont autorisées ; un critère secondaire déterministe départage les exercices. L'ordre exact et sa sémantique pour la sélection des sessions doivent rester cohérents avec le planificateur. Les changements de
+`priority_order` est un entier non unique dans le JSON de chaque exercice. Les égalités sont autorisées ; l'entier `exercise_id` départage les exercices de même priorité dans un commit. L'ordre exact et sa sémantique pour la sélection des sessions doivent rester cohérents avec le planificateur. Les changements de
 phrase, groupe, contenu et média restent des entités distinctes : chaque
 changement ne décrit qu'une entité.
 
@@ -417,7 +420,9 @@ ContentId, SentenceId et SentenceGroupId désignent un changement exact par
 (CommitUid, change_id), où change_id est non négatif. Une correction change
 la référence éditoriale mais ne change pas l'identité locale de progression.
 Les types distincts ne sont jamais égaux, même si leurs valeurs coïncident.
-Les identifiants internes aux payloads seront des entiers, notamment pour
+Les identifiants internes aux payloads sont des entiers, notamment pour
 le départage de priority_order par exercise_id. Ils ne sont pas les références
-éditoriales du domaine. La représentation SQL/JSON historique reste en place
-jusqu'à l'étape de conversion et de migration correspondante.
+éditoriales du domaine. La représentation SQL historique de la progression reste en place jusqu'à
+l'étape de migration correspondante. Le calcul provisoire de l'UID racine
+normalise les références internes avec un UID de staging, puis reconstruit
+les snapshots avec l'UID définitif avant insertion.

@@ -19,11 +19,10 @@ final class LegacyBankContentChange {
 
 /// Converts the current normalized content schema into root-commit snapshots.
 ///
-/// IDs from the content database are preserved as decimal strings. The
-/// bundled database is the source of these IDs in 0.3; converting them to
-/// strings matches `exercise_progress.exercise_id` while retaining their
-/// identity and ordering. Local SQLite IDs are never included for field
-/// definitions, field values, or media files.
+/// Legacy content IDs are retained as integers inside entity snapshots.
+/// Links between snapshots are resolved to exact change references after
+/// deterministic change IDs have been assigned. Field and media row IDs
+/// are not exported.
 final class LegacyBankContentMapper {
   const LegacyBankContentMapper();
 
@@ -80,13 +79,63 @@ final class LegacyBankContentMapper {
     List<LegacyBankContentChange> legacyChanges,
     CommitUid commitUid,
   ) {
+    final changeIds = <(String, Object), int>{};
+    for (var index = 0; index < legacyChanges.length; index++) {
+      final change = legacyChanges[index];
+      if (change.changeType == 'add content' ||
+          change.changeType == 'add sentence' ||
+          change.changeType == 'add sentence group') {
+        changeIds[(change.changeType, _entityId(change))] = index;
+      }
+    }
+
+    Map<String, Object> reference(String type, int id) {
+      final changeId = changeIds[(type, id)];
+      if (changeId == null) {
+        throw StateError('Missing $type reference for legacy ID $id');
+      }
+      return {'commit_uid': commitUid.value, 'change_id': changeId};
+    }
+
+    Map<String, Object?> resolve(LegacyBankContentChange change) {
+      final payload = Map<String, Object?>.of(change.payload);
+      switch (change.changeType) {
+        case 'add exercise':
+          if (payload.containsKey('content_id')) {
+            payload['content_ref'] = reference(
+              'add content',
+              payload.remove('content_id') as int,
+            );
+          } else {
+            payload['sentence_group_ref'] = reference(
+              'add sentence group',
+              payload.remove('sentence_group_id') as int,
+            );
+          }
+          break;
+        case 'add sentence':
+          payload['content_ref'] = reference(
+            'add content',
+            payload.remove('content_id') as int,
+          );
+          break;
+        case 'add sentence group':
+          payload['sentence_refs'] = [
+            for (final id in payload.remove('sentence_ids') as List<int>)
+              reference('add sentence', id),
+          ];
+          break;
+      }
+      return payload;
+    }
+
     return List.unmodifiable([
       for (var index = 0; index < legacyChanges.length; index++)
         BankChange(
           ref: BankChangeRef(commitUid: commitUid, changeId: index),
           previousChangeRef: null,
           changeType: legacyChanges[index].changeType,
-          payload: legacyChanges[index].payload,
+          payload: resolve(legacyChanges[index]),
         ),
     ]);
   }
@@ -117,12 +166,12 @@ final class LegacyBankContentMapper {
       ORDER BY sentence_group_id, id
       ''');
 
-    final sentenceIdsByGroup = <int, List<String>>{};
+    final sentenceIdsByGroup = <int, List<int>>{};
     for (final row in sentenceRows) {
       final groupId = row['sentence_group_id'] as int;
       final contentId = row['content_id'] as int;
       referencedContentIds.add(contentId);
-      sentenceIdsByGroup.putIfAbsent(groupId, () => []).add(_id(row['id'] as int));
+      sentenceIdsByGroup.putIfAbsent(groupId, () => []).add(row['id'] as int);
     }
 
     final sentenceGroupIds = groupsRows.map((row) => row['id'] as int).toSet();
@@ -137,7 +186,7 @@ final class LegacyBankContentMapper {
       final exerciseId = row['exercise_id'] as int;
       final type = row['exercise_type'] as String;
       final Map<String, Object?> payload = {
-        'exercise_id': _id(exerciseId),
+        'exercise_id': exerciseId,
         'exercise_type': type,
         // Preserve the existing deterministic editorial ordering.
         'priority_order': exerciseId,
@@ -148,7 +197,7 @@ final class LegacyBankContentMapper {
         case 'word':
           final contentId = _requiredInt(row['word_content_id'], 'word', exerciseId);
           referencedContentIds.add(contentId);
-          payload['content_id'] = _id(contentId);
+          payload['content_id'] = contentId;
           break;
         case 'character':
           final contentId = _requiredInt(
@@ -157,7 +206,7 @@ final class LegacyBankContentMapper {
             exerciseId,
           );
           referencedContentIds.add(contentId);
-          payload['content_id'] = _id(contentId);
+          payload['content_id'] = contentId;
           break;
         case 'sentence':
           final groupId = _requiredInt(row['sentence_group_id'], 'sentence', exerciseId);
@@ -167,7 +216,7 @@ final class LegacyBankContentMapper {
             );
           }
           sentenceExerciseGroupIds.add(groupId);
-          payload['sentence_group_id'] = _id(groupId);
+          payload['sentence_group_id'] = groupId;
           break;
         default:
           throw StateError('Unsupported legacy exercise type "$type"');
@@ -181,8 +230,8 @@ final class LegacyBankContentMapper {
         LegacyBankContentChange(
           changeType: 'add sentence',
           payload: {
-            'sentence_id': _id(row['id'] as int),
-            'content_id': _id(row['content_id'] as int),
+            'sentence_id': row['id'] as int,
+            'content_id': row['content_id'] as int,
           },
         ),
       );
@@ -193,9 +242,9 @@ final class LegacyBankContentMapper {
         LegacyBankContentChange(
           changeType: 'add sentence group',
           payload: {
-            'sentence_group_id': _id(groupId),
-            'sentence_ids': List<String>.unmodifiable(
-              sentenceIdsByGroup[groupId] ?? const <String>[],
+            'sentence_group_id': groupId,
+            'sentence_ids': List<int>.unmodifiable(
+              sentenceIdsByGroup[groupId] ?? const <int>[],
             ),
           },
         ),
@@ -333,7 +382,7 @@ final class LegacyBankContentMapper {
         LegacyBankContentChange(
           changeType: 'add content',
           payload: {
-            'content_id': _id(id),
+            'content_id': id,
             'fields': List<Map<String, Object?>>.unmodifiable(fields),
           },
         ),
@@ -380,9 +429,9 @@ final class LegacyBankContentMapper {
     final leftId = _entityId(left);
     final rightId = _entityId(right);
     if (left.changeType == 'add media') {
-      return leftId.compareTo(rightId);
+      return (leftId as String).compareTo(rightId as String);
     }
-    return int.parse(leftId).compareTo(int.parse(rightId));
+    return (leftId as int).compareTo(rightId as int);
   }
 
   static int _changeOrder(String type) => switch (type) {
@@ -394,12 +443,12 @@ final class LegacyBankContentMapper {
     _ => throw StateError('Unsupported generated change type "$type"'),
   };
 
-  static String _entityId(LegacyBankContentChange change) => switch (change.changeType) {
+  static Object _entityId(LegacyBankContentChange change) => switch (change.changeType) {
     'add media' => change.payload['sha256'] as String,
-    'add content' => change.payload['content_id'] as String,
-    'add sentence' => change.payload['sentence_id'] as String,
-    'add sentence group' => change.payload['sentence_group_id'] as String,
-    'add exercise' => change.payload['exercise_id'] as String,
+    'add content' => change.payload['content_id'] as int,
+    'add sentence' => change.payload['sentence_id'] as int,
+    'add sentence group' => change.payload['sentence_group_id'] as int,
+    'add exercise' => change.payload['exercise_id'] as int,
     _ => throw StateError('Unsupported generated change type "${change.changeType}"'),
   };
 
@@ -409,8 +458,6 @@ final class LegacyBankContentMapper {
       'Legacy $type exercise $exerciseId has no required content reference',
     );
   }
-
-  static String _id(int id) => id.toString();
 }
 
 final class _MappedContent {

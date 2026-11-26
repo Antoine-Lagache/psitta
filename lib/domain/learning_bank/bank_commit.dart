@@ -32,7 +32,7 @@ final class BankCommit {
   }
 
   void validateChanges(Iterable<BankChange> changes) {
-    final entities = <(String, String, String)>{};
+    final entities = <(String, Object, String)>{};
     final changeIds = <int>{};
     for (final change in changes) {
       if (change.ref.commitUid != uid) {

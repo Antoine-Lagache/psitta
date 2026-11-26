@@ -14,20 +14,24 @@ final class BundledBankBuilder {
     return database.writeTransaction((tx) async {
       // A staging UID is never persisted. The release identity covers the
       // ordered snapshots, including metadata and media references.
-      final staging = await const LegacyBankContentMapper().mapRootCommit(
-        tx,
-        commitUid: CommitUid('staging'),
-        sourceLanguage: 'en',
-        targetLanguage: 'ja',
-        description: 'Japanese vocabulary, sentences and kana.',
-        defaultSettings: const {
-          'sessions.characters.enabled': true,
-          'sessions.characters.new_count': 5,
-          'sessions.reviews.max_count.v2': -1,
-          'sessions.sentences.new_count': 3,
-          'sessions.words.new_count': 4,
-        },
-      );
+      Future<({BankCommit commit, List<BankChange> changes})> map(CommitUid uid) {
+        return const LegacyBankContentMapper().mapRootCommit(
+          tx,
+          commitUid: uid,
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+          description: 'Japanese vocabulary, sentences and kana.',
+          defaultSettings: const {
+            'sessions.characters.enabled': true,
+            'sessions.characters.new_count': 5,
+            'sessions.reviews.max_count.v2': -1,
+            'sessions.sentences.new_count': 3,
+            'sessions.words.new_count': 4,
+          },
+        );
+      }
+
+      final staging = await map(CommitUid('staging'));
       final serialized = jsonEncode({
         'format_version': staging.commit.formatVersion,
         'changes': [
@@ -41,17 +45,12 @@ final class BundledBankBuilder {
       });
       final digest = sha256.convert(utf8.encode(serialized));
       final uid = CommitUid('psitta-root-$digest');
-      final commit = BankCommit(uid: uid, parentUid: null, isFrozen: true);
-      final changes = [
-        for (final change in staging.changes)
-          BankChange(
-            ref: BankChangeRef(commitUid: uid, changeId: change.ref.changeId),
-            previousChangeRef: null,
-            changeType: change.changeType,
-            payload: change.payload,
-          ),
-      ];
-      await BankChangeDao().insertCommit(tx, commit: commit, changes: changes);
+      final root = await map(uid);
+      await BankChangeDao().insertCommit(
+        tx,
+        commit: root.commit,
+        changes: root.changes,
+      );
       await tx.execute('INSERT INTO learning_bank (head_commit_uid) VALUES (?)', [
         uid.value,
       ]);

@@ -10,7 +10,7 @@ final class BankChange {
   final BankChangeRef? previousChangeRef;
   final String changeType;
   final Map<String, Object?> payload;
-  late final (String, String, String) entityIdentity;
+  late final (String, Object, String) entityIdentity;
 
   BankChange({
     required this.ref,
@@ -30,18 +30,26 @@ final class BankChange {
     entityIdentity = _resolveEntityIdentity();
   }
 
-  (String, String, String) _resolveEntityIdentity() => switch (changeType) {
+  (String, Object, String) _resolveEntityIdentity() => switch (changeType) {
     'add bank languages' => ('bank languages', '', ''),
     'add bank description' => ('bank description', '', ''),
-    'add exercise' => ('exercise', _requiredId('exercise_id'), ''),
-    'add sentence group' => ('sentence group', _requiredId('sentence_group_id'), ''),
-    'add sentence' => ('sentence', _requiredId('sentence_id'), ''),
-    'add content' => ('content', _requiredId('content_id'), ''),
+    'add exercise' => ('exercise', _requiredInteger('exercise_id'), ''),
+    'add sentence group' => ('sentence group', _requiredInteger('sentence_group_id'), ''),
+    'add sentence' => ('sentence', _requiredInteger('sentence_id'), ''),
+    'add content' => ('content', _requiredInteger('content_id'), ''),
     'add media' || 'remove media' => ('media', _requiredId('sha256'), ''),
     'add setting' ||
     'update setting' => ('setting', _requiredId('profile'), _requiredId('key')),
     _ => throw ArgumentError.value(changeType, 'changeType', 'Unsupported change type'),
   };
+
+  int _requiredInteger(String key) {
+    final value = payload[key];
+    if (value is! int || value < 0) {
+      throw ArgumentError.value(value, key, 'Must be a non-negative integer');
+    }
+    return value;
+  }
 
   String _requiredId(String key) {
     final value = payload[key];
