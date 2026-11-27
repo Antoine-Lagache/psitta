@@ -123,6 +123,29 @@ void main() {
       expect(() => commit.validateChanges([change(0), change(1)]), throwsArgumentError);
     });
 
+    test('only removal followed by addition may reuse an entity ID', () {
+      final uid = CommitUid('commit-a');
+      final commit = BankCommit(uid: uid, parentUid: null, isFrozen: false);
+      BankChange change(int id, String type) => BankChange(
+        ref: BankChangeRef(commitUid: uid, changeId: id),
+        previousChangeRef: null,
+        changeType: type,
+        payload: const {'sha256': 'hash'},
+      );
+
+      final removal = change(0, 'remove media');
+      final addition = change(1, 'add media');
+      expect(() => commit.validateChanges([addition, removal]), returnsNormally);
+      expect(
+        () => commit.validateChanges([change(0, 'add media'), change(1, 'remove media')]),
+        throwsArgumentError,
+      );
+      expect(
+        () => commit.validateChanges([removal, addition, change(2, 'add media')]),
+        throwsArgumentError,
+      );
+    });
+
     test('entity identity distinguishes kinds and setting profiles', () {
       final uid = CommitUid('commit-a');
       final commit = BankCommit(uid: uid, parentUid: null, isFrozen: false);

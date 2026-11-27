@@ -33,7 +33,7 @@ final class BankCommit {
   }
 
   void validateChanges(Iterable<BankChange> changes) {
-    final entities = <BankEntityIdentity<Object?>>{};
+    final entities = <BankEntityIdentity<Object?>, List<BankChange>>{};
     final changeIds = <int>{};
     for (final change in changes) {
       if (change.ref.commitUid != uid) {
@@ -42,8 +42,15 @@ final class BankCommit {
       if (!changeIds.add(change.ref.changeId)) {
         throw ArgumentError('A commit cannot contain duplicate change IDs');
       }
-      if (!entities.add(change.getEntityIdentity())) {
-        throw ArgumentError('A commit cannot contain two changes to one entity');
+      entities.putIfAbsent(change.getEntityIdentity(), () => []).add(change);
+    }
+    for (final entityChanges in entities.values) {
+      if (entityChanges.length == 1) continue;
+      entityChanges.sort((a, b) => a.ref.changeId.compareTo(b.ref.changeId));
+      if (entityChanges.length != 2 ||
+          !entityChanges.first.changeType.startsWith('remove ') ||
+          !entityChanges.last.changeType.startsWith('add ')) {
+        throw ArgumentError('Only removal followed by addition may share an entity ID');
       }
     }
   }

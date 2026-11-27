@@ -25,7 +25,8 @@ supprimées du SQL.
 - Les identifiants d'entité sont dans `payload_json`. Le type d'entité et
   l'opération sont portés par `change_type` (par exemple `add exercise` ou
   `update setting`) ; le payload contient l'identifiant entier local au type et au commit et l'état complet
-  de l'entité. Un commit ne peut contenir qu'un changement par entité.
+  de l'entité. Un commit ne peut contenir qu'un changement par entité, sauf
+  une suppression suivie d'un ajout (change_id croissant).
 - `media` est un catalogue local des fichiers physiques. Le SHA-256 identifie
   le contenu binaire et permet de partager le même fichier entre exercices,
   commits et banques.
@@ -99,8 +100,12 @@ changements correspondants de ce brouillon ; il n'y a pas de `remove setting`
 en 0.3.
 
 Chaque payload d'exercice, contenu, phrase ou groupe contient un identifiant
-entier unique par type et commit, ainsi que son état complet. Les références
-entre entités désignent les changements exacts par `(commit_uid, change_id)`.
+entier unique par type dans l'état de banque considéré, ainsi que son état
+complet. Une correction conserve cet entier ; une suppression autorise sa
+réattribution, y compris dans le même commit. Les références entre entités
+utilisent les entiers et sont résolues dans l'état de banque considéré.
+Les références éditoriales reconstruites en mémoire désignent les changements
+exacts par `(commit_uid, change_id)`.
 Le changement ne répète jamais sa propre clé primaire dans son payload.
 Une mise à jour n'est pas un patch : elle sérialise toute la nouvelle entité.
 Le changement précédent permet de retrouver l'état antérieur et de recalculer
@@ -113,7 +118,7 @@ Exemples indicatifs des payloads :
 {
   "exercise_id": 1,
   "exercise_type": "word",
-  "content_ref": {"commit_uid": "root", "change_id": 10},
+  "content_id": 1,
   "priority_order": 10,
   "training_count_max": 0
 }
@@ -126,7 +131,7 @@ et chaque phrase référence son contenu séparément :
 {
   "exercise_id": 2,
   "exercise_type": "sentence",
-  "sentence_group_ref": {"commit_uid": "root", "change_id": 13},
+  "sentence_group_id": 1,
   "priority_order": 10,
   "training_count_max": 3
 }
@@ -135,19 +140,19 @@ et chaque phrase référence son contenu séparément :
 ```json
 {
   "sentence_group_id": 1,
-  "sentence_refs": [{"commit_uid": "root", "change_id": 11}, {"commit_uid": "root", "change_id": 12}]
+  "sentence_ids": [1, 2]
 }
 ```
 
 ```json
 {
   "sentence_id": 1,
-  "content_ref": {"commit_uid": "root", "change_id": 10}
+  "content_id": 1
 }
 ```
 
 L'association entre les phrases et le groupe est portée par la liste ordonnée
-`sentence_refs` du changement de groupe. Chaque ID numérique hérité de la base
+`sentence_ids` du changement de groupe. Chaque ID numérique hérité de la base
 0.2 est conservé comme entier ; les clés
 numériques propres à SQLite (valeurs de `field_definition`, `field_value` et
 `media`) ne sont jamais exportées.
@@ -205,7 +210,8 @@ par changement :
 phrase, groupe, contenu et média restent des entités distinctes : chaque
 changement ne décrit qu'une entité.
 
-La règle « au plus un changement par entité et par commit », la forme JSON du
+La règle « au plus un changement par entité et par commit, sauf suppression
+puis ajout », la forme JSON du
 payload, la cohérence de la paire de références précédente, l'absence de
 référence à soi-même et la validité du type d'opération sont contrôlées dans le
 domaine ou la couche applicative, avec des tests dédiés. Les FK SQL ne
@@ -252,14 +258,13 @@ avant d'insérer. L'index unique seul ne réalise pas cette déduplication.
 |---|---|
 | `id INTEGER PRIMARY KEY` | Clé locale courte utilisée par les FK des données de progression |
 | `learning_bank_id INTEGER NOT NULL` | Banque locale à laquelle appartient cette progression |
-| `exercise_id TEXT NOT NULL` | Identifiant portable de l'exercice dans la banque |
 | `active_commit_uid TEXT NOT NULL` | Commit contenant la définition actuellement suivie |
 | `active_change_id INTEGER NOT NULL` | Changement définissant actuellement l'exercice |
 
-Contrainte unique : `(learning_bank_id, exercise_id)`. La paire active référence
-`bank_change(commit_uid, change_id)`. Une FK composite peut assurer l'existence
-de ce changement, mais elle ne peut pas assurer que son payload décrit
-l'exercice de `exercise_id`; le résolveur doit le valider. Cette ligne est
+Contrainte unique : `(learning_bank_id, active_commit_uid, active_change_id)`.
+La paire active référence `bank_change(commit_uid, change_id)`. L'identifiant
+numérique de l'exercice se trouve dans le payload ; il n'est pas dupliqué.
+Le résolveur vérifie le type du changement et son appartenance à la banque. Cette ligne est
 conservée lorsque la définition change ; ses pointeurs vers le changement
 actif sont mis à jour afin de préserver la progression. Une suppression
 d'exercice n'efface donc pas automatiquement sa progression ni son historique.
@@ -282,13 +287,16 @@ d'exercice n'efface donc pas automatiquement sa progression ni son historique.
 |---|---|
 | `id INTEGER PRIMARY KEY` | Identifiant local de l'événement |
 | `exercise_progress_id INTEGER NOT NULL` | Progression concernée |
-| `sentence_id TEXT NULL` | Phrase concernée, identifiant stable dans l'exercice |
+| `sentence_commit_uid TEXT NULL` | Commit du changement exact de la phrase présentée |
+| `sentence_change_id INTEGER NULL` | Changement exact de la phrase présentée |
 | `grade INTEGER NOT NULL` | Note FSRS enregistrée |
 | `answered_at TEXT NOT NULL` | Date de réponse |
 | `status INTEGER NOT NULL` | Statut de l'exercice au moment de la réponse |
 
-FK vers `exercise_progress(id)` en cascade. `sentence_id` n'a pas de FK SQL
-vers le contenu, car celui-ci est résolu depuis la chaîne de changements.
+FK vers `exercise_progress(id)` en cascade. Dans le schéma final, la paire
+nullable de phrase référence `bank_change(commit_uid, change_id)` ; sa
+cohérence (deux valeurs présentes ou deux nulles) est validée en Dart.
+La migration transitoire ajoute les colonnes avant la reconstruction de la table.
 
 ### `sentence_instance_progress`
 
@@ -298,12 +306,14 @@ et sa progression utilisateur :
 | Colonne | Rôle |
 |---|---|
 | `exercise_progress_id INTEGER NOT NULL` | Progression de l'exercice phrase |
-| `sentence_id TEXT NOT NULL` | Identifiant de la phrase dans le contenu de l'exercice |
+| `sentence_id INTEGER NOT NULL` | Identifiant numérique de la phrase dans le payload |
 | `shown_count INTEGER NOT NULL` | Nombre d'affichages |
 | `accumulated_score REAL NOT NULL` | Score de sélection accumulé |
 | `is_in_learning INTEGER NOT NULL` | État d'apprentissage de cette phrase |
 
-Clé primaire : `(exercise_progress_id, sentence_id)`.
+Clé primaire : `(exercise_progress_id, sentence_id)`. Lors de l'activation
+future d'un commit, une correction conserve l'état de phrase ; une suppression
+retire cet état avant un éventuel ajout utilisant le même identifiant.
 
 ## Sessions
 
@@ -395,7 +405,7 @@ conservées avec les nouvelles références décrites plus haut.
 - Les références HTML de médias utilisent `psitta://media/<sha256>` et sont résolues localement.
 - `add setting` et `update setting` contiennent `profile`, `key`, `value` (JSON typé). La 0.3 n'utilise que `default`.
 - Les métadonnées additionnelles de licence et les dépendances pédagogiques sont reportées à une évolution du format ; elles ne font pas partie de la 0.3.
-- Les mises à jour futures conservent la progression lorsque l'identité de l'exercice est préservée ; un exercice supprimé puis recréé avec un nouvel identifiant reçoit une nouvelle progression. Les commits téléchargés peuvent rester inactifs.
+- Les mises à jour futures conservent la progression lorsque l'identité de l'exercice est préservée ; un exercice supprimé puis recréé reçoit une nouvelle progression, même si son identifiant numérique est réutilisé. Les commits téléchargés peuvent rester inactifs.
 
 ## Conversion du corpus officiel
 
@@ -423,6 +433,7 @@ Les types distincts ne sont jamais égaux, même si leurs valeurs coïncident.
 Les identifiants internes aux payloads sont des entiers, notamment pour
 le départage de priority_order par exercise_id. Ils ne sont pas les références
 éditoriales du domaine. La représentation SQL historique de la progression reste en place jusqu'à
-l'étape de migration correspondante. Le calcul provisoire de l'UID racine
-normalise les références internes avec un UID de staging, puis reconstruit
-les snapshots avec l'UID définitif avant insertion.
+l'étape de migration correspondante. Le calcul provisoire de l'UID racine utilise les payloads numériques et les
+identifiants de changements déterministes, puis attribue l'UID définitif avant
+insertion. Les clés locales de progression ne sont pas des identifiants
+portables d'échange.

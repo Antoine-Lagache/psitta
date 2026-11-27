@@ -43,10 +43,9 @@ CREATE TABLE media (
 CREATE TABLE exercise_progress (
   id INTEGER PRIMARY KEY,
   learning_bank_id INTEGER NOT NULL,
-  exercise_id TEXT NOT NULL,
   active_commit_uid TEXT NOT NULL,
   active_change_id INTEGER NOT NULL,
-  UNIQUE (learning_bank_id, exercise_id),
+  UNIQUE (learning_bank_id, active_commit_uid, active_change_id),
   FOREIGN KEY (learning_bank_id) REFERENCES learning_bank(id) ON DELETE CASCADE,
   FOREIGN KEY (active_commit_uid, active_change_id)
     REFERENCES bank_change(commit_uid, change_id) ON DELETE RESTRICT
@@ -67,17 +66,20 @@ CREATE TABLE srs_state (
 CREATE TABLE exercise_history (
   id INTEGER PRIMARY KEY,
   exercise_progress_id INTEGER NOT NULL,
-  sentence_id TEXT,
+  sentence_commit_uid TEXT,
+  sentence_change_id INTEGER,
   grade INTEGER NOT NULL,
   answered_at TEXT NOT NULL,
   status INTEGER NOT NULL,
+  FOREIGN KEY (sentence_commit_uid, sentence_change_id)
+    REFERENCES bank_change(commit_uid, change_id) ON DELETE RESTRICT,
   FOREIGN KEY (exercise_progress_id)
     REFERENCES exercise_progress(id) ON DELETE CASCADE
 );
 
 CREATE TABLE sentence_instance_progress (
   exercise_progress_id INTEGER NOT NULL,
-  sentence_id TEXT NOT NULL,
+  sentence_id INTEGER NOT NULL,
   shown_count INTEGER NOT NULL,
   accumulated_score REAL NOT NULL,
   is_in_learning INTEGER NOT NULL,

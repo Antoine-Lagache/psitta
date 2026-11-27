@@ -20,9 +20,8 @@ final class LegacyBankContentChange {
 /// Converts the current normalized content schema into root-commit snapshots.
 ///
 /// Legacy content IDs are retained as integers inside entity snapshots.
-/// Links between snapshots are resolved to exact change references after
-/// deterministic change IDs have been assigned. Field and media row IDs
-/// are not exported.
+/// Links between entities retain numeric IDs and are resolved in the selected
+/// bank state. Field and media row IDs are not exported.
 final class LegacyBankContentMapper {
   const LegacyBankContentMapper();
 
@@ -79,63 +78,13 @@ final class LegacyBankContentMapper {
     List<LegacyBankContentChange> legacyChanges,
     CommitUid commitUid,
   ) {
-    final changeIds = <(String, Object), int>{};
-    for (var index = 0; index < legacyChanges.length; index++) {
-      final change = legacyChanges[index];
-      if (change.changeType == 'add content' ||
-          change.changeType == 'add sentence' ||
-          change.changeType == 'add sentence group') {
-        changeIds[(change.changeType, _entityId(change))] = index;
-      }
-    }
-
-    Map<String, Object> reference(String type, int id) {
-      final changeId = changeIds[(type, id)];
-      if (changeId == null) {
-        throw StateError('Missing $type reference for legacy ID $id');
-      }
-      return {'commit_uid': commitUid.value, 'change_id': changeId};
-    }
-
-    Map<String, Object?> resolve(LegacyBankContentChange change) {
-      final payload = Map<String, Object?>.of(change.payload);
-      switch (change.changeType) {
-        case 'add exercise':
-          if (payload.containsKey('content_id')) {
-            payload['content_ref'] = reference(
-              'add content',
-              payload.remove('content_id') as int,
-            );
-          } else {
-            payload['sentence_group_ref'] = reference(
-              'add sentence group',
-              payload.remove('sentence_group_id') as int,
-            );
-          }
-          break;
-        case 'add sentence':
-          payload['content_ref'] = reference(
-            'add content',
-            payload.remove('content_id') as int,
-          );
-          break;
-        case 'add sentence group':
-          payload['sentence_refs'] = [
-            for (final id in payload.remove('sentence_ids') as List<int>)
-              reference('add sentence', id),
-          ];
-          break;
-      }
-      return payload;
-    }
-
     return List.unmodifiable([
       for (var index = 0; index < legacyChanges.length; index++)
         BankChange(
           ref: BankChangeRef(commitUid: commitUid, changeId: index),
           previousChangeRef: null,
           changeType: legacyChanges[index].changeType,
-          payload: resolve(legacyChanges[index]),
+          payload: legacyChanges[index].payload,
         ),
     ]);
   }

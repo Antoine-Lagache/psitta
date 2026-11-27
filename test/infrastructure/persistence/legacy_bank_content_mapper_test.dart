@@ -96,47 +96,34 @@ void main() {
     expect(await db.database.getAll('PRAGMA foreign_key_check'), isEmpty);
   });
 
-  test('snapshot references target exact changes with integer entity IDs', () async {
+  test('snapshot links use numeric entity IDs, not change references', () async {
     final changes = await db.database.writeTransaction(
       (tx) => mapper.mapDomainChanges(tx, commitUid: uid),
     );
-    final byId = {for (final change in changes) change.ref.changeId: change};
-    void verify(Object? value, String type, String key, int id) {
-      final ref = value as Map;
-      expect(ref['commit_uid'], uid.value);
-      final target = byId[ref['change_id']];
-      expect(target?.changeType, type);
-      expect(target?.payload[key], id);
-    }
-
     for (final change in changes) {
       final payload = change.payload;
       expect(payload.containsKey('commit_uid'), isFalse);
       expect(payload.containsKey('change_id'), isFalse);
+      expect(payload.containsKey('content_ref'), isFalse);
+      expect(payload.containsKey('sentence_group_ref'), isFalse);
+      expect(payload.containsKey('sentence_refs'), isFalse);
       switch (change.changeType) {
         case 'add exercise':
           final id = payload['exercise_id'] as int;
           expect(payload['priority_order'], id);
           if (payload['exercise_type'] == 'sentence') {
-            verify(
-              payload['sentence_group_ref'],
-              'add sentence group',
-              'sentence_group_id',
-              1,
-            );
+            expect(payload['sentence_group_id'], 1);
           } else {
-            verify(payload['content_ref'], 'add content', 'content_id', id);
+            expect(payload['content_id'], id);
           }
           break;
         case 'add sentence':
           expect(payload['sentence_id'], 1);
-          verify(payload['content_ref'], 'add content', 'content_id', 2);
+          expect(payload['content_id'], 2);
           break;
         case 'add sentence group':
           expect(payload['sentence_group_id'], 1);
-          final refs = payload['sentence_refs'] as List;
-          expect(refs, hasLength(1));
-          verify(refs.single, 'add sentence', 'sentence_id', 1);
+          expect(payload['sentence_ids'], [1]);
           break;
         case 'add content':
           expect(payload['content_id'], isA<int>());

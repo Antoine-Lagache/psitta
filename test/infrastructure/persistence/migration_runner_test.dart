@@ -109,7 +109,8 @@ void main() {
           'answered_at',
           'status',
           'exercise_progress_id',
-          'sentence_id',
+          'sentence_commit_uid',
+          'sentence_change_id',
         ],
         'field_value': [
           'id',
@@ -144,7 +145,6 @@ void main() {
         'exercise_progress': [
           'id',
           'learning_bank_id',
-          'exercise_id',
           'active_commit_uid',
           'active_change_id',
         ],

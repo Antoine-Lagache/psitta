@@ -70,12 +70,10 @@ class V3LearningBanksSchema implements DatabaseMigration {
       CREATE TABLE exercise_progress (
         id INTEGER PRIMARY KEY,
         learning_bank_id INTEGER NOT NULL,
-        exercise_id TEXT NOT NULL,
-        
         active_commit_uid TEXT NOT NULL,
         active_change_id INTEGER NOT NULL,
 
-        UNIQUE (learning_bank_id, exercise_id),
+        UNIQUE (learning_bank_id, active_commit_uid, active_change_id),
         FOREIGN KEY (learning_bank_id)
           REFERENCES learning_bank(id) ON DELETE CASCADE,
         FOREIGN KEY (active_commit_uid, active_change_id)
@@ -86,7 +84,7 @@ class V3LearningBanksSchema implements DatabaseMigration {
     await database.execute('''
       CREATE TABLE sentence_instance_progress (
         exercise_progress_id INTEGER NOT NULL,
-        sentence_id TEXT NOT NULL,
+        sentence_id INTEGER NOT NULL,
         shown_count INTEGER NOT NULL,
         accumulated_score REAL NOT NULL,
         is_in_learning INTEGER NOT NULL,
@@ -110,7 +108,11 @@ class V3LearningBanksSchema implements DatabaseMigration {
       ''');
     await database.execute('''
       ALTER TABLE exercise_history
-      ADD COLUMN sentence_id TEXT;
+      ADD COLUMN sentence_commit_uid TEXT;
+      ''');
+    await database.execute('''
+      ALTER TABLE exercise_history
+      ADD COLUMN sentence_change_id INTEGER;
       ''');
     await database.execute('''
       ALTER TABLE session_result
