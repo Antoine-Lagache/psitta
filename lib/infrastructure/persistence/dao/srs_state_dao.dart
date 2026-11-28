@@ -162,8 +162,10 @@ final class SrsStateDao {
     return rows.single['count'] as int;
   }
 
-  Future<Map<String, ({int notStarted, int started, int mastered})>>
-  countProgressByType(sqlite.SqliteReadContext database, LearningBankId bankId) async {
+  Future<Map<String, ({int notStarted, int started, int mastered})>> countProgressByType(
+    sqlite.SqliteReadContext database,
+    LearningBankId bankId,
+  ) async {
     final rows = await database.getAll(
       '''
       SELECT json_extract(c.payload_json, '\$.exercise_type') AS type,

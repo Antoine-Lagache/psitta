@@ -113,10 +113,7 @@ final class BankExerciseHistoryDao {
     return rows.isNotEmpty;
   }
 
-  Future<void> delete(
-    sqlite.SqliteWriteContext transaction,
-    ExerciseHistoryId id,
-  ) async {
+  Future<void> delete(sqlite.SqliteWriteContext transaction, ExerciseHistoryId id) async {
     await transaction.execute('DELETE FROM exercise_history WHERE id = ?', [id.value]);
   }
 

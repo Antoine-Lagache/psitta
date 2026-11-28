@@ -101,10 +101,7 @@ final class BankSessionResultDao {
     return id;
   }
 
-  Future<void> update(
-    sqlite.SqliteWriteContext transaction,
-    SessionResult result,
-  ) async {
+  Future<void> update(sqlite.SqliteWriteContext transaction, SessionResult result) async {
     final id = result.id;
     if (id == null) throw ArgumentError('Session has no ID');
     final row = SessionResultMapper.toPersistence(result);
@@ -147,10 +144,7 @@ final class BankSessionResultDao {
     }
   }
 
-  Future<void> delete(
-    sqlite.SqliteWriteContext transaction,
-    SessionResultId id,
-  ) async {
+  Future<void> delete(sqlite.SqliteWriteContext transaction, SessionResultId id) async {
     await transaction.execute('DELETE FROM session_result WHERE id = ?', [id.value]);
   }
 }
