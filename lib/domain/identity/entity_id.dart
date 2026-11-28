@@ -104,9 +104,17 @@ final class SentenceGroupId extends ChangeId {
 }
 
 final class SentenceInstanceProgressId
-    extends EntityId<(ExerciseProgressId, SentenceId)> {
-  const SentenceInstanceProgressId(super.value);
+    extends EntityId<(ExerciseProgressId, int)> {
+  SentenceInstanceProgressId((ExerciseProgressId, int) value)
+    : super(_validate(value));
+
+  static (ExerciseProgressId, int) _validate((ExerciseProgressId, int) value) {
+    if (value.$2 < 0) {
+      throw ArgumentError.value(value.$2, 'sentenceId', 'Must not be negative');
+    }
+    return value;
+  }
 
   ExerciseProgressId get exerciseProgressId => value.$1;
-  SentenceId get sentenceId => value.$2;
+  int get sentenceId => value.$2;
 }
