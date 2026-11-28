@@ -103,10 +103,8 @@ final class SentenceGroupId extends ChangeId {
   SentenceGroupId(super.value);
 }
 
-final class SentenceInstanceProgressId
-    extends EntityId<(ExerciseProgressId, int)> {
-  SentenceInstanceProgressId((ExerciseProgressId, int) value)
-    : super(_validate(value));
+final class SentenceInstanceProgressId extends EntityId<(ExerciseProgressId, int)> {
+  SentenceInstanceProgressId((ExerciseProgressId, int) value) : super(_validate(value));
 
   static (ExerciseProgressId, int) _validate((ExerciseProgressId, int) value) {
     if (value.$2 < 0) {

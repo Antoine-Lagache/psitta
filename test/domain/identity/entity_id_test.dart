@@ -23,16 +23,19 @@ void main() {
     expect(() => SentenceId((uid, -1)), throwsArgumentError);
   });
 
-  test('sentence progress identity includes the local exercise and numeric entity ID', () {
-    const sentence = 2;
-    final id = SentenceInstanceProgressId((ExerciseProgressId(1), sentence));
-    expect(id, SentenceInstanceProgressId((ExerciseProgressId(1), sentence)));
-    expect(id, isNot(SentenceInstanceProgressId((ExerciseProgressId(2), sentence))));
-    expect(id.exerciseProgressId, ExerciseProgressId(1));
-    expect(id.sentenceId, sentence);
-    expect(
-      () => SentenceInstanceProgressId((ExerciseProgressId(1), -1)),
-      throwsArgumentError,
-    );
-  });
+  test(
+    'sentence progress identity includes the local exercise and numeric entity ID',
+    () {
+      const sentence = 2;
+      final id = SentenceInstanceProgressId((ExerciseProgressId(1), sentence));
+      expect(id, SentenceInstanceProgressId((ExerciseProgressId(1), sentence)));
+      expect(id, isNot(SentenceInstanceProgressId((ExerciseProgressId(2), sentence))));
+      expect(id.exerciseProgressId, ExerciseProgressId(1));
+      expect(id.sentenceId, sentence);
+      expect(
+        () => SentenceInstanceProgressId((ExerciseProgressId(1), -1)),
+        throwsArgumentError,
+      );
+    },
+  );
 }

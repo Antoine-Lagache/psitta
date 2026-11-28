@@ -1,10 +1,7 @@
 import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/srs/sentence_state.dart';
 
-typedef SentenceProgressEntry = ({
-  SentenceInstanceProgressId id,
-  SentenceState state,
-});
+typedef SentenceProgressEntry = ({SentenceInstanceProgressId id, SentenceState state});
 
 class SentenceInstanceProgressMapper {
   const SentenceInstanceProgressMapper();
