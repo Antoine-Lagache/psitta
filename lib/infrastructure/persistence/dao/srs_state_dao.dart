@@ -2,8 +2,7 @@ import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/infrastructure/persistence/mappers/exercise/srs_state_mapper.dart';
 import 'package:sqlite_async/sqlite_async.dart' as sqlite;
 
-/// Reads and updates migrated FSRS rows by their local progression identity.
-/// Insertion is deferred until the legacy primary key has been removed.
+/// Persists FSRS rows by their local progression identity on the target schema.
 final class SrsStateDao {
   Future<SRSState?> getById(
     sqlite.SqliteReadContext database,
@@ -49,5 +48,32 @@ final class SrsStateDao {
     if (updated.length != 1) {
       throw StateError('Expected one FSRS state for progression $id');
     }
+  }
+
+  Future<void> insert(
+    sqlite.SqliteWriteContext transaction,
+    ExerciseProgressId id,
+    SRSState state,
+  ) async {
+    if (state.exerciseId != id) {
+      throw ArgumentError('FSRS state must belong to the requested progression');
+    }
+    final row = SRSStateMapper.toPersistenceSrsState(state);
+    await transaction.execute(
+      '''
+      INSERT INTO srs_state (
+        exercise_progress_id, state, step, stability, difficulty, due, last_review
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        id.value,
+        row.state,
+        row.step,
+        row.stability,
+        row.difficulty,
+        row.due,
+        row.lastReview,
+      ],
+    );
   }
 }
