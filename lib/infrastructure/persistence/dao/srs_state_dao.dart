@@ -94,7 +94,7 @@ final class SrsStateDao {
   ) async {
     final typeCondition = type == null
         ? ''
-        : "AND json_extract(c.payload_json, '$.exercise_type') = ?";
+        : "AND json_extract(c.payload_json, '\$.exercise_type') = ?";
     final rows = await database.getAll(
       '''
       SELECT p.id $_join
@@ -102,7 +102,7 @@ final class SrsStateDao {
         $typeCondition
       ORDER BY s.due ASC, p.id ASC LIMIT ?
       ''',
-      [bankId.value, nowInMicroseconds, if (type != null) type, count],
+      [bankId.value, nowInMicroseconds, ?type, count],
     );
     return rows.map((row) => ExerciseProgressId(row['id'] as int)).toList();
   }
@@ -115,15 +115,15 @@ final class SrsStateDao {
   ) async {
     final typeCondition = type == null
         ? ''
-        : "AND json_extract(c.payload_json, '$.exercise_type') = ?";
+        : "AND json_extract(c.payload_json, '\$.exercise_type') = ?";
     final rows = await database.getAll(
       '''
       SELECT p.id $_join AND s.last_review IS NULL $typeCondition
-      ORDER BY json_extract(c.payload_json, '$.priority_order') ASC,
-        json_extract(c.payload_json, '$.exercise_id') ASC
+      ORDER BY json_extract(c.payload_json, '\$.priority_order') ASC,
+        json_extract(c.payload_json, '\$.exercise_id') ASC
       LIMIT ?
       ''',
-      [bankId.value, if (type != null) type, count],
+      [bankId.value, ?type, count],
     );
     return rows.map((row) => ExerciseProgressId(row['id'] as int)).toList();
   }
@@ -136,13 +136,13 @@ final class SrsStateDao {
   ) async {
     final typeCondition = type == null
         ? ''
-        : "AND json_extract(c.payload_json, '$.exercise_type') = ?";
+        : "AND json_extract(c.payload_json, '\$.exercise_type') = ?";
     final rows = await database.getAll(
       '''
       SELECT COUNT(*) AS count $_join
         AND s.last_review IS NOT NULL AND s.due <= ? $typeCondition
       ''',
-      [bankId.value, nowInMicroseconds, if (type != null) type],
+      [bankId.value, nowInMicroseconds, ?type],
     );
     return rows.single['count'] as int;
   }
@@ -154,10 +154,10 @@ final class SrsStateDao {
   ) async {
     final typeCondition = type == null
         ? ''
-        : "AND json_extract(c.payload_json, '$.exercise_type') = ?";
+        : "AND json_extract(c.payload_json, '\$.exercise_type') = ?";
     final rows = await database.getAll(
       'SELECT COUNT(*) AS count $_join AND s.last_review IS NULL $typeCondition',
-      [bankId.value, if (type != null) type],
+      [bankId.value, ?type],
     );
     return rows.single['count'] as int;
   }
@@ -166,7 +166,7 @@ final class SrsStateDao {
   countProgressByType(sqlite.SqliteReadContext database, LearningBankId bankId) async {
     final rows = await database.getAll(
       '''
-      SELECT json_extract(c.payload_json, '$.exercise_type') AS type,
+      SELECT json_extract(c.payload_json, '\$.exercise_type') AS type,
         SUM(CASE WHEN s.last_review IS NULL THEN 1 ELSE 0 END) AS not_started,
         SUM(CASE WHEN s.last_review IS NOT NULL AND
           (s.stability IS NULL OR s.stability <= 30) THEN 1 ELSE 0 END) AS started,

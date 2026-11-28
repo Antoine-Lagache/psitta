@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:psitta/domain/exercise/exercise_resume.dart';
-import 'package:psitta/domain/exercise/exercise_status.dart';
 import 'package:psitta/domain/identity/entity_id.dart';
 import 'package:psitta/domain/sessions/session_result.dart';
 import 'package:psitta/domain/sessions/session_type.dart';
